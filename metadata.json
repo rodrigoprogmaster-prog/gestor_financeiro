@@ -1,0 +1,5 @@
+{
+  "name": "Gerenciador de Sistemas Financeiros",
+  "description": "Um painel central para acessar e gerenciar três sistemas financeiros distintos: Controle de Cheques, Gestão de Boletos e Controle de Boletos. Navegue facilmente entre os sistemas e utilize suas funcionalidades de forma individual.",
+  "requestFramePermissions": []
+}

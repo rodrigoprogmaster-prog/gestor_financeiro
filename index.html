@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gerenciador de Sistemas Financeiros</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      :root {
+        --font-body: 'Roboto', sans-serif;
+        --font-heading: 'Roboto', sans-serif;
+
+        /* Light Theme */
+        --color-primary: #2563eb;
+        --color-primary-hover: #1d4ed8;
+        --color-secondary: #e5e7eb;
+        --color-background: #f9fafb;
+        --color-card: #ffffff;
+        --color-text-primary: #1f2937;
+        --color-text-secondary: #6b7280;
+        --color-border: #d1d5db;
+        --color-success: #16a34a;
+        --color-warning: #f59e0b;
+        --color-danger: #dc2626;
+      }
+
+      html.dark {
+        /* Dark Theme */
+        --color-primary: #3b82f6;
+        --color-primary-hover: #60a5fa;
+        --color-secondary: #374151;
+        --color-background: #111827;
+        --color-card: #1f2937;
+        --color-text-primary: #f9fafb;
+        --color-text-secondary: #9ca3af;
+        --color-border: #4b5563;
+        --color-success: #22c55e;
+        --color-warning: #f59e0b;
+        --color-danger: #ef4444;
+      }
+      
+      body {
+        font-family: var(--font-body);
+      }
+      h1, h2, h3, h4, h5, h6 {
+        font-family: var(--font-heading);
+      }
+    </style>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['var(--font-body)', 'sans-serif'],
+              heading: ['var(--font-heading)', 'sans-serif'],
+            },
+            colors: {
+              'primary': 'var(--color-primary)',
+              'primary-hover': 'var(--color-primary-hover)',
+              'secondary': 'var(--color-secondary)',
+              'background': 'var(--color-background)',
+              'card': 'var(--color-card)',
+              'text-primary': 'var(--color-text-primary)',
+              'text-secondary': 'var(--color-text-secondary)',
+              'border': 'var(--color-border)',
+              'success': 'var(--color-success)',
+              'warning': 'var(--color-warning)',
+              'danger': 'var(--color-danger)',
+            },
+            animation: {
+              'fade-in': 'fadeIn 0.5s ease-out forwards',
+              'fade-in-down': 'fadeInDown 0.3s ease-out forwards',
+              'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+              'spin': 'spin 1s linear infinite',
+            },
+            keyframes: {
+              fadeIn: { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
+              fadeInDown: { '0%': { opacity: 0, transform: 'translateY(-10px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+              shake: {
+                '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+                '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+                '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+                '40%, 60%': { transform: 'translate3d(4px, 0, 0)' },
+              },
+               spin: {
+                from: { transform: 'rotate(0deg)' },
+                to: { transform: 'rotate(360deg)' },
+              },
+            }
+          },
+        },
+      }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-background text-text-primary">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
