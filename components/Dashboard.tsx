@@ -27,7 +27,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
     return (
         <div className="animate-fade-in flex flex-col flex-grow">
             <div className="text-center mb-10">
-                <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary mb-2 font-heading">Bem-vindo ao Gerenciador</h2>
+                <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary mb-2 font-heading">Bem-vindo ao Gerenciador Financeiro PJ</h2>
                 <p className="text-lg text-text-secondary">Selecione um módulo abaixo para começar a gerenciar suas finanças.</p>
             </div>
             
