@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import CartaoMMA from './CartaoMMA';
 import CartaoWorldWide from './CartaoWorldWide';
 import CartaoManual from './CartaoManual';
-import { CreditCardChipIcon } from './icons';
+import { CreditCardChipIcon, ArrowLeftIcon } from './icons';
 
 type CardId = 'mma' | 'worldwide' | 'adm' | 'itau';
 
@@ -40,7 +40,7 @@ const CreditCard: React.FC<{ card: CardInfo; onSelect: () => void }> = ({ card, 
 );
 
 
-const GerenciadorCartoes: React.FC = () => {
+const GerenciadorCartoes: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [selectedCard, setSelectedCard] = useState<CardId | null>(null);
 
     const handleSelectCard = (cardId: CardId) => {
@@ -70,9 +70,17 @@ const GerenciadorCartoes: React.FC = () => {
         <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in">
             {selectedCard === null ? (
                 <>
-                    <h2 className="text-2xl md:text-3xl font-bold text-text-primary mb-6">
-                        Gerenciador de Cartões de Crédito
-                    </h2>
+                    <div className="flex items-center gap-4 mb-6">
+                        {onBack && (
+                            <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors h-10">
+                                <ArrowLeftIcon className="h-5 w-5" />
+                                Voltar
+                            </button>
+                        )}
+                        <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
+                            Gerenciador de Cartões de Crédito
+                        </h2>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                         {cards.map(card => (
                             <CreditCard key={card.id} card={card} onSelect={() => handleSelectCard(card.id)} />

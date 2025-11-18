@@ -22,8 +22,16 @@ interface TransferenciasEmpresasProps {
 const formatDateToBR = (isoDate: string): string => {
     if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return '';
     const [year, month, day] = isoDate.split('-');
-    return `${day}/${month}/${year}`;
+    // Create a UTC date to avoid timezone issues
+    const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+    return date.toLocaleDateString('pt-BR', {
+        timeZone: 'UTC',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+    });
 };
+
 
 const formatDateToISO = (brDate: string): string => {
     if (!brDate || !/^\d{2}\/\d{2}\/\d{4}$/.test(brDate)) return '';

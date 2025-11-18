@@ -2,11 +2,11 @@ import React from 'react';
 import { AppView } from '../types';
 import { ReportIcon } from './icons';
 
-interface PagamentosDiariosProps {
+interface PagamentosDiariosLandingProps {
   setView: (view: AppView) => void;
 }
 
-const PagamentosDiarios: React.FC<PagamentosDiariosProps> = ({ setView }) => {
+const PagamentosDiariosLanding: React.FC<PagamentosDiariosLandingProps> = ({ setView }) => {
   return (
     <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in flex flex-col items-center flex-grow justify-center">
       <div className="text-center mb-10">
@@ -39,4 +39,4 @@ const PagamentosDiarios: React.FC<PagamentosDiariosProps> = ({ setView }) => {
   );
 };
 
-export default PagamentosDiarios;
+export default PagamentosDiariosLanding;

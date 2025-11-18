@@ -66,11 +66,19 @@ const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-const formatDateToBR = (dateString: string): string => {
-  if (!dateString || !/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return '';
-  const [year, month, day] = dateString.split('-');
-  return `${day}/${month}/${year}`;
+const formatDateToBR = (isoDate: string): string => {
+    if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return '';
+    const [year, month, day] = isoDate.split('-');
+    // Create a UTC date to avoid timezone issues
+    const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+    return date.toLocaleDateString('pt-BR', {
+        timeZone: 'UTC',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+    });
 };
+
 
 type View = 'menu' | 'previsao' | 'dashboard' | 'banco' | 'empresa';
 
@@ -152,7 +160,8 @@ const PrevisaoFabrica: React.FC = () => {
     }, [filteredPrevisoes]);
 
     const totaisPorBanco = useMemo(() => {
-        // FIX: Explicitly typing the accumulator `acc` to resolve type inference issues.
+        // FIX: Explicitly type the initial value of reduce to ensure correct type inference for the accumulator.
+// @FIX: Explicitly type the initial value of reduce to ensure correct type inference for the accumulator.
         const porEmpresaBanco = previsoes.reduce((acc, item) => {
             const key = `${item.empresa}-${item.tipo}`;
             if (!acc[key]) {
@@ -160,8 +169,8 @@ const PrevisaoFabrica: React.FC = () => {
             }
             acc[key].receitas += item.receitas;
             return acc;
-// @FIX: Provide a typed initial value to the reduce function to prevent type inference issues.
-        }, {} as Record<string, { empresa: string, banco: string, receitas: number }>);
+            // FIX: Add explicit type to the accumulator to resolve TypeScript errors.
+        }, {} as Record<string, { empresa: string; banco: string; receitas: number; }>);
     
         return Object.values(porEmpresaBanco)
             .filter(item => item.receitas > 0)
@@ -172,13 +181,16 @@ const PrevisaoFabrica: React.FC = () => {
     }, [previsoes]);
 
     const despesasPorEmpresa = useMemo(() => {
-        // FIX: Explicitly type accumulator in reduce to fix type inference issues.
+        // FIX: Explicitly type the initial value of reduce to ensure correct type inference for the accumulator.
+// @FIX: Explicitly type the initial value of reduce to ensure correct type inference for the accumulator.
         const porEmpresa = previsoes.reduce((acc, item) => {
-            if (!acc[item.empresa]) acc[item.empresa] = { totalDespesas: 0 };
+            if (!acc[item.empresa]) {
+                acc[item.empresa] = { totalDespesas: 0 };
+            }
             acc[item.empresa].totalDespesas += item.despesas;
             return acc;
-// @FIX: Provide a typed initial value to the reduce function to prevent type inference issues.
-        }, {} as Record<string, { totalDespesas: number }>);
+            // FIX: Add explicit type to the accumulator to resolve TypeScript errors.
+        }, {} as Record<string, { totalDespesas: number; }>);
         return Object.entries(porEmpresa).map(([empresa, { totalDespesas }]) => ({ empresa, totalDespesas })).filter(item => item.totalDespesas > 0).sort((a, b) => b.totalDespesas - a.totalDespesas);
     }, [previsoes]);
     
@@ -214,13 +226,16 @@ const PrevisaoFabrica: React.FC = () => {
             return;
         }
         
-        // FIX: Explicitly typing the accumulator `acc` to resolve type inference issues.
+        // FIX: Explicitly type the initial value of reduce to ensure correct type inference for the accumulator.
+// @FIX: Explicitly type the initial value of reduce to ensure correct type inference for the accumulator.
         const groupedByDate = dadosDaSemana.reduce((acc, item) => {
-            if (!acc[item.data]) acc[item.data] = { data: item.data, receitas: 0, despesas: 0 };
+            if (!acc[item.data]) {
+                acc[item.data] = { data: item.data, receitas: 0, despesas: 0 };
+            }
             acc[item.data].receitas += item.receitas;
             acc[item.data].despesas += item.despesas;
             return acc;
-// @FIX: Provide a typed initial value to the reduce function to prevent type inference issues.
+            // FIX: Add explicit type to the accumulator to resolve TypeScript errors.
         }, {} as Record<string, { data: string; receitas: number; despesas: number; }>);
 
         const diasOrdenados = Object.values(groupedByDate).sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
@@ -354,22 +369,22 @@ const PrevisaoFabrica: React.FC = () => {
     };
 
     const handleCancelConfirm = () => setIsConfirmOpen(false);
-    
+
     const isCurrentDayClosed = dateFilter ? closedDates.has(dateFilter) : false;
-    
-   if (view === 'menu') {
-      return (
-          <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in">
-              <h2 className="text-2xl md:text-3xl font-bold text-text-primary mb-6 text-center">Previsão Fábrica</h2>
-              <p className="text-lg text-text-secondary text-center mb-10">Selecione uma área para visualizar.</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
-                  <NavCard title="Previsão" icon={<TrendingUpIcon className="h-10 w-10 text-primary" />} onClick={() => setView('previsao')} />
-                  <NavCard title="Dashboard" icon={<ReportIcon className="h-10 w-10 text-primary" />} onClick={() => setView('dashboard')} />
-                  <NavCard title="Totais por Banco" icon={<DatabaseIcon className="h-10 w-10 text-primary" />} onClick={() => setView('banco')} />
-                  <NavCard title="Despesas por Empresa" icon={<BoletoIcon className="h-10 w-10 text-primary" />} onClick={() => setView('empresa')} />
-              </div>
-          </div>
-      );
+
+    if (view === 'menu') {
+        return (
+            <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in">
+                <h2 className="text-2xl md:text-3xl font-bold text-text-primary mb-6 text-center">Previsão Fábrica</h2>
+                <p className="text-lg text-text-secondary text-center mb-10">Selecione uma área para visualizar.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+                    <NavCard title="Previsão" icon={<TrendingUpIcon className="h-10 w-10 text-primary" />} onClick={() => setView('previsao')} />
+                    <NavCard title="Dashboard" icon={<ReportIcon className="h-10 w-10 text-primary" />} onClick={() => setView('dashboard')} />
+                    <NavCard title="Totais por Banco" icon={<DatabaseIcon className="h-10 w-10 text-primary" />} onClick={() => setView('banco')} />
+                    <NavCard title="Despesas por Empresa" icon={<BoletoIcon className="h-10 w-10 text-primary" />} onClick={() => setView('empresa')} />
+                </div>
+            </div>
+        );
     }
     
     const viewTitles: Record<View, string> = { menu: '', previsao: 'Previsão', dashboard: 'Dashboard', banco: 'Totais por Banco e Empresa', empresa: 'Despesas por Empresa' };
@@ -414,16 +429,7 @@ const PrevisaoFabrica: React.FC = () => {
           <div className="bg-card shadow-md rounded-lg overflow-x-auto">
             <table className="w-full text-base text-left text-text-secondary">
               <thead className="text-sm text-text-primary uppercase bg-secondary">
-                <tr>
-                  <th scope="col" className="px-6 py-3">Data</th>
-                  <th scope="col" className="px-6 py-3">Semana</th>
-                  <th scope="col" className="px-6 py-3">Empresa</th>
-                  <th scope="col" className="px-6 py-3">Banco</th>
-                  <th scope="col" className="px-6 py-3 text-right">Receitas</th>
-                  <th scope="col" className="px-6 py-3 text-right">Despesas</th>
-                  <th scope="col" className="px-6 py-3 text-right">Resultado</th>
-                  <th scope="col" className="px-6 py-3 text-center">Ações</th>
-                </tr>
+                <tr><th scope="col" className="px-6 py-3">Data</th><th scope="col" className="px-6 py-3">Semana</th><th scope="col" className="px-6 py-3">Empresa</th><th scope="col" className="px-6 py-3">Banco</th><th scope="col" className="px-6 py-3 text-right">Receitas</th><th scope="col" className="px-6 py-3 text-right">Despesas</th><th scope="col" className="px-6 py-3 text-right">Resultado</th><th scope="col" className="px-6 py-3 text-center">Ações</th></tr>
               </thead>
               <tbody>
                 {filteredPrevisoes.length > 0 ? (
@@ -477,46 +483,16 @@ const PrevisaoFabrica: React.FC = () => {
         </div>
       )}
       
-      {view === 'banco' && (
-        <div className="animate-fade-in"><h3 className="text-xl font-bold text-text-primary mb-4">Totais Consolidados por Banco e Empresa</h3><div className="bg-card shadow-md rounded-lg overflow-x-auto"><table className="w-full text-base text-left text-text-secondary"><thead className="text-sm text-text-primary uppercase bg-secondary"><tr><th scope="col" className="px-6 py-3">Empresa</th><th scope="col" className="px-6 py-3">Banco</th><th scope="col" className="px-6 py-3 text-right">Receitas</th></tr></thead><tbody>{totaisPorBanco.length > 0 ? (totaisPorBanco.map(item => (<tr key={`${item.empresa}-${item.banco}`} className="bg-card border-b border-border"><td className="px-6 py-4 font-medium text-text-primary">{item.empresa}</td><td className="px-6 py-4">{item.banco}</td><td className="px-6 py-4 text-right text-success font-semibold">{formatCurrency(item.receitas)}</td></tr>))) : (<tr><td colSpan={3} className="text-center py-16 text-text-secondary">Nenhuma receita para exibir.</td></tr>)}</tbody></table></div></div>
-      )}
-      
-      {view === 'empresa' && (
-          <div className="animate-fade-in">
-            <h3 className="text-xl font-bold text-text-primary mb-4">Totais de Despesas por Empresa</h3>
-            <div className="mb-6">
-                <div className="bg-card p-4 rounded-lg shadow-md border border-border text-center sm:max-w-sm">
-                    <p className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Despesa Total</p>
-                    <p className="text-2xl font-bold text-danger">{formatCurrency(totalDespesasGeral)}</p>
-                </div>
-            </div>
-            <div className="bg-card shadow-md rounded-lg overflow-x-auto">
-                <table className="w-full text-base text-left text-text-secondary">
-                    <thead className="text-sm text-text-primary uppercase bg-secondary">
-                        <tr>
-                            <th scope="col" className="px-6 py-3">Empresa</th>
-                            <th scope="col" className="px-6 py-3 text-right">Despesas</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {despesasPorEmpresa.length > 0 ? (
-                            despesasPorEmpresa.map(item => (
-                                <tr key={item.empresa} className="bg-card border-b border-border">
-                                    <td className="px-6 py-4 font-medium text-text-primary">{item.empresa}</td>
-                                    <td className="px-6 py-4 text-right text-danger font-semibold">{formatCurrency(item.totalDespesas)}</td>
-                                </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan={2} className="text-center py-16 text-text-secondary">Nenhuma despesa registrada.</td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+      {view === 'banco' && (<div className="animate-fade-in"><h3 className="text-xl font-bold text-text-primary mb-4">Totais Consolidados por Banco e Empresa</h3><div className="bg-card shadow-md rounded-lg overflow-x-auto"><table className="w-full text-base text-left text-text-secondary"><thead className="text-sm text-text-primary uppercase bg-secondary"><tr><th scope="col" className="px-6 py-3">Empresa</th><th scope="col" className="px-6 py-3">Banco</th><th scope="col" className="px-6 py-3 text-right">Receitas</th></tr></thead><tbody>{totaisPorBanco.length > 0 ? (totaisPorBanco.map(item => (<tr key={`${item.empresa}-${item.banco}`} className="bg-card border-b border-border"><td className="px-6 py-4 font-medium text-text-primary">{item.empresa}</td><td className="px-6 py-4">{item.banco}</td><td className="px-6 py-4 text-right text-success font-semibold">{formatCurrency(item.receitas)}</td></tr>))) : (<tr><td colSpan={3} className="text-center py-16 text-text-secondary">Nenhuma receita para exibir.</td></tr>)}</tbody></table></div></div>)}
+      {view === 'empresa' && (<div className="animate-fade-in">
+        <h3 className="text-xl font-bold text-text-primary mb-4">Totais de Despesas por Empresa</h3>
+        <div className="mb-6">
+            <div className="bg-card p-4 rounded-lg shadow-md border border-border text-center sm:max-w-sm">
+                <p className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Despesa Total</p>
+                <p className="text-2xl font-bold text-danger">{formatCurrency(totalDespesasGeral)}</p>
             </div>
         </div>
-      )}
-
+        <div className="bg-card shadow-md rounded-lg overflow-x-auto"><table className="w-full text-base text-left text-text-secondary"><thead className="text-sm text-text-primary uppercase bg-secondary"><tr><th scope="col" className="px-6 py-3">Empresa</th><th scope="col" className="px-6 py-3 text-right">Despesas</th></tr></thead><tbody>{despesasPorEmpresa.length > 0 ? (despesasPorEmpresa.map(item => (<tr key={item.empresa} className="bg-card border-b border-border"><td className="px-6 py-4 font-medium text-text-primary">{item.empresa}</td><td className="px-6 py-4 text-right text-danger font-semibold">{formatCurrency(item.totalDespesas)}</td></tr>))) : (<tr><td colSpan={2} className="text-center py-16 text-text-secondary">Nenhuma despesa registrada.</td></tr>)}</tbody></table></div></div>)}
       {isEditModalOpen && editingPrevisao && (<div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in"><div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-lg"><h3 className="text-xl font-bold mb-6 text-text-primary">Editar Previsão</h3><div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label htmlFor="data" className="block text-sm font-medium text-text-secondary mb-1">Data</label><input id="data" type="date" name="data" value={editingPrevisao.data || ''} onChange={handleInputChange} className="w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"/></div><div><label htmlFor="semana" className="block text-sm font-medium text-text-secondary mb-1">Semana</label><input id="semana" type="text" name="semana" value={editingPrevisao.semana || ''} onChange={handleInputChange} disabled className="w-full bg-gray-100 border-gray-300 rounded-md px-3 py-2 text-text-secondary cursor-not-allowed"/></div><div className="md:col-span-2"><label htmlFor="empresa" className="block text-sm font-medium text-text-secondary mb-1">Empresa</label><select id="empresa" name="empresa" value={editingPrevisao.empresa || ''} onChange={handleInputChange} className="w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"><option value="" disabled>Selecione</option>{uniqueEmpresas.map(empresa => (<option key={empresa} value={empresa}>{empresa}</option>))}</select></div><div><label htmlFor="tipo" className="block text-sm font-medium text-text-secondary mb-1">Banco</label><select id="tipo" name="tipo" value={editingPrevisao.tipo || ''} onChange={handleInputChange} className="w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"><option value="" disabled>Selecione</option>{FIXED_BANKS.map(banco => (<option key={banco} value={banco}>{banco}</option>))}</select></div><div></div><div><label htmlFor="receitas" className="block text-sm font-medium text-text-secondary mb-1">Receitas</label><input id="receitas" type="text" name="receitas" value={formatCurrency(editingPrevisao.receitas || 0)} onChange={handleInputChange} className="w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"/></div><div><label htmlFor="despesas" className="block text-sm font-medium text-text-secondary mb-1">Despesas</label><input id="despesas" type="text" name="despesas" value={formatCurrency(editingPrevisao.despesas || 0)} onChange={handleInputChange} className="w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"/></div></div><div className="mt-8 flex justify-end gap-4"><button onClick={handleCloseModal} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button><button onClick={handleSaveChanges} className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Salvar</button></div></div></div>)}
       {isAddDayModalOpen && (<div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in"><div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-sm"><h3 className="text-lg font-bold mb-4 text-text-primary">Adicionar Dia</h3><p className="text-text-secondary mb-4">Selecione a data e informe a semana.</p><div className="space-y-4"><div><label htmlFor="newDayDate" className="block text-sm font-medium text-text-secondary mb-1">Data</label><input id="newDayDate" type="date" name="newDayDate" value={newDayDate} onChange={(e) => setNewDayDate(e.target.value)} className="w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"/></div><div><label htmlFor="newDaySemana" className="block text-sm font-medium text-text-secondary mb-1">Semana</label><input id="newDaySemana" type="text" name="newDaySemana" value={newDaySemana} onChange={(e) => setNewDaySemana(e.target.value)} placeholder="Ex: Semana 32" className="w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"/></div></div><div className="mt-6 flex justify-end gap-4"><button onClick={() => setIsAddDayModalOpen(false)} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button><button onClick={handleAddDay} className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Gerar</button></div></div></div>)}
       {isGerarPrevisaoModalOpen && (<div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in"><div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-sm"><h3 className="text-lg font-bold mb-4 text-text-primary">Criar Previsão</h3><p className="text-text-secondary mb-4">Digite a semana para gerar o resumo.</p><div><label htmlFor="semanaParaGerar" className="block text-sm font-medium text-text-secondary mb-1">Semana</label><input id="semanaParaGerar" type="text" value={semanaParaGerar} onChange={(e) => setSemanaParaGerar(e.target.value)} placeholder="Ex: Semana 32" className="w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"/></div><div className="mt-6 flex justify-end gap-4"><button onClick={() => setIsGerarPrevisaoModalOpen(false)} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button><button onClick={handleProceedToConfirmGerar} className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Gerar</button></div></div></div>)}

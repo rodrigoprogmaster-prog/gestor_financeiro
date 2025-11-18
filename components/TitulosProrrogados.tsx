@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon } from './icons';
+import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, ArrowLeftIcon } from './icons';
 
 // Enum for status
 enum StatusTitulo {
@@ -23,8 +23,16 @@ interface Title {
 const formatDateToBR = (isoDate: string): string => {
     if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return '';
     const [year, month, day] = isoDate.split('-');
-    return `${day}/${month}/${year}`;
+    // Create a UTC date to avoid timezone issues
+    const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+    return date.toLocaleDateString('pt-BR', {
+        timeZone: 'UTC',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+    });
 };
+
 
 const formatDateToISO = (brDate: string): string => {
     if (!brDate || !/^\d{2}\/\d{2}\/\d{4}$/.test(brDate)) return '';
@@ -87,7 +95,7 @@ const newTitleTemplate: Omit<Title, 'id'> = {
   status: StatusTitulo.A_PRORROGAR,
 };
 
-const TitulosProrrogados: React.FC = () => {
+const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const STORAGE_KEY = 'titulos_prorrogados_data';
 
   const [titles, setTitles] = useState<Title[]>(() => {
@@ -400,6 +408,12 @@ const TitulosProrrogados: React.FC = () => {
     <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
         <div className="flex items-center gap-2 flex-wrap">
+          {onBack && (
+            <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors h-10">
+                <ArrowLeftIcon className="h-5 w-5" />
+                Voltar
+            </button>
+           )}
            <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
             Gerenciar Títulos Prorrogados
            </h2>

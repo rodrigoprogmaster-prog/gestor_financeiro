@@ -3,7 +3,7 @@ import { AppView } from '../types';
 import { 
     ArrowUpCircleIcon, CheckIcon, ArrowDownCircleIcon, CalendarClockIcon, 
     TrendingUpIcon, DatabaseIcon, ReportIcon, CreditCardIcon, 
-    ClipboardCheckIcon, SettingsIcon 
+    ClipboardCheckIcon, SettingsIcon, ClipboardListIcon
 } from './icons';
 
 interface DashboardProps {
@@ -15,6 +15,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
         { title: "Boletos a Receber", view: AppView.CONTROLE_CHEQUES, icon: <ArrowUpCircleIcon className="h-8 w-8 text-primary" />, description: "Gerencie e acompanhe os boletos emitidos para seus clientes." },
         { title: "Gerenciador de Cheques", view: AppView.GESTAO_BOLETOS, icon: <CheckIcon className="h-8 w-8 text-primary" />, description: "Controle os cheques recebidos, seus status e datas de compensação." },
         { title: "Boletos a Pagar", view: AppView.CONTROLE_BOLETOS, icon: <ArrowDownCircleIcon className="h-8 w-8 text-primary" />, description: "Organize e monitore suas contas e boletos a serem pagos." },
+        { title: "Gerenciador de Tarefas", view: AppView.GERENCIADOR_TAREFAS, icon: <ClipboardListIcon className="h-8 w-8 text-primary" />, description: "Organize suas tarefas diárias, defina prioridades e acompanhe o progresso." },
         { title: "Títulos Prorrogados", view: AppView.TITULOS_PRORROGADOS, icon: <CalendarClockIcon className="h-8 w-8 text-primary" />, description: "Acompanhe títulos com vencimentos adiados e negociações." },
         { title: "Contas Bancárias", view: AppView.CADASTRO_CONTAS_BANCARIAS, icon: <DatabaseIcon className="h-8 w-8 text-primary" />, description: "Cadastre e gerencie todas as contas bancárias da empresa." },
         { title: "Cartões de Crédito", view: AppView.GERENCIADOR_CARTOES, icon: <CreditCardIcon className="h-8 w-8 text-primary" />, description: "Importe faturas e gerencie os gastos dos cartões corporativos." },
@@ -48,7 +49,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
             </div>
 
             <footer className="text-center text-sm text-text-secondary mt-auto py-4 border-t border-border">
-                @DESENVOLVIDO POR RODRIGO MORAES, 2025, VERSÃO 1
+                DESENVOLVIDO POR RODRIGO MORAES, 2025, VERSÃO 2.0
             </footer>
         </div>
     );

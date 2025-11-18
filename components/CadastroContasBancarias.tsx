@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon } from './icons';
+import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, ArrowLeftIcon } from './icons';
 
 // Data structure for a bank account
 interface ContaBancaria {
@@ -44,7 +44,7 @@ const isValidCnpj = (cnpj: string): boolean => {
 };
 
 
-const CadastroContasBancarias: React.FC = () => {
+const CadastroContasBancarias: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [contas, setContas] = useState<ContaBancaria[]>(() => {
         const savedContas = localStorage.getItem('contas_bancarias');
         return savedContas ? JSON.parse(savedContas) : initialContas;
@@ -309,9 +309,17 @@ const CadastroContasBancarias: React.FC = () => {
         <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in">
             <input type="file" ref={fileInputRef} onChange={handleFileImport} className="hidden" accept=".xlsx, .xls" />
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
-                <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
-                    Cadastro de Contas Bancárias
-                </h2>
+                <div className="flex items-center gap-4">
+                    {onBack && (
+                        <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors h-10">
+                            <ArrowLeftIcon className="h-5 w-5" />
+                            Voltar
+                        </button>
+                    )}
+                    <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
+                        Cadastro de Contas Bancárias
+                    </h2>
+                </div>
                 <div className="flex items-center gap-2 flex-wrap">
                    {selectedContas.size > 0 && (
                         <button

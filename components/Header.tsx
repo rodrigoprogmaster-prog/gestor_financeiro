@@ -17,11 +17,14 @@ import {
   ClipboardCheckIcon,
   SettingsIcon,
   ChevronDownIcon, // Importar o novo ícone
+  ClipboardListIcon,
+  SparklesIcon,
 } from './icons';
 
 interface HeaderProps {
   setView: (view: AppView) => void;
   onLogout: () => void;
+  onOpenMeuDia: () => void;
 }
 
 // Tipos para os itens de navegação
@@ -44,6 +47,7 @@ const modules: NavItem[] = [
     { view: AppView.CONTROLE_CHEQUES, name: 'Boletos a Receber', icon: <ArrowUpCircleIcon className="h-5 w-5" /> },
     { view: AppView.GESTAO_BOLETOS, name: 'Gerenciador de Cheques', icon: <CheckIcon className="h-5 w-5" /> },
     { view: AppView.CONTROLE_BOLETOS, name: 'Boletos a Pagar', icon: <ArrowDownCircleIcon className="h-5 w-5" /> },
+    { view: AppView.GERENCIADOR_TAREFAS, name: 'Gerenciador de Tarefas', icon: <ClipboardListIcon className="h-5 w-5" /> },
     { view: AppView.TITULOS_PRORROGADOS, name: 'Títulos Prorrogados', icon: <CalendarClockIcon className="h-5 w-5" /> },
     { view: AppView.CADASTRO_CONTAS_BANCARIAS, name: 'Contas Bancárias', icon: <DatabaseIcon className="h-5 w-5" /> },
     { view: AppView.GERENCIADOR_CARTOES, name: 'Cartões de Crédito', icon: <CreditCardIcon className="h-5 w-5" /> },
@@ -67,7 +71,7 @@ const modules: NavItem[] = [
     { view: AppView.CONFIGURACAO_SEGURANCA, name: 'Configuração e Segurança', icon: <SettingsIcon className="h-5 w-5" /> },
 ];
 
-const Header: React.FC<HeaderProps> = ({ setView, onLogout }) => {
+const Header: React.FC<HeaderProps> = ({ setView, onLogout, onOpenMeuDia }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openSubMenus, setOpenSubMenus] = useState<Record<string, boolean>>({});
   const menuRef = useRef<HTMLDivElement>(null);
@@ -110,6 +114,14 @@ const Header: React.FC<HeaderProps> = ({ setView, onLogout }) => {
         <div className="hidden sm:block text-right">
           <Clock />
         </div>
+        <button
+            onClick={onOpenMeuDia}
+            className="flex items-center justify-center bg-yellow-400 text-yellow-900 font-semibold p-2 rounded-lg hover:bg-yellow-500 transition-colors duration-300 h-10 w-10"
+            aria-label="Abrir Meu Dia"
+            title="Meu Dia"
+        >
+            <SparklesIcon className="h-6 w-6" />
+        </button>
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}

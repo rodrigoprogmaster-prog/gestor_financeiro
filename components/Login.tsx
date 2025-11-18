@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { WalletIcon, SpinnerIcon, CheckIcon } from './icons';
+import { WalletIcon, SpinnerIcon, CheckIcon, UserIcon } from './icons';
 
 interface LoginProps {
   onLoginSuccess: () => void;
@@ -10,6 +10,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [profilePicture] = useState(() => localStorage.getItem('profile_picture'));
 
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -66,10 +67,17 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 p-4">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 p-4 dark:from-slate-800 dark:to-slate-900">
       <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-2xl shadow-2xl border border-border animate-fade-in">
         <div className="flex flex-col items-center">
-            <div className="flex items-center gap-3 mb-4">
+            {profilePicture ? (
+                <img src={profilePicture} alt="Foto de Perfil" className="h-24 w-24 rounded-full object-cover mb-6 border-2 border-primary shadow-md" />
+            ) : (
+                <div className="h-24 w-24 rounded-full bg-secondary flex items-center justify-center mb-6 border-2 border-border">
+                    <UserIcon className="h-12 w-12 text-text-secondary" />
+                </div>
+            )}
+            <div className="flex items-center gap-3 mb-2">
                 <WalletIcon className="h-10 w-10 text-primary" />
                 <h1 className="text-3xl font-bold text-text-primary">
                 Gerenciador Financeiro
@@ -85,7 +93,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 type="password"
                 autoComplete="current-password"
                 required
-                className={`appearance-none rounded-md relative block w-full px-4 py-3 border placeholder-gray-500 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:z-10 sm:text-sm transition-all duration-300 ${error ? 'border-danger animate-shake' : 'border-border'}`}
+                className={`appearance-none rounded-lg relative block w-full px-4 py-3 border placeholder-gray-500 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:z-10 sm:text-sm transition-all duration-300 ${error ? 'border-danger animate-shake' : 'border-border'}`}
                 placeholder="Senha de Acesso"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -104,7 +112,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             <button
               type="submit"
               disabled={isLoading || isSuccess}
-              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white ${getButtonClass()} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-300`}
+              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white ${getButtonClass()} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-300`}
             >
               {buttonContent()}
             </button>

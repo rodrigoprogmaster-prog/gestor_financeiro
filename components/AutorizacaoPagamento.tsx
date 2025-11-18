@@ -63,11 +63,19 @@ const parseCurrency = (value: string): number => {
     return Number(numericValue) / 100;
 };
 
-const formatDateToBR = (dateString: string): string => {
-  if (!dateString || !/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return '';
-  const [year, month, day] = dateString.split('-');
-  return `${day}/${month}/${year}`;
+const formatDateToBR = (isoDate: string): string => {
+    if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return '';
+    const [year, month, day] = isoDate.split('-');
+    // Create a UTC date to avoid timezone issues
+    const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+    return date.toLocaleDateString('pt-BR', {
+        timeZone: 'UTC',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+    });
 };
+
 
 // Reusable components for inputs
 const FormattedInput: React.FC<{name: keyof AuthValues, value: number, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void}> = ({ name, value, onChange }) => (

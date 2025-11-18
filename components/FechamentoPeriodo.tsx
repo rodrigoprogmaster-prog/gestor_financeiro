@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import FechamentoEmpresas from './FechamentoEmpresas';
 import CaixaLiquidacao from './CaixaLiquidacao';
-import { ClipboardCheckIcon, DatabaseIcon } from './icons';
+import { ClipboardCheckIcon, DatabaseIcon, ArrowLeftIcon } from './icons';
 
 type FechamentoView = 'cristiano' | 'fabrica' | 'caixa_cristiano' | 'caixa_fabrica';
 
-const FechamentoPeriodo: React.FC = () => {
+const FechamentoPeriodo: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [selectedView, setSelectedView] = useState<FechamentoView | null>(null);
 
     const handleSelectView = (view: FechamentoView) => {
@@ -35,9 +35,17 @@ const FechamentoPeriodo: React.FC = () => {
 
     return (
         <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in">
-            <h2 className="text-2xl md:text-3xl font-bold text-text-primary mb-6 text-center">
-                Fechamento de Período Financeiro
-            </h2>
+            <div className="flex items-center gap-4 mb-6">
+                {onBack && (
+                    <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors h-10">
+                        <ArrowLeftIcon className="h-5 w-5" />
+                        Voltar
+                    </button>
+                )}
+                <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
+                    Fechamento de Período Financeiro
+                </h2>
+            </div>
             <p className="text-lg text-text-secondary text-center mb-10">Selecione uma área para gerenciar.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                 <div

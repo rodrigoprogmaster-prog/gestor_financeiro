@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PasswordModal from './PasswordModal';
-import { UserIcon, KeyIcon } from './icons';
+import { UserIcon, KeyIcon, ArrowLeftIcon, EditIcon } from './icons';
 
 // Modal for managing users (placeholder)
 const ManageUsersModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
@@ -60,9 +60,9 @@ const ChangePasswordModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             <div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-md">
                 <h3 className="text-xl font-bold mb-6 text-text-primary">Alterar Senha de Acesso</h3>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <input type="password" placeholder="Senha Atual" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required className="w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" autoFocus />
-                    <input type="password" placeholder="Nova Senha" value={newPassword} onChange={e => setNewPassword(e.target.value)} required className="w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
-                    <input type="password" placeholder="Confirmar Nova Senha" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input type="password" placeholder="Senha Atual" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required className="w-full bg-background border border-border rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" autoFocus />
+                    <input type="password" placeholder="Nova Senha" value={newPassword} onChange={e => setNewPassword(e.target.value)} required className="w-full bg-background border border-border rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input type="password" placeholder="Confirmar Nova Senha" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="w-full bg-background border border-border rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
                     
                     {error && <p className="text-danger text-sm">{error}</p>}
                     {success && <p className="text-success text-sm">{success}</p>}
@@ -79,17 +79,15 @@ const ChangePasswordModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
 
 const googleFonts = ['Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Oswald', 'Source Sans Pro', 'Poppins', 'Merriweather', 'Playfair Display', 'Inter', 'Nunito', 'Raleway'];
 
-const ConfiguracaoSeguranca: React.FC = () => {
+const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [isUnlocked, setIsUnlocked] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(true); // For initial unlock
     const [isActionPasswordModalOpen, setIsActionPasswordModalOpen] = useState(false); // For subsequent actions
     const [passwordAction, setPasswordAction] = useState<{ action: (() => void) | null }>({ action: null });
-
-    // New states
     const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
     const [isManageUsersModalOpen, setIsManageUsersModalOpen] = useState(false);
-    
-    // Existing states
+    const [profilePicture, setProfilePicture] = useState(() => localStorage.getItem('profile_picture'));
+    const photoInputRef = useRef<HTMLInputElement>(null);
     const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
     const [bodyFont, setBodyFont] = useState(() => localStorage.getItem('fontBody') || 'Roboto');
     const [headingFont, setHeadingFont] = useState(() => localStorage.getItem('fontHeading') || 'Roboto');
@@ -97,6 +95,7 @@ const ConfiguracaoSeguranca: React.FC = () => {
     const [previewText, setPreviewText] = useState('A rápida raposa marrom salta sobre o cão preguiçoso. 1234567890');
     const [loadedFonts, setLoadedFonts] = useState<string[]>(['Roboto']);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
     useEffect(() => {
         if (isDarkMode) {
@@ -121,6 +120,13 @@ const ConfiguracaoSeguranca: React.FC = () => {
             setLoadedFonts(prev => [...prev, fontToLoad]);
         }
     }, [currentFont, loadedFonts]);
+    
+    const showNotification = (message: string, type: 'success' | 'error' = 'success', duration: number = 3000) => {
+        setNotification({ message, type });
+        setTimeout(() => {
+            setNotification(null);
+        }, duration);
+    };
 
     const handleInitialUnlockSuccess = () => {
         setIsPasswordModalOpen(false);
@@ -139,6 +145,19 @@ const ConfiguracaoSeguranca: React.FC = () => {
         setPasswordAction({ action });
         setIsActionPasswordModalOpen(true);
     };
+    
+    const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64 = e.target?.result as string;
+                localStorage.setItem('profile_picture', base64);
+                setProfilePicture(base64);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     const handleApplyFont = () => {
         const apply = (target: 'body' | 'heading', fontName: string) => {
@@ -152,7 +171,7 @@ const ConfiguracaoSeguranca: React.FC = () => {
         } else {
             apply('heading', headingFont);
         }
-        alert('Fonte aplicada com sucesso!');
+        showNotification('Fonte aplicada com sucesso!');
     };
     
     const handleBackup = () => {
@@ -170,6 +189,7 @@ const ConfiguracaoSeguranca: React.FC = () => {
         a.download = `backup_financeiro_${new Date().toISOString().slice(0, 10)}.json`;
         a.click();
         URL.revokeObjectURL(a.href);
+        showNotification('Backup criado com sucesso!');
     };
 
     const handleRestore = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -182,10 +202,12 @@ const ConfiguracaoSeguranca: React.FC = () => {
                 requestPassword(() => {
                     localStorage.clear();
                     Object.keys(backupData).forEach(key => localStorage.setItem(key, typeof backupData[key] === 'object' ? JSON.stringify(backupData[key]) : backupData[key]));
-                    alert('Backup restaurado! A página será recarregada.');
-                    window.location.reload();
+                    showNotification('Backup restaurado! A página será recarregada.');
+                    setTimeout(() => window.location.reload(), 2000);
                 });
-            } catch (error) { alert('Erro ao ler o arquivo de backup.'); }
+            } catch (error) { 
+                showNotification('Erro ao ler o arquivo de backup.', 'error'); 
+            }
         };
         reader.readAsText(file);
     };
@@ -200,19 +222,55 @@ const ConfiguracaoSeguranca: React.FC = () => {
 
     return (
         <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in">
-            <h2 className="text-2xl md:text-3xl font-bold text-text-primary mb-8 font-heading">Configuração e Segurança</h2>
+            <div className="flex items-center gap-4 mb-8">
+                {onBack && (
+                    <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors h-10">
+                        <ArrowLeftIcon className="h-5 w-5" />
+                        Voltar
+                    </button>
+                )}
+                <h2 className="text-2xl md:text-3xl font-bold text-text-primary font-heading">Configuração e Segurança</h2>
+            </div>
             <div className="space-y-12">
                 
-                <div className="bg-card p-6 rounded-lg shadow-md border border-border">
+                 <div className="bg-card p-6 rounded-lg shadow-md border border-border">
                     <h3 className="text-xl font-bold text-text-primary mb-4 font-heading flex items-center gap-3">
                         <UserIcon className="h-6 w-6 text-primary" />
                         Perfil de Usuário
                     </h3>
-                    <div className="flex items-center gap-4">
-                        <span className="font-semibold text-text-primary">Nome de Usuário:</span>
-                        <span className="text-text-secondary">Rodrigo Moraes</span>
+                    <div className="flex items-center gap-6">
+                        <div className="relative">
+                            {profilePicture ? (
+                                <img src={profilePicture} alt="Foto de Perfil" className="h-24 w-24 rounded-full object-cover border-2 border-primary" />
+                            ) : (
+                                <div className="h-24 w-24 rounded-full bg-secondary flex items-center justify-center border-2 border-border">
+                                    <UserIcon className="h-12 w-12 text-text-secondary" />
+                                </div>
+                            )}
+                            <button
+                                onClick={() => photoInputRef.current?.click()}
+                                className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full hover:bg-primary-hover transition-colors shadow-md"
+                                aria-label="Alterar foto"
+                            >
+                                <EditIcon className="h-4 w-4" />
+                            </button>
+                            <input
+                                type="file"
+                                ref={photoInputRef}
+                                onChange={handlePhotoChange}
+                                className="hidden"
+                                accept="image/png, image/jpeg"
+                            />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-4">
+                                <span className="font-semibold text-text-primary">Nome de Usuário:</span>
+                                <span className="text-text-secondary">Rodrigo Moraes</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
 
                 <div className="bg-card p-6 rounded-lg shadow-md border border-border">
                     <h3 className="text-xl font-bold text-text-primary mb-4 font-heading flex items-center gap-3">
@@ -237,21 +295,36 @@ const ConfiguracaoSeguranca: React.FC = () => {
                            <label className="block text-sm font-medium text-text-secondary mb-2">Alterar Fontes</label>
                            <div className="space-y-4">
                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                   <select value={currentFont} onChange={(e) => { const f = e.target.value; fontTarget === 'all' ? setBodyFont(f) : setHeadingFont(f); }} className="sm:col-span-1 bg-background border border-border rounded-md px-3 py-2 text-text-primary h-10">{googleFonts.map(f => (<option key={f} value={f}>{f}</option>))}</select>
-                                   <select value={fontTarget} onChange={(e) => setFontTarget(e.target.value as any)} className="sm:col-span-1 bg-background border border-border rounded-md px-3 py-2 text-text-primary h-10"><option value="all">Todo o Sistema</option><option value="headings">Apenas Cabeçalhos</option></select>
+                                   <select value={currentFont} onChange={(e) => { const f = e.target.value; fontTarget === 'all' ? setBodyFont(f) : setHeadingFont(f); }} className="sm:col-span-1 bg-background border border-border rounded-lg px-3 py-2 text-text-primary h-10">{googleFonts.map(f => (<option key={f} value={f}>{f}</option>))}</select>
+                                   <select value={fontTarget} onChange={(e) => setFontTarget(e.target.value as any)} className="sm:col-span-1 bg-background border border-border rounded-lg px-3 py-2 text-text-primary h-10"><option value="all">Todo o Sistema</option><option value="headings">Apenas Cabeçalhos</option></select>
                                    <button onClick={() => requestPassword(handleApplyFont)} className="sm:col-span-1 py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold h-10">Aplicar</button>
                                </div>
-                               <div><textarea value={previewText} onChange={(e) => setPreviewText(e.target.value)} style={{ fontFamily: `'${currentFont}', sans-serif` }} className="w-full h-24 p-4 bg-background border border-border rounded-md text-text-primary text-lg" placeholder="Digite para pré-visualizar..."/></div>
+                               <div><textarea value={previewText} onChange={(e) => setPreviewText(e.target.value)} style={{ fontFamily: `'${currentFont}', sans-serif` }} className="w-full h-24 p-4 bg-background border border-border rounded-lg text-text-primary text-lg" placeholder="Digite para pré-visualizar..."/></div>
                            </div>
                         </div>
                     </div>
                 </div>
                 <div className="bg-card p-6 rounded-lg shadow-md border border-border">
                     <h3 className="text-xl font-bold text-text-primary mb-4 font-heading">Gerenciamento de Dados</h3>
+
+                     <div className="mb-6 p-4 bg-blue-500/10 border border-primary/20 rounded-lg">
+                        <p className="text-sm text-primary/80">
+                            <strong>Salvamento Automático:</strong> Todas as suas informações são salvas automaticamente no seu navegador. Elas persistirão entre as sessões de login, a menos que o cache do navegador seja limpo.
+                        </p>
+                    </div>
+
                     <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <button onClick={handleBackup} className="py-3 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">Backup Geral</button>
-                            <button onClick={() => fileInputRef.current?.click()} className="py-3 px-4 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold">Restaurar Backup</button>
+                        <div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <button onClick={handleBackup} className="py-3 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">Backup Geral</button>
+                                <button onClick={() => fileInputRef.current?.click()} className="py-3 px-4 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold">Restaurar Backup</button>
+                            </div>
+                            <p className="text-xs text-text-secondary mt-2">
+                                <strong>Backup:</strong> Salva um arquivo com TODOS os dados do sistema (lançamentos, configurações e senha). Guarde em local seguro.
+                            </p>
+                             <p className="text-xs text-text-secondary mt-1">
+                                <strong>Restaurar:</strong> Carrega todos os dados de um arquivo de backup. A sessão atual será perdida e a página recarregada.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -262,6 +335,12 @@ const ConfiguracaoSeguranca: React.FC = () => {
 
             {isChangePasswordModalOpen && <ChangePasswordModal onClose={() => setIsChangePasswordModalOpen(false)} />}
             {isManageUsersModalOpen && <ManageUsersModal onClose={() => setIsManageUsersModalOpen(false)} />}
+
+            {notification && (
+                <div className={`fixed bottom-8 right-8 text-white py-3 px-6 rounded-lg shadow-lg animate-fade-in z-50 ${notification.type === 'success' ? 'bg-success' : 'bg-danger'}`}>
+                    {notification.message}
+                </div>
+            )}
         </div>
     );
 };

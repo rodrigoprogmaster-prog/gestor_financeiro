@@ -58,11 +58,19 @@ const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-const formatDateToBR = (dateString: string): string => {
-  if (!dateString || !/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return '';
-  const [year, month, day] = dateString.split('-');
-  return `${day}/${month}/${year}`;
+const formatDateToBR = (isoDate: string): string => {
+    if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return '';
+    const [year, month, day] = isoDate.split('-');
+    // Create a UTC date to avoid timezone issues
+    const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+    return date.toLocaleDateString('pt-BR', {
+        timeZone: 'UTC',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+    });
 };
+
 
 type View = 'menu' | 'previsao' | 'dashboard' | 'banco' | 'empresa';
 
@@ -145,7 +153,8 @@ const PrevisaoCristiano: React.FC = () => {
     }, [filteredPrevisoes]);
 
     const totaisPorBanco = useMemo(() => {
-        // FIX: Explicitly typing the accumulator `acc` to resolve type inference issues.
+        // FIX: Explicitly type the initial value of reduce to ensure correct type inference for the accumulator.
+// @FIX: Explicitly type the initial value of reduce to ensure correct type inference for the accumulator.
         const porEmpresaBanco = previsoes.reduce((acc, item) => {
             const key = `${item.empresa}-${item.tipo}`;
             if (!acc[key]) {
@@ -153,8 +162,8 @@ const PrevisaoCristiano: React.FC = () => {
             }
             acc[key].receitas += item.receitas;
             return acc;
-// @FIX: Provide a typed initial value to the reduce function to prevent type inference issues.
-        }, {} as Record<string, { empresa: string, banco: string, receitas: number }>);
+            // FIX: Add explicit type to the accumulator to resolve TypeScript errors.
+        }, {} as Record<string, { empresa: string; banco: string; receitas: number; }>);
     
         return Object.values(porEmpresaBanco)
             .filter(item => item.receitas > 0)
@@ -165,13 +174,16 @@ const PrevisaoCristiano: React.FC = () => {
     }, [previsoes]);
 
     const despesasPorEmpresa = useMemo(() => {
-        // FIX: Explicitly type accumulator in reduce to fix type inference issues.
+        // FIX: Explicitly type the initial value of reduce to ensure correct type inference for the accumulator.
+// @FIX: Explicitly type the initial value of reduce to ensure correct type inference for the accumulator.
         const porEmpresa = previsoes.reduce((acc, item) => {
-            if (!acc[item.empresa]) acc[item.empresa] = { totalDespesas: 0 };
+            if (!acc[item.empresa]) {
+                acc[item.empresa] = { totalDespesas: 0 };
+            }
             acc[item.empresa].totalDespesas += item.despesas;
             return acc;
-// @FIX: Provide a typed initial value to the reduce function to prevent type inference issues.
-        }, {} as Record<string, { totalDespesas: number }>);
+            // FIX: Add explicit type to the accumulator to resolve TypeScript errors.
+        }, {} as Record<string, { totalDespesas: number; }>);
         return Object.entries(porEmpresa).map(([empresa, { totalDespesas }]) => ({ empresa, totalDespesas })).filter(item => item.totalDespesas > 0).sort((a, b) => b.totalDespesas - a.totalDespesas);
     }, [previsoes]);
 
@@ -207,13 +219,16 @@ const PrevisaoCristiano: React.FC = () => {
             return;
         }
         
-        // FIX: Explicitly typing the accumulator `acc` to resolve type inference issues.
+        // FIX: Explicitly type the initial value of reduce to ensure correct type inference for the accumulator.
+// @FIX: Explicitly type the initial value of reduce to ensure correct type inference for the accumulator.
         const groupedByDate = dadosDaSemana.reduce((acc, item) => {
-            if (!acc[item.data]) acc[item.data] = { data: item.data, receitas: 0, despesas: 0 };
+            if (!acc[item.data]) {
+                acc[item.data] = { data: item.data, receitas: 0, despesas: 0 };
+            }
             acc[item.data].receitas += item.receitas;
             acc[item.data].despesas += item.despesas;
             return acc;
-// @FIX: Provide a typed initial value to the reduce function to prevent type inference issues.
+            // FIX: Add explicit type to the accumulator to resolve TypeScript errors.
         }, {} as Record<string, { data: string; receitas: number; despesas: number; }>);
 
         const diasOrdenados = Object.values(groupedByDate).sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
