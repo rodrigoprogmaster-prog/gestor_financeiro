@@ -47,6 +47,25 @@ const getDayOfWeek = (dateString: string): string => {
 
 type Tab = 'pagamentos' | 'transferencias' | 'inserir_banco';
 
+// Currency formatter for the input field itself (ATM style)
+const formatInputCurrency = (rawDigits: string): string => {
+    if (!rawDigits) return '0,00';
+    const num = parseInt(rawDigits, 10);
+    if (isNaN(num)) return '0,00'; // Fallback for invalid inputs
+
+    let s = num.toString();
+    // Ensure at least two digits for cents, padding with '0' if needed
+    while (s.length < 3) s = '0' + s; 
+    
+    const integerPart = s.slice(0, s.length - 2);
+    const decimalPart = s.slice(s.length - 2);
+    
+    // Add thousands separator (dots)
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    
+    return `${formattedInteger},${decimalPart}`;
+};
+
 
 const PagamentosCristiano: React.FC = () => {
     const [pagamentos, setPagamentos] = useState<Pagamento[]>(() => {
@@ -60,6 +79,7 @@ const PagamentosCristiano: React.FC = () => {
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<{ action: (() => void) | null, message: string }>({ action: null, message: '' });
     const [activeTab, setActiveTab] = useState<Tab>('pagamentos');
+    const [tempCurrencyInput, setTempCurrencyInput] = useState<Record<string, string>>({}); // New state for raw currency input
 
     useEffect(() => {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(pagamentos));
@@ -124,10 +144,6 @@ const PagamentosCristiano: React.FC = () => {
             envia: totaisDoDia.envia,
             recebe: totaisDoDia.recebe,
             resultado: totaisDoDia.resultado,
-            // Only add receitasDoDia here if you want it as a separate total, 
-            // otherwise, the `receitas` field should already encompass this.
-            // If the intention of `receitas` was for "Saldo Inicial", it needs to be calculated differently.
-            // For now, assuming "Receitas do Dia" total should reflect direct receitas.
             receitasDoDia: totaisDoDia.receitasDoDia, // Explicitly keep for card.
         };
     }, [selectedDate, dailyData, balanceByDate]);
@@ -135,6 +151,13 @@ const PagamentosCristiano: React.FC = () => {
     const handleRowClick = (pagamento: Pagamento) => {
         setErrors({});
         setEditingPagamento({ ...pagamento });
+        // Initialize temp currency inputs with values * 100 as strings
+        setTempCurrencyInput({
+            receitas: (pagamento.receitas * 100).toFixed(0),
+            despesas: (pagamento.despesas * 100).toFixed(0),
+            envia: (pagamento.envia * 100).toFixed(0),
+            recebe: (pagamento.recebe * 100).toFixed(0),
+        });
         setIsEditModalOpen(true);
     };
 
@@ -142,6 +165,7 @@ const PagamentosCristiano: React.FC = () => {
         setIsEditModalOpen(false);
         setEditingPagamento(null);
         setErrors({});
+        setTempCurrencyInput({}); // Clear temp state on close
     };
     
     const handleDeleteClick = (e: React.MouseEvent, idToDelete: string) => {
@@ -156,19 +180,38 @@ const PagamentosCristiano: React.FC = () => {
         setIsConfirmOpen(true);
     };
 
+    // Generic input change for non-currency fields
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         if (editingPagamento) {
             const { name, value } = e.target;
-            if (['receitas', 'despesas', 'envia', 'recebe'].includes(name)) {
-                let numericValue = value.replace(/[^\d,]/g, '');
-                if (numericValue === '') numericValue = '0';
-                // Replace comma with dot for float parsing
-                numericValue = numericValue.replace(',', '.');
-                const numberValue = Number(numericValue);
-                setEditingPagamento({ ...editingPagamento, [name]: numberValue });
-            } else {
-                setEditingPagamento({ ...editingPagamento, [name]: value });
-            }
+            setEditingPagamento({ ...editingPagamento, [name]: value });
+        }
+    };
+
+    // Specific handler for ATM-style currency inputs
+    const handleCurrencyInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!editingPagamento) return;
+        const { name, value } = e.target;
+        
+        // Only allow digits in the temporary input state
+        const rawDigits = value.replace(/\D/g, '');
+        
+        setTempCurrencyInput(prev => ({
+            ...prev,
+            [name]: rawDigits,
+        }));
+
+        // Convert rawDigits to a number (e.g., "12345" -> 123.45) for the actual Pagamento object
+        const numberValue = parseInt(rawDigits, 10) / 100 || 0;
+        setEditingPagamento(prev => prev ? { ...prev, [name]: numberValue } : null);
+
+        // Clear error on change if it exists
+        if (errors[name as keyof PagamentoErrors]) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[name as keyof PagamentoErrors];
+                return newErrors;
+            });
         }
     };
 
@@ -414,22 +457,50 @@ const PagamentosCristiano: React.FC = () => {
                 </div>
                 <div>
                   <label htmlFor="receitas" className="block text-sm font-medium text-text-secondary mb-1">Receitas (R$)</label>
-                  <input id="receitas" type="text" name="receitas" value={formatCurrency(editingPagamento.receitas)} onChange={handleInputChange} className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.receitas ? 'border-danger' : 'border-border'}`}/>
+                  <input 
+                      id="receitas" 
+                      type="text" // Changed to text to handle custom currency input
+                      name="receitas" 
+                      value={formatInputCurrency(tempCurrencyInput.receitas || '')} 
+                      onChange={handleCurrencyInputChange} 
+                      className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.receitas ? 'border-danger' : 'border-border'}`}
+                  />
                   {errors.receitas && <p className="text-danger text-xs mt-1">{errors.receitas}</p>}
                 </div>
                 <div>
                   <label htmlFor="despesas" className="block text-sm font-medium text-text-secondary mb-1">Despesas (R$)</label>
-                  <input id="despesas" type="text" name="despesas" value={formatCurrency(editingPagamento.despesas)} onChange={handleInputChange} className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.despesas ? 'border-danger' : 'border-border'}`}/>
+                  <input 
+                      id="despesas" 
+                      type="text" // Changed to text to handle custom currency input
+                      name="despesas" 
+                      value={formatInputCurrency(tempCurrencyInput.despesas || '')} 
+                      onChange={handleCurrencyInputChange} 
+                      className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.despesas ? 'border-danger' : 'border-border'}`}
+                  />
                    {errors.despesas && <p className="text-danger text-xs mt-1">{errors.despesas}</p>}
                 </div>
                 <div>
                   <label htmlFor="envia" className="block text-sm font-medium text-text-secondary mb-1">Envia (R$)</label>
-                  <input id="envia" type="text" name="envia" value={formatCurrency(editingPagamento.envia)} onChange={handleInputChange} className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.envia ? 'border-danger' : 'border-border'}`}/>
+                  <input 
+                      id="envia" 
+                      type="text" // Changed to text to handle custom currency input
+                      name="envia" 
+                      value={formatInputCurrency(tempCurrencyInput.envia || '')} 
+                      onChange={handleCurrencyInputChange} 
+                      className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.envia ? 'border-danger' : 'border-border'}`}
+                  />
                    {errors.envia && <p className="text-danger text-xs mt-1">{errors.envia}</p>}
                 </div>
                  <div>
                   <label htmlFor="recebe" className="block text-sm font-medium text-text-secondary mb-1">Recebe (R$)</label>
-                  <input id="recebe" type="text" name="recebe" value={formatCurrency(editingPagamento.recebe)} onChange={handleInputChange} className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.recebe ? 'border-danger' : 'border-border'}`}/>
+                  <input 
+                      id="recebe" 
+                      type="text" // Changed to text to handle custom currency input
+                      name="recebe" 
+                      value={formatInputCurrency(tempCurrencyInput.recebe || '')} 
+                      onChange={handleCurrencyInputChange} 
+                      className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.recebe ? 'border-danger' : 'border-border'}`}
+                  />
                   {errors.recebe && <p className="text-danger text-xs mt-1">{errors.recebe}</p>}
                 </div>
               </div>
