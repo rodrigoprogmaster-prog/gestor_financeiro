@@ -413,25 +413,56 @@ export const PrevisaoCristiano: React.FC = () => {
     };
 
     const confirmTransfer = () => {
-        const LOCAL_STORAGE_KEY_PAGAMENTOS_CRISTIANO = 'pagamentos_diarios_cristiano';
-        const pagamentosData: Pagamento[] = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_PAGAMENTOS_CRISTIANO) || '[]');
+        const LOCAL_STORAGE_KEY_PAGAMENTOS = 'pagamentos_diarios_cristiano';
+        let existingPagamentos: Pagamento[] = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_PAGAMENTOS) || '[]');
         
         const entriesToTransfer = filteredPrevisoes.filter(p => p.receitas > 0 || p.despesas > 0);
 
-        const newPagamentos: Pagamento[] = entriesToTransfer.map(prev => ({
-            id: `${prev.data}-${prev.empresa}-${prev.tipo}-${Date.now()}`,
-            data: prev.data,
-            empresa: prev.empresa,
-            tipo: prev.tipo,
-            receitas: prev.receitas,
-            despesas: prev.despesas,
-            envia: 0,
-            recebe: 0,
-        }));
+        const existingPaymentsForDateMap = new Map<string, Pagamento>();
+        existingPagamentos.forEach(p => {
+            if (p.data === transferDate) {
+                const key = `${p.empresa}-${p.tipo}`;
+                existingPaymentsForDateMap.set(key, p);
+            }
+        });
 
-        const updatedPagamentos = [...pagamentosData, ...newPagamentos];
-        localStorage.setItem(LOCAL_STORAGE_KEY_PAGAMENTOS_CRISTIANO, JSON.stringify(updatedPagamentos));
-        alert(`${newPagamentos.length} lançamentos do dia ${formatDateToBR(transferDate)} transferidos com sucesso para Pagamentos Diários Cristiano!`);
+        let otherPagamentos = existingPagamentos.filter(p => p.data !== transferDate);
+        let updatedPaymentsForDate: Pagamento[] = [];
+
+        entriesToTransfer.forEach(prev => {
+            const key = `${prev.empresa}-${prev.tipo}`;
+            const existingPayment = existingPaymentsForDateMap.get(key);
+
+            if (existingPayment) {
+                updatedPaymentsForDate.push({
+                    ...existingPayment,
+                    receitas: prev.receitas, // Update with new forecast value
+                    despesas: prev.despesas, // Update with new forecast value
+                    // Preserve existing envia/recebe if they were set, otherwise keep 0.
+                    envia: existingPayment.envia || 0, 
+                    recebe: existingPayment.recebe || 0,
+                });
+                existingPaymentsForDateMap.delete(key);
+            } else {
+                updatedPaymentsForDate.push({
+                    id: `${prev.data}-${prev.empresa}-${prev.tipo}-${Date.now()}`,
+                    data: prev.data,
+                    empresa: prev.empresa,
+                    tipo: prev.tipo,
+                    receitas: prev.receitas,
+                    despesas: prev.despesas,
+                    envia: 0,
+                    recebe: 0,
+                });
+            }
+        });
+
+        existingPaymentsForDateMap.forEach(p => updatedPaymentsForDate.push(p));
+
+        const finalPagamentos = [...otherPagamentos, ...updatedPaymentsForDate];
+        
+        localStorage.setItem(LOCAL_STORAGE_KEY_PAGAMENTOS, JSON.stringify(finalPagamentos));
+        alert(`${updatedPaymentsForDate.length} lançamentos do dia ${formatDateToBR(transferDate)} transferidos/atualizados com sucesso para Pagamentos Diários Cristiano!`);
         setIsTransferConfirmOpen(false);
     };
 
