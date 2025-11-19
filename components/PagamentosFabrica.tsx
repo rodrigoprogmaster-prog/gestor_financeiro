@@ -71,7 +71,11 @@ const PagamentosFabrica: React.FC = () => {
     };
     
     const dailyData = useMemo(() => {
-        return pagamentos.filter(p => p.data === selectedDate).sort((a, b) => a.tipo.localeCompare(b.tipo));
+        // Filter payments for the selected date and exclude entries where all financial values are zero
+        return pagamentos.filter(p => 
+            p.data === selectedDate && 
+            (p.receitas !== 0 || p.despesas !== 0 || p.envia !== 0 || p.recebe !== 0)
+        ).sort((a, b) => a.tipo.localeCompare(b.tipo));
     }, [pagamentos, selectedDate]);
 
     const balanceByDate = useMemo(() => {
@@ -114,7 +118,7 @@ const PagamentosFabrica: React.FC = () => {
         }
         
         return {
-            receitas: saldoAcumuladoAnterior, // Saldo Inicial
+            receitas: totaisDoDia.receitasDoDia, // Saldo Inicial
             despesas: totaisDoDia.despesas,
             envia: totaisDoDia.envia,
             recebe: totaisDoDia.recebe,
@@ -151,9 +155,11 @@ const PagamentosFabrica: React.FC = () => {
         if (editingPagamento) {
             const { name, value } = e.target;
             if (['receitas', 'despesas', 'envia', 'recebe'].includes(name)) {
-                let numericValue = value.replace(/\D/g, '');
+                let numericValue = value.replace(/[^\d,]/g, '');
                 if (numericValue === '') numericValue = '0';
-                const numberValue = Number(numericValue) / 100;
+                // Replace comma with dot for float parsing
+                numericValue = numericValue.replace(',', '.');
+                const numberValue = Number(numericValue);
                 setEditingPagamento({ ...editingPagamento, [name]: numberValue });
             } else {
                 setEditingPagamento({ ...editingPagamento, [name]: value });
