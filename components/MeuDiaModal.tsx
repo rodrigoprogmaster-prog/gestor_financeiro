@@ -131,15 +131,17 @@ const MeuDiaModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const renderItem = (item: Item) => {
          let title = '';
         let details = '';
+        const valor = 'valor' in item ? (item.valor || 0) : 0;
+        const valorFormatted = valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
         switch(item.type) {
             case 'boletoReceber':
                 title = `Boleto a Receber: ${item.cliente || item.credor}`;
-                details = `Valor: ${item.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+                details = `Valor: ${valorFormatted}`;
                 break;
             case 'cheque':
                 title = `Cheque: ${item.emitente}`;
-                details = `Nº ${item.numero}, Valor: ${item.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+                details = `Nº ${item.numero}, Valor: ${valorFormatted}`;
                 break;
             case 'tarefa':
                 title = `Tarefa: ${item.titulo}`;
@@ -147,7 +149,7 @@ const MeuDiaModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 break;
             case 'boletoPagar':
                 title = `Boleto a Pagar: ${item.fornecedor || item.pagador}`;
-                details = `Valor: ${item.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+                details = `Valor: ${valorFormatted}`;
                 break;
         }
         

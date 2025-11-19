@@ -58,32 +58,32 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
   const getButtonClass = () => {
     if (isSuccess) {
-      return 'bg-success hover:bg-success/90';
+      return 'bg-success hover:bg-success/90 border-transparent';
     }
     if (isLoading) {
-        return 'bg-primary/80 cursor-not-allowed';
+        return 'bg-primary/80 border-transparent cursor-not-allowed';
     }
-    return 'bg-primary hover:bg-primary-hover';
+    return 'bg-primary hover:bg-primary-hover border-transparent shadow-sm';
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 p-4 dark:from-slate-800 dark:to-slate-900">
-      <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-2xl shadow-2xl border border-border animate-fade-in">
+    <div className="flex items-center justify-center min-h-screen bg-background p-4">
+      <div className="w-full max-w-sm p-8 space-y-8 bg-card rounded-xl border border-border shadow-sm animate-fade-in">
         <div className="flex flex-col items-center">
             {profilePicture ? (
-                <img src={profilePicture} alt="Foto de Perfil" className="h-24 w-24 rounded-full object-cover mb-6 border-2 border-primary shadow-md" />
+                <img src={profilePicture} alt="Foto de Perfil" className="h-20 w-20 rounded-full object-cover mb-4 border border-border" />
             ) : (
-                <div className="h-24 w-24 rounded-full bg-secondary flex items-center justify-center mb-6 border-2 border-border">
-                    <UserIcon className="h-12 w-12 text-text-secondary" />
+                <div className="h-20 w-20 rounded-full bg-secondary flex items-center justify-center mb-4 border border-border">
+                    <UserIcon className="h-10 w-10 text-text-secondary" />
                 </div>
             )}
-            <div className="flex items-center gap-3 mb-2">
-                <WalletIcon className="h-10 w-10 text-primary" />
-                <h1 className="text-3xl font-bold text-text-primary">
-                Gerenciador Financeiro
+            <div className="flex items-center gap-2 mb-2">
+                <WalletIcon className="h-6 w-6 text-primary" />
+                <h1 className="text-2xl font-bold text-text-primary tracking-tight">
+                Gerenciador
                 </h1>
             </div>
-            <p className="text-text-secondary">Por favor, insira sua senha para acessar.</p>
+            <p className="text-sm text-text-secondary">Digite sua senha para continuar.</p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="relative">
@@ -93,7 +93,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 type="password"
                 autoComplete="current-password"
                 required
-                className={`appearance-none rounded-lg relative block w-full px-4 py-3 border placeholder-gray-500 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:z-10 sm:text-sm transition-all duration-300 ${error ? 'border-danger animate-shake' : 'border-border'}`}
+                className={`appearance-none rounded-md relative block w-full px-3 py-2 bg-white border placeholder-text-secondary/50 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition-all ${error ? 'border-danger animate-shake' : 'border-border'}`}
                 placeholder="Senha de Acesso"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -103,7 +103,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           </div>
           
           {error && (
-            <p className="text-center text-sm text-danger">
+            <p className="text-center text-xs text-danger">
               {error}
             </p>
           )}
@@ -112,7 +112,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             <button
               type="submit"
               disabled={isLoading || isSuccess}
-              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white ${getButtonClass()} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-300`}
+              className={`group relative w-full flex justify-center py-2 px-4 border text-sm font-medium rounded-md text-white ${getButtonClass()} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200`}
             >
               {buttonContent()}
             </button>

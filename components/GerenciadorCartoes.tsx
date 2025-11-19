@@ -24,17 +24,17 @@ const cards: CardInfo[] = [
 const CreditCard: React.FC<{ card: CardInfo; onSelect: () => void }> = ({ card, onSelect }) => (
     <div
         onClick={onSelect}
-        className={`rounded-xl shadow-lg p-6 flex flex-col justify-between cursor-pointer transform hover:scale-105 transition-transform duration-300 h-56 ${card.bgColor} ${card.textColor}`}
+        className={`rounded-xl shadow-md p-6 flex flex-col justify-between cursor-pointer hover:shadow-lg transition-shadow duration-300 h-56 ${card.bgColor} ${card.textColor}`}
     >
         <div>
             <div className="flex justify-between items-start">
                 <h3 className="text-2xl font-bold">{card.title}</h3>
-                <CreditCardChipIcon className="h-10 w-10 text-yellow-400" />
+                <CreditCardChipIcon className="h-10 w-10 text-yellow-400/80" />
             </div>
-            <p className="opacity-80 mt-1">{card.description}</p>
+            <p className="opacity-80 mt-1 text-sm">{card.description}</p>
         </div>
         <div>
-            <p className="font-mono text-xl tracking-widest">**** **** **** 1234</p>
+            <p className="font-mono text-xl tracking-widest opacity-90">**** **** **** 1234</p>
         </div>
     </div>
 );

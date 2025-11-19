@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, ArrowLeftIcon } from './icons';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, ArrowLeftIcon, SpinnerIcon } from './icons';
 
 // Enum for status
 enum StatusTitulo {
-  PRORROGADO = 'Prorogado',
+  PRORROGADO = 'Prorrogado',
   A_PRORROGAR = 'A Prorrogar',
 }
 
@@ -95,6 +95,10 @@ const newTitleTemplate: Omit<Title, 'id'> = {
   status: StatusTitulo.A_PRORROGAR,
 };
 
+// Constants for infinite scroll
+const ITEMS_PER_LOAD = 20;
+const SCROLL_THRESHOLD = 100; // pixels from the bottom to trigger loading
+
 const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const STORAGE_KEY = 'titulos_prorrogados_data';
 
@@ -123,6 +127,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     message: string
   }>({ action: null, message: '' });
   const [errors, setErrors] = useState<TitleErrors>({});
+  // Fix: Initialize selectedTitles state correctly with useState
   const [selectedTitles, setSelectedTitles] = useState<Set<number>>(new Set());
 
 
@@ -130,11 +135,17 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [statusFilter, setStatusFilter] = useState<string>('Todos');
   const [searchTerm, setSearchTerm] = useState<string>('');
 
+  // Infinite scroll states
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [displayCount, setDisplayCount] = useState(ITEMS_PER_LOAD);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
   useEffect(() => {
     setSelectedTitles(new Set());
   }, [statusFilter, searchTerm]);
 
   const filteredTitles = useMemo(() => {
+    setDisplayCount(ITEMS_PER_LOAD); // Reset display count on filter change
     const lowercasedSearchTerm = searchTerm.toLowerCase();
     return titles.filter(title => {
       const statusMatch = statusFilter === 'Todos' || title.status === statusFilter;
@@ -225,7 +236,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   };
 
   const handleSelectAll = () => {
-    if (selectedTitles.size === filteredTitles.length) {
+    if (filteredTitles.length > 0 && selectedTitles.size === filteredTitles.length) {
         setSelectedTitles(new Set());
     } else {
         setSelectedTitles(new Set(filteredTitles.map(t => t.id)));
@@ -403,42 +414,50 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       setConfirmAction({ action: null, message: '' });
   }
 
+  const handleScroll = () => {
+    if (scrollRef.current) {
+        const { scrollTop, clientHeight, scrollHeight } = scrollRef.current;
+        if (scrollHeight - scrollTop - clientHeight < SCROLL_THRESHOLD && !isLoadingMore && displayCount < filteredTitles.length) {
+            setIsLoadingMore(true);
+            setTimeout(() => {
+                setDisplayCount(prevCount => Math.min(prevCount + ITEMS_PER_LOAD, filteredTitles.length));
+                setIsLoadingMore(false);
+            }, 300); // Simulate network delay
+        }
+    }
+  };
+
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in flex flex-col h-full">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
         <div className="flex items-center gap-2 flex-wrap">
-          {onBack && (
-            <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors h-10">
-                <ArrowLeftIcon className="h-5 w-5" />
-                Voltar
-            </button>
-           )}
-           <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
+          
+           <h2 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">
             Gerenciar Títulos Prorrogados
            </h2>
             {selectedTitles.size > 0 && (
                 <button
                     onClick={handleDeleteSelectedClick}
-                    className="flex items-center gap-2 bg-danger text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-300 h-10"
+                    className="flex items-center gap-2 bg-danger text-white font-semibold py-2 px-4 rounded-md hover:bg-danger/90 transition-colors duration-300 h-9"
                 >
-                    <TrashIcon className="h-5 w-5" />
+                    <TrashIcon className="h-4 w-4" />
                     Apagar ({selectedTitles.size})
                 </button>
             )}
            <button 
              onClick={handleOpenAddModal}
-             className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-hover transition-colors duration-300 h-10"
+             className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-md hover:bg-primary-hover transition-colors duration-300 h-9 shadow-sm"
            >
-             <PlusIcon className="h-5 w-5"/>
+             <PlusIcon className="h-4 w-4"/>
              Adicionar Título
            </button>
            <button
             onClick={handleExportXLSX}
-            className="flex items-center gap-2 bg-success text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors duration-300 h-10"
+            className="flex items-center gap-2 bg-white border border-border text-text-primary font-semibold py-2 px-4 rounded-md hover:bg-secondary transition-colors duration-300 h-9"
             aria-label="Exportar para XLSX"
           >
-            <DownloadIcon className="h-5 w-5" />
+            <DownloadIcon className="h-4 w-4" />
             Exportar XLSX
           </button>
         </div>
@@ -449,189 +468,203 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 placeholder="Buscar por Fornecedor, Devedor, Nº Título..."
                 value={searchTerm} 
                 onChange={(e) => setSearchTerm(e.target.value)} 
-                className="bg-background border border-border rounded-md px-3 py-2 pl-10 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10 w-full sm:w-64"
+                className="bg-white border border-border rounded-md px-3 py-2 pl-10 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 w-full sm:w-64"
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <SearchIcon className="h-5 w-5 text-text-secondary" />
+                <SearchIcon className="h-4 w-4 text-text-secondary" />
               </div>
             </div>
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10">
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-white border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9">
                 <option value="Todos">Todos Status</option>
-                <option value={StatusTitulo.PRORROGADO}>Prorogado</option>
+                <option value={StatusTitulo.PRORROGADO}>Prorrogado</option>
                 <option value={StatusTitulo.A_PRORROGAR}>A Prorrogar</option>
             </select>
-            <button onClick={handleClearFilters} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors h-10">Limpar</button>
+            <button onClick={handleClearFilters} className="py-2 px-4 rounded-md bg-secondary hover:bg-border font-semibold transition-colors h-9">Limpar</button>
         </div>
       </div>
        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-card p-4 rounded-lg shadow-md border border-border text-center">
-          <p className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Valor Total</p>
-          <p className="text-2xl font-bold text-primary">{totalValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+        <div className="bg-card p-4 rounded-lg shadow-sm border border-border text-center">
+          <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Valor Total</p>
+          <p className="text-xl font-bold text-primary">{totalValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
         </div>
-        <div className="bg-card p-4 rounded-lg shadow-md border border-border text-center">
-          <p className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Títulos</p>
-          <p className="text-2xl font-bold text-primary">{filteredTitles.length}</p>
+        <div className="bg-card p-4 rounded-lg shadow-sm border border-border text-center">
+          <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Títulos</p>
+          <p className="text-xl font-bold text-primary">{filteredTitles.length}</p>
         </div>
       </div>
-      <div className="bg-card shadow-md rounded-lg overflow-x-auto">
-        <table className="w-full text-base text-left text-text-secondary">
-          <thead className="text-sm text-text-primary uppercase bg-secondary">
-            <tr>
-              <th scope="col" className="px-6 py-3">
-                  <input
-                      type="checkbox"
-                      className="h-5 w-5 text-primary bg-background border-border rounded focus:ring-primary"
-                      checked={filteredTitles.length > 0 && selectedTitles.size === filteredTitles.length}
-                      onChange={handleSelectAll}
-                      aria-label="Selecionar todos os títulos"
-                  />
-              </th>
-              <th scope="col" className="px-6 py-3">Fornecedor</th>
-              <th scope="col" className="px-6 py-3">Nº do Título</th>
-              <th scope="col" className="px-6 py-3">Venc. Original</th>
-              <th scope="col" className="px-6 py-3">Devedor</th>
-              <th scope="col" className="px-6 py-3">Novo Vencimento</th>
-              <th scope="col" className="px-6 py-3 text-right">Valor</th>
-              <th scope="col" className="px-6 py-3 text-center">Status</th>
-              <th scope="col" className="px-6 py-3 text-center">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredTitles.length > 0 ? (
-              filteredTitles.map((title) => (
-                <tr
-                  key={title.id}
-                  className={`bg-card border-b border-border hover:bg-secondary transition-colors duration-200 ${selectedTitles.has(title.id) ? 'bg-primary/10' : ''}`}
-                >
-                  <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                      <input
-                          type="checkbox"
-                          className="h-5 w-5 text-primary bg-background border-border rounded focus:ring-primary"
-                          checked={selectedTitles.has(title.id)}
-                          onChange={() => handleSelectTitle(title.id)}
-                          aria-label={`Selecionar título de ${title.fornecedor}`}
-                      />
-                  </td>
-                  <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{title.fornecedor}</td>
-                  <td className="px-6 py-4">{title.numeroTitulo}</td>
-                  <td className="px-6 py-4">{formatDateToBR(title.vencimentoOriginal)}</td>
-                  <td className="px-6 py-4">{title.devedor}</td>
-                  <td className="px-6 py-4 font-semibold text-warning">{formatDateToBR(title.novoVencimento)}</td>
-                  <td className="px-6 py-4 text-right">{title.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                  <td className="px-6 py-4 text-center">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      title.status === StatusTitulo.PRORROGADO 
-                      ? 'bg-success/20 text-success' 
-                      : 'bg-warning/20 text-warning'
-                    }`}>
-                      {title.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-center gap-2">
-                        <button 
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleRowClick(title);
-                            }} 
-                            className="text-primary hover:text-primary/80 p-2 rounded-full hover:bg-primary/10 transition-colors"
-                            aria-label="Editar título"
-                        >
-                            <EditIcon className="h-5 w-5"/>
-                        </button>
-                        <button 
-                            onClick={(e) => handleDeleteClick(e, title.id)} 
-                            className="text-danger hover:text-danger/80 p-2 rounded-full hover:bg-danger/10 transition-colors"
-                            aria-label="Excluir título"
-                        >
-                            <TrashIcon className="h-5 w-5"/>
-                        </button>
-                    </div>
-                  </td>
+      <div className="bg-card shadow-sm rounded-lg overflow-hidden flex-grow border border-border">
+        <div ref={scrollRef} onScroll={handleScroll} className="overflow-x-auto overflow-y-auto h-full">
+            <table className="min-w-full divide-y divide-border text-sm text-left text-text-secondary">
+            <thead className="bg-secondary text-xs text-text-secondary uppercase font-medium tracking-wider sticky top-0">
+                <tr>
+                <th scope="col" className="px-6 py-3">
+                    <input
+                        type="checkbox"
+                        className="h-4 w-4 text-primary bg-white border-border rounded focus:ring-primary"
+                        checked={filteredTitles.length > 0 && selectedTitles.size === filteredTitles.length}
+                        onChange={handleSelectAll}
+                        aria-label="Selecionar todos os títulos"
+                    />
+                </th>
+                <th scope="col" className="px-6 py-3">Fornecedor</th>
+                <th scope="col" className="px-6 py-3">Nº do Título</th>
+                <th scope="col" className="px-6 py-3">Venc. Original</th>
+                <th scope="col" className="px-6 py-3">Devedor</th>
+                <th scope="col" className="px-6 py-3">Novo Vencimento</th>
+                <th scope="col" className="px-6 py-3 text-right">Valor</th>
+                <th scope="col" className="px-6 py-3 text-center">Status</th>
+                <th scope="col" className="px-6 py-3 text-center">Ações</th>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={9} className="text-center py-16">
-                  <div className="flex flex-col items-center justify-center text-text-secondary">
-                    <SearchIcon className="w-12 h-12 mb-4 text-gray-300" />
-                    <h3 className="text-xl font-semibold text-text-primary">Nenhum Título Encontrado</h3>
-                    <p className="mt-1">Tente ajustar seus filtros de busca ou adicione um novo título.</p>
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-border bg-white">
+                {filteredTitles.length > 0 ? (
+                filteredTitles.slice(0, displayCount).map((title) => (
+                    <tr
+                    key={title.id}
+                    className={`bg-card border-b border-border hover:bg-secondary transition-colors duration-200 ${selectedTitles.has(title.id) ? 'bg-primary/10' : ''}`}
+                    >
+                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                        <input
+                            type="checkbox"
+                            className="h-4 w-4 text-primary bg-white border-border rounded focus:ring-primary"
+                            checked={selectedTitles.has(title.id)}
+                            onChange={() => handleSelectTitle(title.id)}
+                            aria-label={`Selecionar título de ${title.fornecedor}`}
+                        />
+                    </td>
+                    <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{title.fornecedor}</td>
+                    <td className="px-6 py-4 text-text-secondary">{title.numeroTitulo}</td>
+                    <td className="px-6 py-4 text-text-secondary">{formatDateToBR(title.vencimentoOriginal)}</td>
+                    <td className="px-6 py-4 text-text-secondary">{title.devedor}</td>
+                    <td className="px-6 py-4 font-semibold text-warning whitespace-nowrap">{formatDateToBR(title.novoVencimento)}</td>
+                    <td className="px-6 py-4 text-right font-semibold text-text-primary whitespace-nowrap">{title.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td className="px-6 py-4 text-center">
+                        <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded-full border ${
+                        title.status === StatusTitulo.PRORROGADO 
+                        ? 'bg-success/20 text-success border-success/30' 
+                        : 'bg-warning/20 text-warning border-warning/30'
+                        }`}>
+                        {title.status}
+                        </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                            <button 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRowClick(title);
+                                }} 
+                                className="text-primary hover:text-primary/80 p-1.5 rounded-md hover:bg-primary/10 transition-colors"
+                                aria-label="Editar título"
+                            >
+                                <EditIcon className="h-4 w-4"/>
+                            </button>
+                            <button 
+                                onClick={(e) => handleDeleteClick(e, title.id)} 
+                                className="text-danger hover:text-danger/80 p-1.5 rounded-md hover:bg-danger/10 transition-colors"
+                                aria-label="Excluir título"
+                            >
+                                <TrashIcon className="h-4 w-4"/>
+                            </button>
+                        </div>
+                    </td>
+                    </tr>
+                ))
+                ) : (
+                <tr>
+                    <td colSpan={9} className="text-center py-16">
+                    <div className="flex flex-col items-center justify-center text-text-secondary">
+                        <SearchIcon className="w-10 h-10 mb-4 text-gray-300" />
+                        <h3 className="text-lg font-medium text-text-primary">Nenhum Título Encontrado</h3>
+                        <p className="text-sm mt-1">Tente ajustar seus filtros de busca ou adicione um novo título.</p>
+                    </div>
+                    </td>
+                </tr>
+                )}
+                {isLoadingMore && (
+                    <tr>
+                        <td colSpan={9} className="text-center py-4 text-primary">
+                            <SpinnerIcon className="h-5 w-5 animate-spin mx-auto" />
+                            Carregando mais...
+                        </td>
+                    </tr>
+                )}
+            </tbody>
+            </table>
+        </div>
       </div>
 
       {isModalOpen && editingTitle && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-          <div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-lg">
-            <h3 className="text-xl font-bold mb-6 text-text-primary">
-                {editingTitle.id ? 'Editar Título' : 'Adicionar Novo Título'}
-            </h3>
-            <div className="space-y-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
+          <div className="bg-card rounded-lg shadow-lg border border-border w-full max-w-lg overflow-hidden">
+            <div className="px-6 py-4 border-b border-border bg-secondary/30">
+                <h3 className="text-lg font-bold text-text-primary">{editingTitle.id ? 'Editar Título' : 'Adicionar Novo Título'}</h3>
+            </div>
+            <div className="p-6 space-y-4">
                 <div>
-                  <label htmlFor="fornecedor" className="block text-sm font-medium text-text-secondary mb-1">Fornecedor <span className="text-danger">*</span></label>
-                  <input id="fornecedor" type="text" name="fornecedor" value={editingTitle.fornecedor || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.fornecedor ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
+                  <label htmlFor="fornecedor" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Fornecedor <span className="text-danger">*</span></label>
+                  <input id="fornecedor" type="text" name="fornecedor" value={editingTitle.fornecedor || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.fornecedor ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
                   {errors.fornecedor && <p className="text-danger text-xs mt-1">{errors.fornecedor}</p>}
                 </div>
                 <div>
-                  <label htmlFor="numeroTitulo" className="block text-sm font-medium text-text-secondary mb-1">Número do Título <span className="text-danger">*</span></label>
-                  <input id="numeroTitulo" type="text" name="numeroTitulo" value={editingTitle.numeroTitulo || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.numeroTitulo ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
+                  <label htmlFor="numeroTitulo" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Número do Título <span className="text-danger">*</span></label>
+                  <input id="numeroTitulo" type="text" name="numeroTitulo" value={editingTitle.numeroTitulo || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.numeroTitulo ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
                   {errors.numeroTitulo && <p className="text-danger text-xs mt-1">{errors.numeroTitulo}</p>}
                 </div>
-                <div>
-                  <label htmlFor="vencimentoOriginal" className="block text-sm font-medium text-text-secondary mb-1">Vencimento Original <span className="text-danger">*</span></label>
-                  <input id="vencimentoOriginal" type="text" name="vencimentoOriginal" value={editingTitle.vencimentoOriginal || ''} onChange={handleInputChange} onBlur={handleBlur} maxLength={10} placeholder="DD/MM/AAAA" className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.vencimentoOriginal ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
-                  {errors.vencimentoOriginal && <p className="text-danger text-xs mt-1">{errors.vencimentoOriginal}</p>}
+                 <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label htmlFor="vencimentoOriginal" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Venc. Original <span className="text-danger">*</span></label>
+                        <input id="vencimentoOriginal" type="text" name="vencimentoOriginal" value={editingTitle.vencimentoOriginal || ''} onChange={handleInputChange} onBlur={handleBlur} placeholder="DD/MM/AAAA" maxLength={10} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.vencimentoOriginal ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
+                        {errors.vencimentoOriginal && <p className="text-danger text-xs mt-1">{errors.vencimentoOriginal}</p>}
+                    </div>
+                    <div>
+                        <label htmlFor="novoVencimento" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Novo Vencimento <span className="text-danger">*</span></label>
+                        <input id="novoVencimento" type="text" name="novoVencimento" value={editingTitle.novoVencimento || ''} onChange={handleInputChange} onBlur={handleBlur} placeholder="DD/MM/AAAA" maxLength={10} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.novoVencimento ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
+                        {errors.novoVencimento && <p className="text-danger text-xs mt-1">{errors.novoVencimento}</p>}
+                    </div>
                 </div>
                  <div>
-                  <label htmlFor="devedor" className="block text-sm font-medium text-text-secondary mb-1">Devedor <span className="text-danger">*</span></label>
-                  <input id="devedor" type="text" name="devedor" value={editingTitle.devedor || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.devedor ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
+                  <label htmlFor="devedor" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Devedor <span className="text-danger">*</span></label>
+                  <input id="devedor" type="text" name="devedor" value={editingTitle.devedor || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.devedor ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
                   {errors.devedor && <p className="text-danger text-xs mt-1">{errors.devedor}</p>}
                 </div>
-                <div>
-                  <label htmlFor="novoVencimento" className="block text-sm font-medium text-text-secondary mb-1">Novo Vencimento <span className="text-danger">*</span></label>
-                  <input id="novoVencimento" type="text" name="novoVencimento" value={editingTitle.novoVencimento || ''} onChange={handleInputChange} onBlur={handleBlur} maxLength={10} placeholder="DD/MM/AAAA" className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.novoVencimento ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
-                  {errors.novoVencimento && <p className="text-danger text-xs mt-1">{errors.novoVencimento}</p>}
-                </div>
-                <div>
-                  <label htmlFor="valor" className="block text-sm font-medium text-text-secondary mb-1">Valor <span className="text-danger">*</span></label>
-                  <input id="valor" type="text" name="valor" value={(editingTitle.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 })} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.valor ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
-                  {errors.valor && <p className="text-danger text-xs mt-1">{errors.valor}</p>}
-                </div>
-                <div>
-                  <label htmlFor="status" className="block text-sm font-medium text-text-secondary mb-1">Status</label>
-                  <select id="status" name="status" value={editingTitle.status || StatusTitulo.A_PRORROGAR} onChange={handleInputChange} className="w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary">
-                    <option value={StatusTitulo.A_PRORROGAR}>A Prorrogar</option>
-                    <option value={StatusTitulo.PRORROGADO}>Prorogado</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-4">
+                     <div>
+                        <label htmlFor="valor" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Valor (R$) <span className="text-danger">*</span></label>
+                        <input id="valor" type="text" name="valor" value={editingTitle.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.valor ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
+                        {errors.valor && <p className="text-danger text-xs mt-1">{errors.valor}</p>}
+                    </div>
+                    <div>
+                        <label htmlFor="status" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Status</label>
+                        <select id="status" name="status" value={editingTitle.status} onChange={handleInputChange} className="w-full bg-white border border-border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9">
+                            <option value={StatusTitulo.A_PRORROGAR}>A Prorrogar</option>
+                            <option value={StatusTitulo.PRORROGADO}>Prorrogado</option>
+                        </select>
+                    </div>
                 </div>
             </div>
-            <div className="mt-8 flex justify-end gap-4">
-              <button onClick={handleCloseModal} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-              <button onClick={handleSaveChanges} className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">
-                {editingTitle.id ? 'Salvar Alterações' : 'Adicionar Título'}
-              </button>
+            <div className="px-6 py-4 border-t border-border bg-secondary/30 flex justify-end gap-3">
+                <button onClick={handleCloseModal} className="py-2 px-4 rounded-md bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
+                <button onClick={handleSaveChanges} className="py-2 px-4 rounded-md bg-primary hover:bg-primary-hover text-white font-semibold text-sm shadow-sm">
+                    {editingTitle.id ? 'Salvar Alterações' : 'Adicionar Título'}
+                </button>
             </div>
           </div>
         </div>
       )}
-
+      
       {isConfirmOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-              <div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-sm">
-                  <h3 className="text-lg font-bold mb-4 text-text-primary">Confirmar Ação</h3>
-                  <p className="text-text-secondary mb-6">{confirmAction.message}</p>
-                   <div className="flex justify-end gap-4">
-                      <button onClick={handleCancelConfirm} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                      <button onClick={handleConfirm} className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Confirmar</button>
-                   </div>
-              </div>
-          </div>
-      )}
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
+                <div className="bg-card rounded-lg shadow-lg border border-border w-full max-w-sm p-6">
+                    <h3 className="text-lg font-bold mb-2 text-text-primary">Confirmar Ação</h3>
+                    <p className="text-sm text-text-secondary mb-6">{confirmAction.message}</p>
+                    <div className="flex justify-end gap-3">
+                        <button onClick={handleCancelConfirm} className="px-4 py-2 rounded-md bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
+                        <button onClick={handleConfirm} className="px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+        )}
     </div>
   );
 };

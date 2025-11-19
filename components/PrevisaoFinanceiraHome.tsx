@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import PrevisaoFabrica from './PrevisaoFinanceira';
-import PrevisaoCristiano from './HistoricoPrevisoes';
+// Fix: Changed import from default to named import
+import { PrevisaoFabrica } from './PrevisaoFinanceira';
+// Fix: Changed import from default to named import
+import { PrevisaoCristiano } from './HistoricoPrevisoes';
 import { ArrowLeftIcon } from './icons';
 
 interface PrevisaoFinanceiraHomeProps {

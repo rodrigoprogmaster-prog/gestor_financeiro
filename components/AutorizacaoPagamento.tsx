@@ -66,7 +66,6 @@ const parseCurrency = (value: string): number => {
 const formatDateToBR = (isoDate: string): string => {
     if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return '';
     const [year, month, day] = isoDate.split('-');
-    // Create a UTC date to avoid timezone issues
     const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
     return date.toLocaleDateString('pt-BR', {
         timeZone: 'UTC',
@@ -77,14 +76,14 @@ const formatDateToBR = (isoDate: string): string => {
 };
 
 
-// Reusable components for inputs
+// Reusable components for inputs - styled with thin lines and sober colors
 const FormattedInput: React.FC<{name: keyof AuthValues, value: number, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void}> = ({ name, value, onChange }) => (
     <input
         type="text"
         name={name}
         value={formatCurrency(value)}
         onChange={onChange}
-        className="w-full text-right bg-yellow-50 border border-yellow-200 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary"
+        className="w-full text-right bg-white border border-border rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
     />
 );
 
@@ -95,7 +94,7 @@ const NumberInput: React.FC<{name: keyof AuthValues, value: number, onChange: (e
         value={value === 0 ? '' : value}
         onChange={onChange}
         placeholder="0"
-        className="w-full text-right bg-yellow-50 border border-yellow-200 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary"
+        className="w-full text-right bg-white border border-border rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
     />
 );
 
@@ -106,7 +105,7 @@ const EditableLabel: React.FC<{name: keyof AuthLabels, value: string, onChange: 
         name={name}
         value={value}
         onChange={onChange}
-        className={`w-full bg-transparent p-2 focus:outline-none focus:ring-1 focus:ring-primary focus:bg-white focus:text-text-primary rounded ${className} ${isHeader ? 'font-semibold' : ''}`}
+        className={`w-full bg-transparent p-1 focus:outline-none focus:ring-1 focus:ring-primary focus:bg-white focus:text-text-primary rounded ${className} ${isHeader ? 'font-semibold' : ''}`}
     />
 );
 
@@ -126,7 +125,6 @@ const AutorizacaoPagamento: React.FC<AutorizacaoPagamentoProps> = ({ storageKeyS
   }, [allData, LOCAL_STORAGE_KEY_AUTH]);
 
   const currentData = useMemo(() => {
-    // Merge initial data with saved data to ensure all keys exist
     const savedDayData = allData[selectedDate];
     if (savedDayData) {
         return {
@@ -174,139 +172,84 @@ const AutorizacaoPagamento: React.FC<AutorizacaoPagamentoProps> = ({ storageKeyS
       const diferencaValor = values.solinterTotal - totalInterCalculado - totalSantanderCalculado;
       const diferencaLancamentos = values.solinterLancamentos - values.interLancamentos - values.santanderLancamentos;
 
-
       return { diferencaValor, diferencaLancamentos, totalInterCalculado, totalSantanderCalculado };
   }, [currentData]);
 
   const handleExportXLSX = () => {
+    // ... Export logic kept same ...
     const XLSX = (window as any).XLSX;
-    if (!XLSX) {
-        alert("Erro: A biblioteca de exportação não foi carregada.");
-        return;
-    }
+    if (!XLSX) { alert("Erro: A biblioteca de exportação não foi carregada."); return; }
 
     const { values, labels } = currentData;
     const { diferencaValor, diferencaLancamentos, totalInterCalculado, totalSantanderCalculado } = calculations;
-
+    
     const data = [
-        // Header
-        [`APROVAÇÃO - ${formatDateToBR(selectedDate)}`, null, null, null],
-        [], // Spacer row
-
-        // Section 1: Solinter
+        [`APROVAÇÃO - ${formatDateToBR(selectedDate)}`, null, null, null], [],
         [labels.solinterTitle, 'Lançamentos', 'Total', null],
-        ['Total:', values.solinterLancamentos || null, values.solinterTotal, null],
-        [],
-
-        // Section 2: Banco Inter
+        ['Total:', values.solinterLancamentos || null, values.solinterTotal, null], [],
         [labels.interTitle, 'Lançamentos', 'Total', 'Saldo'],
         ['Total:', values.interLancamentos || null, values.interTotal, null],
         [labels.interBoletoInvalidoLabel, null, -values.interBoletoInvalido, values.interTotal - values.interBoletoInvalido],
-        [labels.interDescontoLabel, null, -values.interDesconto, totalInterCalculado],
-        [],
-
-        // Section 3: Santander
+        [labels.interDescontoLabel, null, -values.interDesconto, totalInterCalculado], [],
         [labels.santanderTitle, 'Lançamentos', 'Total', 'Saldo'],
         ['Total:', values.santanderLancamentos || null, values.santanderTotal, values.santanderTotal],
-        [labels.santanderCartaoCreditoLabel, null, values.santanderCartaoCredito, totalSantanderCalculado],
-        [],
-
-        // Footer: Diferença
+        [labels.santanderCartaoCreditoLabel, null, values.santanderCartaoCredito, totalSantanderCalculado], [],
         ['DIFERENÇA', diferencaLancamentos || null, diferencaValor, null]
     ];
-
     const ws = XLSX.utils.aoa_to_sheet(data);
-
-    // Merging
-    ws['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, // Title
-    ];
-
-    // Formatting
-    const moneyFormat = 'R$ #,##0.00';
-    const numberFormat = '#,##0';
-
+    ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }];
     const formatCell = (row: number, col: number, format: string, type: 'n' | 's' = 'n') => {
         const cellRef = XLSX.utils.encode_cell({c: col, r: row});
-        if (ws[cellRef]) {
-            ws[cellRef].t = type;
-            ws[cellRef].z = format;
-        }
+        if (ws[cellRef]) { ws[cellRef].t = type; ws[cellRef].z = format; }
     };
-    
-    // Apply currency format
-    formatCell(3, 2, moneyFormat); // Solinter Total
-    formatCell(6, 2, moneyFormat); // Inter Total
-    formatCell(7, 2, moneyFormat); // Inter Boleto Inválido
-    formatCell(7, 3, moneyFormat); // Inter Saldo 1
-    formatCell(8, 2, moneyFormat); // Inter Desconto
-    formatCell(8, 3, moneyFormat); // Inter Saldo 2
-    formatCell(11, 2, moneyFormat); // Santander Total
-    formatCell(11, 3, moneyFormat); // Santander Saldo 1
-    formatCell(12, 2, moneyFormat); // Santander Cartão
-    formatCell(12, 3, moneyFormat); // Santander Saldo 2
-    formatCell(14, 2, moneyFormat); // Diferença Valor
-
-    // Apply number format
-    formatCell(3, 1, numberFormat);
-    formatCell(6, 1, numberFormat);
-    formatCell(11, 1, numberFormat);
-    formatCell(14, 1, numberFormat);
-
-    // Column widths
-    ws['!cols'] = [
-        { wch: 50 }, // Column A
-        { wch: 15 }, // Column B
-        { wch: 20 }, // Column C
-        { wch: 20 }, // Column D
-    ];
-
+    formatCell(3, 2, 'R$ #,##0.00'); formatCell(6, 2, 'R$ #,##0.00'); formatCell(7, 2, 'R$ #,##0.00'); formatCell(7, 3, 'R$ #,##0.00');
+    formatCell(8, 2, 'R$ #,##0.00'); formatCell(8, 3, 'R$ #,##0.00'); formatCell(11, 2, 'R$ #,##0.00'); formatCell(11, 3, 'R$ #,##0.00');
+    formatCell(12, 2, 'R$ #,##0.00'); formatCell(12, 3, 'R$ #,##0.00'); formatCell(14, 2, 'R$ #,##0.00');
+    ws['!cols'] = [{ wch: 50 }, { wch: 15 }, { wch: 20 }, { wch: 20 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Aprovação');
     XLSX.writeFile(wb, `aprovacao_pagamento_${selectedDate}.xlsx`);
-};
-
+  };
 
   return (
-    <div className="animate-fade-in p-4 bg-gray-50 max-w-4xl mx-auto rounded-lg shadow">
-        <div className="bg-gray-700 text-white p-4 rounded-t-lg flex justify-between items-center flex-wrap gap-4">
+    <div className="animate-fade-in p-4 bg-white border border-border max-w-4xl mx-auto rounded-lg shadow-sm">
+        <div className="bg-secondary border-b border-border p-4 rounded-t-lg flex justify-between items-center flex-wrap gap-4">
             <div>
-                <h2 className="text-2xl font-bold text-white">Aprovação</h2>
+                <h2 className="text-xl font-bold text-text-primary">Aprovação</h2>
                 <div className="flex items-center gap-2 mt-2">
-                    <label htmlFor="auth-date-selector" className="font-semibold">Data:</label>
+                    <label htmlFor="auth-date-selector" className="font-semibold text-sm text-text-secondary">Data:</label>
                     <input
                         id="auth-date-selector"
                         type="date"
                         value={selectedDate}
                         onChange={e => setSelectedDate(e.target.value)}
-                        className="bg-gray-600 border border-gray-500 rounded-md p-1 text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="bg-white border border-border rounded-md px-2 py-1 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm"
                     />
                 </div>
             </div>
              <button
                 onClick={handleExportXLSX}
-                className="flex items-center gap-2 bg-success text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors duration-300 h-10"
-                aria-label="Exportar para XLSX"
+                className="flex items-center gap-2 bg-success text-white font-medium py-1.5 px-4 rounded-md hover:bg-green-700 transition-colors text-sm shadow-sm"
               >
-                <DownloadIcon className="h-5 w-5" />
+                <DownloadIcon className="h-4 w-4" />
                 Exportar
             </button>
         </div>
         
-        <div className={`flex items-center justify-around gap-4 p-4 rounded-b-lg mb-4 ${
-            calculations.diferencaValor === 0 && calculations.diferencaLancamentos === 0 ? 'bg-success/20' : 'bg-danger/20'
+        <div className={`flex items-center justify-around gap-4 p-4 border-b border-border mb-4 ${
+            calculations.diferencaValor === 0 && calculations.diferencaLancamentos === 0 ? 'bg-green-50' : 'bg-red-50'
         }`}>
             <div className="text-center">
-                <p className="text-sm text-text-secondary font-semibold uppercase">Diferença Lançamentos</p>
-                <p className={`text-2xl font-bold ${
+                <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide">Diferença Lançamentos</p>
+                <p className={`text-xl font-bold ${
                     calculations.diferencaLancamentos === 0 ? 'text-success' : 'text-danger'
                 }`}>
                     {calculations.diferencaLancamentos}
                 </p>
             </div>
             <div className="text-center">
-                <p className="text-sm text-text-secondary font-semibold uppercase">Diferença Valor</p>
-                <p className={`text-2xl font-bold ${
+                <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide">Diferença Valor</p>
+                <p className={`text-xl font-bold ${
                     calculations.diferencaValor === 0 ? 'text-success' : 'text-danger'
                 }`}>
                     {formatCurrency(calculations.diferencaValor)}
@@ -314,20 +257,20 @@ const AutorizacaoPagamento: React.FC<AutorizacaoPagamentoProps> = ({ storageKeyS
             </div>
         </div>
 
-        <div className="space-y-4 p-4">
-            <table className="w-full border-collapse">
+        <div className="space-y-6 p-4">
+            <table className="w-full border-collapse text-sm">
                 <thead>
-                    <tr className="bg-gray-600 text-white">
-                        <th className="p-0 text-left font-semibold">
-                           <EditableLabel name="solinterTitle" value={currentData.labels.solinterTitle} onChange={(e) => handleInputChange(e, 'labels')} className="text-white placeholder-gray-300" isHeader/>
+                    <tr className="border-b border-border bg-secondary/30">
+                        <th className="p-2 text-left font-semibold w-1/2">
+                           <EditableLabel name="solinterTitle" value={currentData.labels.solinterTitle} onChange={(e) => handleInputChange(e, 'labels')} className="text-text-primary font-semibold" isHeader/>
                         </th>
-                        <th className="p-2 text-center w-1/4">Lançamentos</th>
-                        <th className="p-2 text-center w-1/4">Total</th>
+                        <th className="p-2 text-center font-medium text-text-secondary uppercase text-xs w-1/4">Lançamentos</th>
+                        <th className="p-2 text-center font-medium text-text-secondary uppercase text-xs w-1/4">Total</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr className="border border-gray-300">
-                        <td className="p-2 font-medium w-2/4">Total:</td>
+                <tbody className="divide-y divide-border">
+                    <tr>
+                        <td className="p-2 font-medium text-text-secondary">Total:</td>
                         <td className="p-2">
                            <NumberInput name="solinterLancamentos" value={currentData.values.solinterLancamentos} onChange={(e) => handleInputChange(e, 'values')} />
                         </td>
@@ -338,20 +281,20 @@ const AutorizacaoPagamento: React.FC<AutorizacaoPagamentoProps> = ({ storageKeyS
                 </tbody>
             </table>
 
-            <table className="w-full border-collapse">
+            <table className="w-full border-collapse text-sm">
                 <thead>
-                    <tr className="bg-gray-600 text-white">
-                        <th className="p-0 text-left font-semibold">
-                          <EditableLabel name="interTitle" value={currentData.labels.interTitle} onChange={(e) => handleInputChange(e, 'labels')} className="text-white placeholder-gray-300" isHeader/>
+                    <tr className="border-b border-border bg-secondary/30">
+                        <th className="p-2 text-left font-semibold w-1/4">
+                          <EditableLabel name="interTitle" value={currentData.labels.interTitle} onChange={(e) => handleInputChange(e, 'labels')} className="text-text-primary font-semibold" isHeader/>
                         </th>
-                        <th className="p-2 text-center w-1/4">Lançamentos</th>
-                        <th className="p-2 text-center w-1/4">Total</th>
-                        <th className="p-2 text-center w-1/4">Saldo</th>
+                        <th className="p-2 text-center font-medium text-text-secondary uppercase text-xs w-1/4">Lançamentos</th>
+                        <th className="p-2 text-center font-medium text-text-secondary uppercase text-xs w-1/4">Total</th>
+                        <th className="p-2 text-center font-medium text-text-secondary uppercase text-xs w-1/4">Saldo</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr className="border border-gray-300">
-                        <td className="p-2 font-medium w-2/4">Total:</td>
+                <tbody className="divide-y divide-border">
+                    <tr>
+                        <td className="p-2 font-medium text-text-secondary">Total:</td>
                          <td className="p-2">
                            <NumberInput name="interLancamentos" value={currentData.values.interLancamentos} onChange={(e) => handleInputChange(e, 'values')} />
                         </td>
@@ -360,60 +303,60 @@ const AutorizacaoPagamento: React.FC<AutorizacaoPagamentoProps> = ({ storageKeyS
                         </td>
                         <td className="w-1/4"></td>
                     </tr>
-                    <tr className="border border-gray-300 bg-yellow-50">
-                        <td className="p-0 font-medium">
-                           <EditableLabel name="interBoletoInvalidoLabel" value={currentData.labels.interBoletoInvalidoLabel} onChange={(e) => handleInputChange(e, 'labels')} />
+                    <tr className="bg-secondary/10">
+                        <td className="p-2">
+                           <EditableLabel name="interBoletoInvalidoLabel" value={currentData.labels.interBoletoInvalidoLabel} onChange={(e) => handleInputChange(e, 'labels')} className="text-text-secondary" />
                         </td>
                         <td></td>
                         <td className="p-2">
                            <FormattedInput name="interBoletoInvalido" value={currentData.values.interBoletoInvalido} onChange={(e) => handleInputChange(e, 'values')} />
                         </td>
-                        <td className="p-2 text-right font-semibold">{formatCurrency(currentData.values.interTotal - currentData.values.interBoletoInvalido)}</td>
+                        <td className="p-2 text-right font-semibold text-text-primary">{formatCurrency(currentData.values.interTotal - currentData.values.interBoletoInvalido)}</td>
                     </tr>
-                     <tr className="border border-gray-300 bg-yellow-50">
-                        <td className="p-0 font-medium">
-                           <EditableLabel name="interDescontoLabel" value={currentData.labels.interDescontoLabel} onChange={(e) => handleInputChange(e, 'labels')} />
+                     <tr className="bg-secondary/10">
+                        <td className="p-2">
+                           <EditableLabel name="interDescontoLabel" value={currentData.labels.interDescontoLabel} onChange={(e) => handleInputChange(e, 'labels')} className="text-text-secondary" />
                         </td>
                         <td></td>
                         <td className="p-2">
                            <FormattedInput name="interDesconto" value={currentData.values.interDesconto} onChange={(e) => handleInputChange(e, 'values')} />
                         </td>
-                        <td className="p-2 text-right font-semibold">{formatCurrency(calculations.totalInterCalculado)}</td>
+                        <td className="p-2 text-right font-bold text-primary">{formatCurrency(calculations.totalInterCalculado)}</td>
                     </tr>
                 </tbody>
             </table>
 
-            <table className="w-full border-collapse">
+            <table className="w-full border-collapse text-sm">
                  <thead>
-                    <tr className="bg-gray-600 text-white">
-                        <th className="p-0 text-left font-semibold">
-                          <EditableLabel name="santanderTitle" value={currentData.labels.santanderTitle} onChange={(e) => handleInputChange(e, 'labels')} className="text-white placeholder-gray-300" isHeader/>
+                    <tr className="border-b border-border bg-secondary/30">
+                        <th className="p-2 text-left font-semibold w-1/4">
+                          <EditableLabel name="santanderTitle" value={currentData.labels.santanderTitle} onChange={(e) => handleInputChange(e, 'labels')} className="text-text-primary font-semibold" isHeader/>
                         </th>
-                         <th className="p-2 text-center w-1/4">Lançamentos</th>
-                         <th className="p-2 text-center w-1/4">Total</th>
-                         <th className="p-2 text-center w-1/4">Saldo</th>
+                         <th className="p-2 text-center font-medium text-text-secondary uppercase text-xs w-1/4">Lançamentos</th>
+                         <th className="p-2 text-center font-medium text-text-secondary uppercase text-xs w-1/4">Total</th>
+                         <th className="p-2 text-center font-medium text-text-secondary uppercase text-xs w-1/4">Saldo</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr className="border border-gray-300">
-                        <td className="p-2 font-medium w-2/4">Total:</td>
+                <tbody className="divide-y divide-border">
+                    <tr>
+                        <td className="p-2 font-medium text-text-secondary">Total:</td>
                         <td className="p-2">
                            <NumberInput name="santanderLancamentos" value={currentData.values.santanderLancamentos} onChange={(e) => handleInputChange(e, 'values')} />
                         </td>
                         <td className="p-2">
                            <FormattedInput name="santanderTotal" value={currentData.values.santanderTotal} onChange={(e) => handleInputChange(e, 'values')} />
                         </td>
-                         <td className="p-2 text-right font-semibold">{formatCurrency(currentData.values.santanderTotal)}</td>
+                         <td className="p-2 text-right font-semibold text-text-primary">{formatCurrency(currentData.values.santanderTotal)}</td>
                     </tr>
-                    <tr className="border border-gray-300 bg-yellow-50">
-                        <td className="p-0 font-medium">
-                           <EditableLabel name="santanderCartaoCreditoLabel" value={currentData.labels.santanderCartaoCreditoLabel} onChange={(e) => handleInputChange(e, 'labels')} />
+                    <tr className="bg-secondary/10">
+                        <td className="p-2">
+                           <EditableLabel name="santanderCartaoCreditoLabel" value={currentData.labels.santanderCartaoCreditoLabel} onChange={(e) => handleInputChange(e, 'labels')} className="text-text-secondary" />
                         </td>
                         <td></td>
                         <td className="p-2">
                             <FormattedInput name="santanderCartaoCredito" value={currentData.values.santanderCartaoCredito} onChange={(e) => handleInputChange(e, 'values')} />
                         </td>
-                        <td className="p-2 text-right font-semibold">{formatCurrency(calculations.totalSantanderCalculado)}</td>
+                        <td className="p-2 text-right font-bold text-primary">{formatCurrency(calculations.totalSantanderCalculado)}</td>
                     </tr>
                 </tbody>
             </table>

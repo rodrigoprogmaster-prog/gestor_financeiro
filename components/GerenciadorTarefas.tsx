@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { PlusIcon, TrashIcon, SearchIcon, EditIcon, CheckIcon, CalendarClockIcon, TrendingUpIcon, ArrowLeftIcon } from './icons';
+import { PlusIcon, TrashIcon, SearchIcon, EditIcon, CheckIcon, CalendarClockIcon, ArrowLeftIcon } from './icons';
 
 // Enums
 enum StatusTarefa {
@@ -54,8 +54,12 @@ const isValidBRDate = (dateString: string): boolean => {
 const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const STORAGE_KEY = 'gerenciador_tarefas_data';
     const [tarefas, setTarefas] = useState<Tarefa[]>(() => {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        return saved ? JSON.parse(saved) : [];
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            return [];
+        }
     });
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -71,7 +75,6 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [lembretes, setLembretes] = useState<Tarefa[]>([]);
     const [isLembreteOpen, setIsLembreteOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'tarefas' | 'analise'>('tarefas');
-
 
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(tarefas));
@@ -92,7 +95,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             setLembretes(lembretesDoDia);
             setIsLembreteOpen(true);
         }
-    }, [tarefas]);
+    }, [tarefas]); // Run only when tasks change, but ideally once per day/session
 
     const getDynamicStatus = (tarefa: Tarefa): StatusTarefa | 'Atrasada' => {
         if (tarefa.status === StatusTarefa.CONCLUIDA) return StatusTarefa.CONCLUIDA;
@@ -105,12 +108,6 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const allTarefasWithStatus = useMemo(() => tarefas.map(t => ({ ...t, dynamicStatus: getDynamicStatus(t) })), [tarefas]);
 
     const filteredTarefas = useMemo(() => {
-        const priorityOrder: Record<PrioridadeTarefa, number> = {
-            [PrioridadeTarefa.ALTA]: 1,
-            [PrioridadeTarefa.MEDIA]: 2,
-            [PrioridadeTarefa.BAIXA]: 3,
-        };
-
         return allTarefasWithStatus.filter(tarefa => {
             const statusMatch = statusFilter === 'Todas' || tarefa.dynamicStatus === statusFilter;
             const searchMatch = !searchTerm || tarefa.titulo.toLowerCase().includes(searchTerm.toLowerCase()) || tarefa.descricao.toLowerCase().includes(searchTerm.toLowerCase());
@@ -118,17 +115,22 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             const endDateMatch = !dateRange.end || tarefa.dataVencimento <= dateRange.end;
             return statusMatch && searchMatch && startDateMatch && endDateMatch;
         }).sort((a, b) => {
+            // 1. Completed tasks always at the bottom
             const aCompleted = a.status === StatusTarefa.CONCLUIDA;
             const bCompleted = b.status === StatusTarefa.CONCLUIDA;
-            if (aCompleted !== bCompleted) {
-                return aCompleted ? 1 : -1;
+            if (aCompleted && !bCompleted) return 1;
+            if (!aCompleted && bCompleted) return -1;
+
+            // 2. Priority (High > Medium > Low)
+            const priorityValue = { [PrioridadeTarefa.ALTA]: 3, [PrioridadeTarefa.MEDIA]: 2, [PrioridadeTarefa.BAIXA]: 1 };
+            const pA = priorityValue[a.prioridade] || 0;
+            const pB = priorityValue[b.prioridade] || 0;
+            
+            if (pA !== pB) {
+                return pB - pA; // Descending order (3 > 2 > 1)
             }
 
-            const priorityComparison = priorityOrder[a.prioridade] - priorityOrder[b.prioridade];
-            if (priorityComparison !== 0) {
-                return priorityComparison;
-            }
-
+            // 3. Due Date (Ascending - soonest first)
             return new Date(a.dataVencimento).getTime() - new Date(b.dataVencimento).getTime();
         });
     }, [allTarefasWithStatus, statusFilter, searchTerm, dateRange]);
@@ -235,61 +237,59 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     
     const renderStatusPill = (status: StatusTarefa | 'Atrasada') => {
         const styles = {
-            'Atrasada': 'bg-danger/20 text-danger',
-            [StatusTarefa.PENDENTE]: 'bg-yellow-500/20 text-yellow-600',
-            [StatusTarefa.EM_ANDAMENTO]: 'bg-primary/20 text-primary',
-            [StatusTarefa.CONCLUIDA]: 'bg-success/20 text-success',
+            'Atrasada': 'bg-red-50 text-red-700 border border-red-200',
+            [StatusTarefa.PENDENTE]: 'bg-yellow-50 text-yellow-700 border border-yellow-200',
+            [StatusTarefa.EM_ANDAMENTO]: 'bg-blue-50 text-blue-700 border border-blue-200',
+            [StatusTarefa.CONCLUIDA]: 'bg-green-50 text-green-700 border border-green-200',
         };
-        return <span className={`px-2 py-1 text-xs font-semibold rounded-full ${styles[status]}`}>{status}</span>;
+        return <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded-full ${styles[status]}`}>{status}</span>;
     };
     
-    const getPriorityStyles = (priority: PrioridadeTarefa) => {
+    const getPriorityColor = (priority: PrioridadeTarefa) => {
         switch (priority) {
-            case PrioridadeTarefa.ALTA: return { border: 'border-danger', text: 'text-danger' };
-            case PrioridadeTarefa.MEDIA: return { border: 'border-yellow-500', text: 'text-yellow-600' };
-            case PrioridadeTarefa.BAIXA: return { border: 'border-primary', text: 'text-primary' };
-            default: return { border: 'border-border', text: 'text-text-secondary' };
+            case PrioridadeTarefa.ALTA: return 'text-red-600';
+            case PrioridadeTarefa.MEDIA: return 'text-yellow-600';
+            case PrioridadeTarefa.BAIXA: return 'text-blue-600';
+            default: return 'text-gray-500';
         }
     };
-
 
     const renderTarefas = () => (
         <>
             <div className="flex flex-col sm:flex-row justify-end sm:items-center mb-6 gap-4">
-                <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-hover h-10"><PlusIcon className="h-5 w-5"/>Incluir Tarefa</button>
+                <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-primary text-white font-medium py-2 px-4 rounded-md hover:bg-primary-hover text-sm h-9 shadow-sm"><PlusIcon className="h-4 w-4"/>Incluir Tarefa</button>
             </div>
             <div className="mb-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {(['Atrasada', StatusTarefa.PENDENTE, StatusTarefa.EM_ANDAMENTO, StatusTarefa.CONCLUIDA] as const).map(status => {
                     const count = totals[status] || 0;
-                    const colors = { 'Atrasada': 'danger', [StatusTarefa.PENDENTE]: 'yellow-500', [StatusTarefa.EM_ANDAMENTO]: 'primary', [StatusTarefa.CONCLUIDA]: 'success' };
-                    const color = colors[status];
+                    const isActive = statusFilter === status;
                     return (
-                        <div key={status} onClick={() => setStatusFilter(status)} className={`p-4 rounded-lg shadow-md text-center cursor-pointer transition-all ${statusFilter === status ? `ring-2 ring-${color}` : 'border border-border'}`}>
-                            <p className="text-sm font-semibold text-text-secondary uppercase tracking-wider">{status}</p>
-                            <p className={`text-2xl font-bold text-${color}`}>{count}</p>
-                            <p className="text-sm text-text-secondary">{count === 1 ? 'tarefa' : 'tarefas'}</p>
+                        <div key={status} onClick={() => setStatusFilter(status)} className={`p-4 rounded-lg border cursor-pointer transition-all ${isActive ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-gray-300'}`}>
+                            <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">{status}</p>
+                            <p className="text-xl font-bold text-text-primary">{count}</p>
                         </div>
                     );
                 })}
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                <div className="relative w-full sm:w-auto flex-grow sm:flex-grow-0">
-                    <input type="text" placeholder="Buscar por título ou descrição..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="bg-background border border-border rounded-lg px-3 py-2 pl-10 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10 w-full sm:w-80"/>
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon className="h-5 w-5 text-text-secondary"/></div>
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 bg-white p-3 rounded-lg border border-border">
+                 <div className="relative w-full sm:w-auto flex-grow sm:flex-grow-0">
+                    <input type="text" placeholder="Buscar por título ou descrição..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full sm:w-80 pl-10 pr-3 py-2 bg-background border border-border rounded-md text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"/>
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon className="h-4 w-4 text-text-secondary"/></div>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                    <label className="text-sm font-medium">Vencimento:</label>
-                    <input type="date" value={dateRange.start} onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))} className="bg-background border border-border rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10"/>
-                    <span className="text-text-secondary">até</span>
-                    <input type="date" value={dateRange.end} onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))} className="bg-background border border-border rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10"/>
-                    <button onClick={handleClearFilters} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors h-10">Limpar</button>
+                 <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-text-secondary">Vencimento:</span>
+                        <input type="date" value={dateRange.start} onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))} className="bg-background border border-border rounded-md px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/>
+                        <span className="text-xs text-text-secondary">até</span>
+                        <input type="date" value={dateRange.end} onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))} className="bg-background border border-border rounded-md px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/>
+                    </div>
+                    <button onClick={handleClearFilters} className="px-3 py-1.5 rounded-md bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-9 transition-colors">Limpar</button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 flex-grow">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 flex-grow content-start">
                 {filteredTarefas.length > 0 ? filteredTarefas.map(tarefa => {
-                    const priorityStyles = getPriorityStyles(tarefa.prioridade);
                     const hoje = new Date();
                     hoje.setHours(0, 0, 0, 0);
                     const vencimento = new Date(tarefa.dataVencimento + 'T00:00:00');
@@ -298,55 +298,43 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     return (
                         <div
                             key={tarefa.id}
-                            className={`bg-card rounded-lg shadow-md border ${priorityStyles.border} border-l-4 p-5 flex flex-col justify-between hover:shadow-xl transition-shadow duration-300 min-h-[250px]`}
+                            className="bg-card rounded-lg border border-border p-4 flex flex-col justify-between hover:shadow-md transition-shadow duration-200 min-h-[200px]"
                         >
                             <div>
                                 <div className="flex justify-between items-start mb-2">
-                                    <p className="text-xs font-semibold bg-secondary text-text-secondary px-2 py-0.5 rounded-full">{tarefa.categoria}</p>
-                                    <span className={`text-xs font-bold ${priorityStyles.text}`}>{tarefa.prioridade}</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-wide bg-secondary text-text-secondary px-2 py-0.5 rounded-sm border border-border">{tarefa.categoria}</span>
+                                    <span className={`text-xs font-bold ${getPriorityColor(tarefa.prioridade)}`}>{tarefa.prioridade}</span>
                                 </div>
-                                <h4 className="font-bold text-lg text-text-primary mb-2 break-words">{tarefa.titulo}</h4>
+                                <h4 className="font-semibold text-base text-text-primary mb-2 line-clamp-2">{tarefa.titulo}</h4>
                             </div>
 
-                            <p className="text-sm text-text-secondary my-4 flex-grow break-words">{tarefa.descricao || 'Sem descrição.'}</p>
+                            <p className="text-sm text-text-secondary my-3 line-clamp-3 flex-grow">{tarefa.descricao || 'Sem descrição.'}</p>
 
                             <div className="mt-auto pt-3 border-t border-border space-y-3">
-                                <div className="flex justify-between items-center text-xs">
+                                <div className="flex justify-between items-center">
                                     {renderStatusPill(tarefa.dynamicStatus)}
-                                    <div className={`flex items-center gap-1.5 font-medium ${isOverdue ? 'text-danger' : 'text-text-secondary'}`}>
-                                        <CalendarClockIcon className="h-4 w-4" />
+                                    <div className={`flex items-center gap-1.5 text-xs font-medium ${isOverdue ? 'text-danger' : 'text-text-secondary'}`}>
+                                        <CalendarClockIcon className="h-3 w-3" />
                                         <span>{formatDateToBR(tarefa.dataVencimento)}</span>
                                     </div>
                                 </div>
-                                <div className="flex items-center justify-end gap-1">
+                                <div className="flex items-center justify-end gap-2">
                                     {tarefa.status !== StatusTarefa.CONCLUIDA && (
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleMarkAsDone(tarefa); }}
-                                            title="Marcar como Concluída"
-                                            className="p-2 rounded-full text-success hover:bg-success/10 transition-colors"
-                                        >
-                                            <CheckIcon className="h-5 w-5" />
+                                        <button onClick={(e) => { e.stopPropagation(); handleMarkAsDone(tarefa); }} className="p-1.5 rounded-md text-success hover:bg-green-50 border border-transparent hover:border-green-100 transition-colors">
+                                            <CheckIcon className="h-4 w-4" />
                                         </button>
                                     )}
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleEditClick(tarefa); }}
-                                        title="Editar Tarefa"
-                                        className="p-2 rounded-full text-primary hover:bg-primary/10 transition-colors"
-                                    >
-                                        <EditIcon className="h-5 w-5" />
+                                    <button onClick={(e) => { e.stopPropagation(); handleEditClick(tarefa); }} className="p-1.5 rounded-md text-primary hover:bg-blue-50 border border-transparent hover:border-blue-100 transition-colors">
+                                        <EditIcon className="h-4 w-4" />
                                     </button>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleDeleteClick(tarefa.id); }}
-                                        title="Excluir Tarefa"
-                                        className="p-2 rounded-full text-danger hover:bg-danger/10 transition-colors"
-                                    >
-                                        <TrashIcon className="h-5 w-5" />
+                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(tarefa.id); }} className="p-1.5 rounded-md text-danger hover:bg-red-50 border border-transparent hover:border-red-100 transition-colors">
+                                        <TrashIcon className="h-4 w-4" />
                                     </button>
                                 </div>
                             </div>
                         </div>
                     )
-                }) : <div className="col-span-full flex flex-col items-center justify-center text-text-secondary py-16"><SearchIcon className="w-12 h-12 mb-4 text-gray-300"/><h3 className="text-xl font-semibold text-text-primary">Nenhuma Tarefa Encontrada</h3><p>Tente ajustar os filtros ou inclua uma nova tarefa.</p></div>}
+                }) : <div className="col-span-full flex flex-col items-center justify-center text-text-secondary py-16"><SearchIcon className="w-10 h-10 mb-3 text-gray-300"/><h3 className="text-lg font-medium text-text-primary">Nenhuma Tarefa Encontrada</h3><p className="text-sm">Tente ajustar os filtros ou inclua uma nova tarefa.</p></div>}
             </div>
         </>
     );
@@ -357,58 +345,51 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         const renderBar = (count: number, total: number) => {
             const percentage = total > 0 ? (count / total) * 100 : 0;
             return (
-                <div className="w-full bg-secondary rounded-full h-2.5">
-                    <div className="bg-primary h-2.5 rounded-full" style={{ width: `${percentage}%` }}></div>
+                <div className="w-full bg-secondary rounded-full h-2">
+                    <div className="bg-primary h-2 rounded-full" style={{ width: `${percentage}%` }}></div>
                 </div>
             );
         };
 
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="bg-card p-6 rounded-xl shadow-md border border-border">
-                    <h4 className="font-bold text-lg text-text-primary mb-4">Tarefas por Status</h4>
+                <div className="bg-card p-5 rounded-lg border border-border shadow-sm">
+                    <h4 className="font-bold text-base text-text-primary mb-4 border-b border-border pb-2">Por Status</h4>
                     <ul className="space-y-4">
                         {Object.entries(statusCounts).map(([status, count]) => (
                             <li key={status} className="text-sm">
                                 <div className="flex justify-between items-center mb-1">
-                                    <span>{status}</span>
-                                    {/* FIX: Cast count to number for arithmetic operation */}
-                                    <span className="font-semibold">{count} ({total > 0 ? (((count as number)/total)*100).toFixed(0) : 0}%)</span>
+                                    <span className="text-text-secondary">{status}</span>
+                                    <span className="font-semibold text-text-primary">{count as number}</span>
                                 </div>
-                                {/* FIX: Cast count to number for function argument */}
                                 {renderBar(count as number, total)}
                             </li>
                         ))}
                     </ul>
                 </div>
-                 <div className="bg-card p-6 rounded-xl shadow-md border border-border">
-                    <h4 className="font-bold text-lg text-text-primary mb-4">Tarefas por Prioridade</h4>
+                 <div className="bg-card p-5 rounded-lg border border-border shadow-sm">
+                    <h4 className="font-bold text-base text-text-primary mb-4 border-b border-border pb-2">Por Prioridade</h4>
                     <ul className="space-y-4">
                         {Object.entries(priorityCounts).map(([priority, count]) => (
                              <li key={priority} className="text-sm">
                                 <div className="flex justify-between items-center mb-1">
-                                    <span>{priority}</span>
-                                    {/* FIX: Cast count to number for arithmetic operation */}
-                                    <span className="font-semibold">{count} ({total > 0 ? (((count as number)/total)*100).toFixed(0) : 0}%)</span>
+                                    <span className="text-text-secondary">{priority}</span>
+                                    <span className="font-semibold text-text-primary">{count as number}</span>
                                 </div>
-                                {/* FIX: Cast count to number for function argument */}
                                 {renderBar(count as number, total)}
                             </li>
                         ))}
                     </ul>
                 </div>
-                 <div className="bg-card p-6 rounded-xl shadow-md border border-border">
-                    <h4 className="font-bold text-lg text-text-primary mb-4">Distribuição por Categoria</h4>
-                     <ul className="space-y-4 max-h-60 overflow-y-auto">
-                        {/* FIX: Cast a and b to number for sort comparison */}
+                 <div className="bg-card p-5 rounded-lg border border-border shadow-sm">
+                    <h4 className="font-bold text-base text-text-primary mb-4 border-b border-border pb-2">Por Categoria</h4>
+                     <ul className="space-y-4 max-h-60 overflow-y-auto pr-2">
                         {Object.entries(categoryCounts).sort(([,a],[,b]) => (b as number) - (a as number)).map(([category, count]) => (
                              <li key={category} className="text-sm">
                                 <div className="flex justify-between items-center mb-1">
-                                    <span>{category}</span>
-                                    {/* FIX: Cast count to number for arithmetic operation */}
-                                    <span className="font-semibold">{count} ({total > 0 ? (((count as number)/total)*100).toFixed(0) : 0}%)</span>
+                                    <span className="text-text-secondary">{category}</span>
+                                    <span className="font-semibold text-text-primary">{count as number}</span>
                                 </div>
-                                {/* FIX: Cast count to number for function argument */}
                                 {renderBar(count as number, total)}
                             </li>
                         ))}
@@ -423,18 +404,18 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in flex flex-col h-full">
             <div className="flex items-center gap-4 mb-6">
                 {onBack && (
-                    <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors h-10">
-                        <ArrowLeftIcon className="h-5 w-5" />
+                    <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-md bg-white border border-border hover:bg-secondary text-text-primary font-medium transition-colors h-10 text-sm">
+                        <ArrowLeftIcon className="h-4 w-4" />
                         Voltar
                     </button>
                 )}
-                <h2 className="text-2xl md:text-3xl font-bold text-text-primary">Gerenciador de Tarefas</h2>
+                <h2 className="text-2xl font-bold text-text-primary tracking-tight">Gerenciador de Tarefas</h2>
             </div>
 
             <div className="border-b border-border mb-6">
                 <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-                    <button onClick={() => setActiveTab('tarefas')} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'tarefas' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`}>Tarefas</button>
-                    <button onClick={() => setActiveTab('analise')} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'analise' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`}>Análise</button>
+                    <button onClick={() => setActiveTab('tarefas')} className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'tarefas' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary hover:border-gray-300'}`}>Tarefas</button>
+                    <button onClick={() => setActiveTab('analise')} className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'analise' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary hover:border-gray-300'}`}>Análise</button>
                 </nav>
             </div>
 
@@ -443,59 +424,63 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             </div>
 
             {isModalOpen && editingTarefa && (
-                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-lg">
-                        <h3 className="text-xl font-bold mb-6 text-text-primary">{editingTarefa.id ? 'Editar Tarefa' : 'Adicionar Nova Tarefa'}</h3>
-                        <div className="space-y-4">
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+                    <div className="bg-card rounded-lg shadow-lg border border-border w-full max-w-lg overflow-hidden">
+                        <div className="px-6 py-4 border-b border-border bg-secondary/30">
+                            <h3 className="text-lg font-bold text-text-primary">{editingTarefa.id ? 'Editar Tarefa' : 'Nova Tarefa'}</h3>
+                        </div>
+                        <div className="p-6 space-y-4">
                             <div>
-                                <label htmlFor="titulo" className="block text-sm font-medium text-text-secondary mb-1">Título</label>
-                                <input id="titulo" name="titulo" value={editingTarefa.titulo || ''} onChange={handleInputChange} className={`w-full bg-background border rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.titulo ? 'border-danger' : 'border-border'}`} />
+                                <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Título</label>
+                                <input id="titulo" name="titulo" value={editingTarefa.titulo || ''} onChange={handleInputChange} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none ${errors.titulo ? 'border-danger' : 'border-border'}`} />
                                 {errors.titulo && <p className="text-danger text-xs mt-1">{errors.titulo}</p>}
                             </div>
                             <div>
-                                <label htmlFor="descricao" className="block text-sm font-medium text-text-secondary mb-1">Descrição</label>
-                                <textarea id="descricao" name="descricao" value={editingTarefa.descricao || ''} onChange={handleInputChange} rows={3} className="w-full bg-background border rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:ring-2 border-border" />
+                                <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Descrição</label>
+                                <textarea id="descricao" name="descricao" value={editingTarefa.descricao || ''} onChange={handleInputChange} rows={3} className="w-full bg-white border border-border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none resize-none" />
                             </div>
-                            <div>
-                                <label htmlFor="categoria" className="block text-sm font-medium text-text-secondary mb-1">Categoria</label>
-                                <input id="categoria" name="categoria" value={editingTarefa.categoria || ''} onChange={handleInputChange} className={`w-full bg-background border rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.categoria ? 'border-danger' : 'border-border'}`} />
-                                {errors.categoria && <p className="text-danger text-xs mt-1">{errors.categoria}</p>}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Categoria</label>
+                                    <input id="categoria" name="categoria" value={editingTarefa.categoria || ''} onChange={handleInputChange} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none ${errors.categoria ? 'border-danger' : 'border-border'}`} />
+                                    {errors.categoria && <p className="text-danger text-xs mt-1">{errors.categoria}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Vencimento</label>
+                                    <input id="dataVencimento_br" name="dataVencimento_br" value={editingTarefa.dataVencimento_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none ${errors.dataVencimento ? 'border-danger' : 'border-border'}`} />
+                                    {errors.dataVencimento && <p className="text-danger text-xs mt-1">{errors.dataVencimento}</p>}
+                                </div>
                             </div>
-                            <div>
-                                <label htmlFor="dataVencimento_br" className="block text-sm font-medium text-text-secondary mb-1">Vencimento</label>
-                                <input id="dataVencimento_br" name="dataVencimento_br" value={editingTarefa.dataVencimento_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-background border rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.dataVencimento ? 'border-danger' : 'border-border'}`} />
-                                {errors.dataVencimento && <p className="text-danger text-xs mt-1">{errors.dataVencimento}</p>}
-                            </div>
-                            <div>
-                                <label htmlFor="prioridade" className="block text-sm font-medium text-text-secondary mb-1">Prioridade</label>
-                                <select id="prioridade" name="prioridade" value={editingTarefa.prioridade || PrioridadeTarefa.MEDIA} onChange={handleInputChange} className={`w-full bg-background border rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.prioridade ? 'border-danger' : 'border-border'}`}>
-                                    <option value={PrioridadeTarefa.ALTA}>Alta</option>
-                                    <option value={PrioridadeTarefa.MEDIA}>Média</option>
-                                    <option value={PrioridadeTarefa.BAIXA}>Baixa</option>
-                                </select>
-                                {errors.prioridade && <p className="text-danger text-xs mt-1">{errors.prioridade}</p>}
-                            </div>
-                            <div>
-                                <label htmlFor="status" className="block text-sm font-medium text-text-secondary mb-1">Status</label>
-                                <select id="status" name="status" value={editingTarefa.status || StatusTarefa.PENDENTE} onChange={handleInputChange} className={`w-full bg-background border rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.status ? 'border-danger' : 'border-border'}`}>
-                                    <option value={StatusTarefa.PENDENTE}>Pendente</option>
-                                    <option value={StatusTarefa.EM_ANDAMENTO}>Em Andamento</option>
-                                    <option value={StatusTarefa.CONCLUIDA}>Concluída</option>
-                                </select>
-                                {errors.status && <p className="text-danger text-xs mt-1">{errors.status}</p>}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Prioridade</label>
+                                    <select id="prioridade" name="prioridade" value={editingTarefa.prioridade || PrioridadeTarefa.MEDIA} onChange={handleInputChange} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none ${errors.prioridade ? 'border-danger' : 'border-border'}`}>
+                                        <option value={PrioridadeTarefa.ALTA}>Alta</option>
+                                        <option value={PrioridadeTarefa.MEDIA}>Média</option>
+                                        <option value={PrioridadeTarefa.BAIXA}>Baixa</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Status</label>
+                                    <select id="status" name="status" value={editingTarefa.status || StatusTarefa.PENDENTE} onChange={handleInputChange} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none ${errors.status ? 'border-danger' : 'border-border'}`}>
+                                        <option value={StatusTarefa.PENDENTE}>Pendente</option>
+                                        <option value={StatusTarefa.EM_ANDAMENTO}>Em Andamento</option>
+                                        <option value={StatusTarefa.CONCLUIDA}>Concluída</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
-                        <div className="mt-8 flex justify-end gap-4">
-                            <button onClick={handleCloseModal} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold">Cancelar</button>
-                            <button onClick={handleSaveChanges} className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold">Salvar</button>
+                        <div className="px-6 py-4 border-t border-border bg-secondary/30 flex justify-end gap-3">
+                            <button onClick={handleCloseModal} className="px-4 py-2 rounded-md bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
+                            <button onClick={handleSaveChanges} className="px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Salvar</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {isConfirmOpen && <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in"><div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-sm"><h3 className="text-lg font-bold mb-4 text-text-primary">Confirmar</h3><p className="text-text-secondary mb-6">{confirmAction.message}</p><div className="flex justify-end gap-4"><button onClick={() => setIsConfirmOpen(false)} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold">Cancelar</button><button onClick={handleConfirm} className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold">Confirmar</button></div></div></div>}
+            {isConfirmOpen && <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"><div className="bg-card rounded-lg shadow-xl border border-border w-full max-w-sm p-6"><h3 className="text-lg font-bold mb-2 text-text-primary">Confirmar</h3><p className="text-sm text-text-secondary mb-6">{confirmAction.message}</p><div className="flex justify-end gap-3"><button onClick={() => setIsConfirmOpen(false)} className="px-4 py-2 rounded-md bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button><button onClick={handleConfirm} className="px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Confirmar</button></div></div></div>}
 
-            {isLembreteOpen && <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in"><div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-lg"><h3 className="text-xl font-bold mb-4 text-text-primary flex items-center gap-2"><CalendarClockIcon className="h-6 w-6 text-primary" />Lembretes de Tarefas</h3><p className="text-text-secondary mb-6">As seguintes tarefas vencem hoje ou estão atrasadas:</p><div className="max-h-60 overflow-y-auto bg-background rounded p-4 border border-border"><ul className="space-y-3">{lembretes.map(tarefa => (<li key={tarefa.id} className="flex justify-between items-center text-sm"><span className="font-semibold text-text-primary">{tarefa.titulo}</span><span className={`font-bold ${getDynamicStatus(tarefa) === 'Atrasada' ? 'text-danger' : 'text-yellow-600'}`}>{formatDateToBR(tarefa.dataVencimento)}</span></li>))}</ul></div><div className="mt-8 flex justify-end"><button onClick={() => setIsLembreteOpen(false)} className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold">Fechar</button></div></div></div>}
+            {isLembreteOpen && <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"><div className="bg-card rounded-lg shadow-xl border border-border w-full max-w-lg overflow-hidden"><div className="px-6 py-4 border-b border-border bg-secondary/30 flex items-center gap-2"><CalendarClockIcon className="h-5 w-5 text-primary" /><h3 className="text-lg font-bold text-text-primary">Lembretes</h3></div><div className="p-6"><p className="text-sm text-text-secondary mb-4">Tarefas vencendo hoje ou atrasadas:</p><div className="max-h-60 overflow-y-auto bg-background rounded-md border border-border p-2"><ul className="space-y-2">{lembretes.map(tarefa => (<li key={tarefa.id} className="flex justify-between items-center text-sm p-2 hover:bg-white rounded"><span className="font-medium text-text-primary">{tarefa.titulo}</span><span className={`text-xs font-bold ${getDynamicStatus(tarefa) === 'Atrasada' ? 'text-danger' : 'text-warning'}`}>{formatDateToBR(tarefa.dataVencimento)}</span></li>))}</ul></div></div><div className="px-6 py-4 border-t border-border bg-secondary/30 flex justify-end"><button onClick={() => setIsLembreteOpen(false)} className="px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Fechar</button></div></div></div>}
         </div>
     );
 };

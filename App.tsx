@@ -32,7 +32,7 @@ const App: React.FC = () => {
     }
     
     const loadAndApplyFont = (target: 'body' | 'heading', fontName: string | null) => {
-      const effectiveFont = fontName || 'Roboto';
+      const effectiveFont = fontName || 'Inter';
       
       document.documentElement.style.setProperty(`--font-${target}`, effectiveFont);
       
@@ -71,9 +71,10 @@ const App: React.FC = () => {
     setCurrentView(AppView.DASHBOARD); 
   };
   
-  const handleBackToDashboard = () => {
-    setCurrentView(AppView.DASHBOARD);
-  };
+  // Removed handleBackToDashboard as per request for side back buttons to be removed
+  // const handleBackToDashboard = () => {
+  //   setCurrentView(AppView.DASHBOARD);
+  // };
 
   const handleOpenMeuDiaModal = () => setIsMeuDiaModalOpen(true);
 
@@ -84,35 +85,35 @@ const App: React.FC = () => {
   const renderView = () => {
     switch (currentView) {
       case AppView.CONTROLE_CHEQUES:
-        return <BoletosAReceber onBack={handleBackToDashboard} />;
+        return <BoletosAReceber />;
       case AppView.GESTAO_BOLETOS:
-        return <GestaoBoletos onBack={handleBackToDashboard} />;
+        return <GestaoBoletos />;
       case AppView.CONTROLE_BOLETOS:
-        return <BoletosAPagar onBack={handleBackToDashboard} />;
+        return <BoletosAPagar />;
       case AppView.TITULOS_PRORROGADOS:
-        return <TitulosProrrogados onBack={handleBackToDashboard} />;
+        return <TitulosProrrogados />;
       case AppView.PREVISAO_FINANCEIRA:
-        return <PrevisaoFinanceiraHome initialTab="fabrica" onBack={handleBackToDashboard} />;
+        return <PrevisaoFinanceiraHome initialTab="fabrica" />;
       case AppView.PAGAMENTOS_DIARIOS:
-        return <PagamentosDiariosHome initialTab="fabrica" onBack={handleBackToDashboard} />;
-      case AppView.PREVISAO_FABRICA:
-        return <PrevisaoFinanceiraHome initialTab="fabrica" onBack={handleBackToDashboard} />;
-      case AppView.PREVISAO_CRISTIANO:
-        return <PrevisaoFinanceiraHome initialTab="cristiano" onBack={handleBackToDashboard} />;
-      case AppView.PAGAMENTOS_FABRICA:
-        return <PagamentosDiariosHome initialTab="fabrica" onBack={handleBackToDashboard} />;
-      case AppView.PAGAMENTOS_CRISTIANO:
-        return <PagamentosDiariosHome initialTab="cristiano" onBack={handleBackToDashboard} />;
+        return <PagamentosDiariosHome initialTab="fabrica" />;
+      case AppView.PREVISAO_FABRICA: // These are sub-views, their `onBack` prop will be to return to PrevisaoFinanceiraHome
+        return <PrevisaoFinanceiraHome initialTab="fabrica" />;
+      case AppView.PREVISAO_CRISTIANO: // These are sub-views, their `onBack` prop will be to return to PrevisaoFinanceiraHome
+        return <PrevisaoFinanceiraHome initialTab="cristiano" />;
+      case AppView.PAGAMENTOS_FABRICA: // These are sub-views, their `onBack` prop will be to return to PagamentosDiariosHome
+        return <PagamentosDiariosHome initialTab="fabrica" />;
+      case AppView.PAGAMENTOS_CRISTIANO: // These are sub-views, their `onBack` prop will be to return to PagamentosDiariosHome
+        return <PagamentosDiariosHome initialTab="cristiano" />;
       case AppView.CADASTRO_CONTAS_BANCARIAS:
-        return <CadastroContasBancarias onBack={handleBackToDashboard} />;
+        return <CadastroContasBancarias />;
       case AppView.GERENCIADOR_CARTOES:
-        return <GerenciadorCartoes onBack={handleBackToDashboard} />;
+        return <GerenciadorCartoes />;
       case AppView.FECHAMENTO_PERIODO:
-        return <FechamentoPeriodo onBack={handleBackToDashboard} />;
+        return <FechamentoPeriodo />;
       case AppView.CONFIGURACAO_SEGURANCA:
-        return <ConfiguracaoSeguranca onBack={handleBackToDashboard} />;
+        return <ConfiguracaoSeguranca />;
       case AppView.GERENCIADOR_TAREFAS:
-        return <GerenciadorTarefas onBack={handleBackToDashboard} />;
+        return <GerenciadorTarefas />;
       case AppView.DASHBOARD:
       default:
         return <Dashboard setView={setCurrentView} />;
