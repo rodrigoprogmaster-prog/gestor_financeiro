@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import TransferenciasEmpresas from './TransferenciasEmpresas';
 import AutorizacaoPagamento from './AutorizacaoPagamento';
-import { CalendarClockIcon, TrashIcon } from './icons';
+import { CalendarClockIcon, TrashIcon, ReportIcon } from './icons';
 
 // Interface for a payment entry
 interface Pagamento {
@@ -16,29 +16,6 @@ interface Pagamento {
 }
 
 type PagamentoErrors = Partial<Record<keyof Omit<Pagamento, 'id' | 'data' | 'empresa' | 'tipo'>, string>>;
-
-// Predefined list of companies and banks for the Factory
-const PREDEFINED_ENTRIES = [
-    { empresa: 'FIBER HIDROMASSAGENS INDUSTRIA E COMERCIO LTDA-ME', tipo: 'INTER' },
-    { empresa: 'LLS SERVIÇOS DE LIMPEZA EIRELI', tipo: 'INTER' },
-    { empresa: 'CSJ INDUSTRIA E COMERCIO DE PLASTIC', tipo: 'INTER' },
-    { empresa: 'LOPC INDUSTRIA E COMERCIO DE PLASTICOS REFORÇADOS', tipo: 'INTER' },
-    { empresa: 'MMA INDUSTRIA DE PLASTICOS REFORCAD', tipo: 'INTER' },
-    { empresa: 'PXT INDUSTRIA E COMERCIO DE PLASTIC', tipo: 'INTER' },
-    { empresa: 'SJB COMERCIO E INDUSTRIA DE PISCINAS LTDA', tipo: 'INTER' },
-    { empresa: 'LOPC INDUSTRIA E COMERCIO DE PLASTICOS REFORÇADOS', tipo: 'XP' },
-    { empresa: 'PXT INDUSTRIA E COMERCIO DE PLASTIC, FRETE', tipo: 'XP' },
-    { empresa: 'CSJ INDUSTRIA E COMERCIO DE PLASTIC', tipo: 'ITAU' },
-    { empresa: 'PXT INDUSTRIA E COMERCIO DE PLASTIC', tipo: 'ITAU' },
-    { empresa: 'CSJ INDUSTRIA E COMERCIO DE PLASTIC', tipo: 'BB' },
-    { empresa: 'SJB COMERCIO E INDUSTRIA DE PISCINAS LTDA', tipo: 'BB' },
-    { empresa: 'PXT INDUSTRIA E COMERCIO DE PLASTIC', tipo: 'BB' },
-    { empresa: 'LOPC INDUSTRIA E COMERCIO DE PLASTICOS REFORÇADOS', tipo: 'BB' },
-    { empresa: 'CSJ INDUSTRIA E COMERCIO DE PLASTIC', tipo: 'SANTANDER' },
-    { empresa: 'PXT INDUSTRIA E COMERCIO DE PLASTIC', tipo: 'SANTANDER' },
-    { empresa: 'SJB COMERCIO E INDUSTRIA DE PISCINAS LTDA', tipo: 'SANTANDER' },
-];
-
 
 const BANK_OPTIONS = ['INTER', 'ITAU', 'BANCO DO BRASIL', 'XP', 'BB', 'SANTANDER'];
 
@@ -89,23 +66,8 @@ const PagamentosFabrica: React.FC = () => {
 
     const handleDateSelect = (newDate: string) => {
         if (!newDate) return;
-        
         setSelectedDate(newDate);
-
-        const dataExists = pagamentos.some(p => p.data === newDate);
-        if (!dataExists) {
-            const newEntries = PREDEFINED_ENTRIES.map((entry, index) => ({
-                id: `${newDate}-${entry.empresa}-${index}`, // Index for unique IDs
-                data: newDate,
-                empresa: entry.empresa,
-                tipo: entry.tipo, // Use the bank from the predefined list
-                receitas: 0,
-                despesas: 0,
-                envia: 0,
-                recebe: 0,
-            }));
-            setPagamentos(prev => [...prev, ...newEntries]);
-        }
+        // No auto-generation of rows. Data must come from Transfer or existing storage.
     };
     
     const dailyData = useMemo(() => {
@@ -241,6 +203,10 @@ const PagamentosFabrica: React.FC = () => {
         setConfirmAction({ action: null, message: '' });
     };
 
+    const handleClearDate = () => {
+        setSelectedDate('');
+    };
+
     const renderContent = () => {
         switch (activeTab) {
             case 'pagamentos':
@@ -248,7 +214,7 @@ const PagamentosFabrica: React.FC = () => {
                     <>
                         <div className="flex flex-col sm:flex-row justify-end sm:items-center mb-6 gap-4">
                             <div className="flex items-center gap-2">
-                                <label htmlFor="date-selector" className="font-semibold">Selecione o Dia:</label>
+                                <label htmlFor="date-selector" className="font-semibold text-sm text-text-secondary">Selecione o Dia:</label>
                                 <input
                                     id="date-selector"
                                     type="date"
@@ -256,10 +222,16 @@ const PagamentosFabrica: React.FC = () => {
                                     onChange={e => handleDateSelect(e.target.value)}
                                     className="bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10"
                                 />
+                                <button 
+                                    onClick={handleClearDate}
+                                    className="py-2 px-4 rounded-md bg-secondary hover:bg-border font-medium text-sm text-text-primary transition-colors h-10"
+                                >
+                                    Limpar Tela
+                                </button>
                             </div>
                         </div>
 
-                        {selectedDate ? (
+                        {selectedDate && dailyData.length > 0 ? (
                             <>
                                 <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                                     <div className="bg-card p-4 rounded-lg shadow-md border border-border text-center">
@@ -336,10 +308,14 @@ const PagamentosFabrica: React.FC = () => {
                                 </div>
                             </>
                         ) : (
-                            <div className="text-center py-16 bg-card rounded-lg shadow-md flex flex-col items-center justify-center">
-                                <CalendarClockIcon className="w-16 h-16 mb-4 text-gray-300" />
-                                <h3 className="text-xl font-semibold text-text-primary">Nenhuma Data Selecionada</h3>
-                                <p className="mt-2 text-text-secondary">Por favor, escolha uma data acima para carregar ou criar os pagamentos do dia.</p>
+                            <div className="text-center py-16 bg-card rounded-lg shadow-md flex flex-col items-center justify-center border border-border">
+                                <ReportIcon className="w-16 h-16 mb-4 text-gray-300" />
+                                <h3 className="text-xl font-semibold text-text-primary">Nenhum Lançamento Encontrado</h3>
+                                <p className="mt-2 text-text-secondary max-w-md">
+                                    {selectedDate 
+                                        ? "Não há pagamentos registrados para esta data. Realize a transferência através do módulo de Previsão Financeira." 
+                                        : "Selecione uma data para visualizar os pagamentos."}
+                                </p>
                             </div>
                         )}
                     </>

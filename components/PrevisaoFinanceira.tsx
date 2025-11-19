@@ -14,7 +14,8 @@ interface Previsao {
 
 interface PrevisaoGerada {
     dias: { data: string; receitas: number; despesas: number; resultado: number; saldo: number }[];
-    totais: { receitas: number; despesas: number; resultado: number };
+    // Adjusted interface to match usage
+    totais: { totalReceitas: number; totalDespesas: number; totalResultado: number };
     semana: string;
     dataGeracao: string;
 }
@@ -222,7 +223,7 @@ export const PrevisaoFabrica: React.FC = () => {
             acc[item.empresa].totalDespesas += item.despesas;
             return acc;
         }, {});
-        return Object.entries(porEmpresa).map(([empresa, value]) => ({ empresa, totalDespesas: value.totalDespesas })).filter(item => item.totalDespesas > 0).sort((a, b) => b.totalDespesas - a.totalDespesas);
+        return Object.entries(porEmpresa).map(([empresa, value]) => ({ empresa, totalDespesas: (value as { totalDespesas: number }).totalDespesas })).filter(item => item.totalDespesas > 0).sort((a, b) => b.totalDespesas - a.totalDespesas);
     }, [filteredReportData]);
     
     const totalDespesasGeral = useMemo(() => {
@@ -283,12 +284,13 @@ export const PrevisaoFabrica: React.FC = () => {
             return { ...dia, resultado: resultadoDoDia, saldo: saldoAcumulado };
         });
 
+        // Consistent key naming for totals
         const totais = diasProcessados.reduce((acc, dia) => {
-            acc.receitas += dia.receitas;
-            acc.despesas += dia.despesas;
-            acc.resultado += dia.resultado;
+            acc.totalReceitas += dia.receitas;
+            acc.totalDespesas += dia.despesas;
+            acc.totalResultado += dia.resultado;
             return acc;
-        }, { receitas: 0, despesas: 0, resultado: 0 });
+        }, { totalReceitas: 0, totalDespesas: 0, totalResultado: 0 });
 
         const novaPrevisao: PrevisaoGerada = { dias: diasProcessados, totais, semana: semanaParaGerar.trim(), dataGeracao: new Date().toISOString() };
         
@@ -564,7 +566,7 @@ export const PrevisaoFabrica: React.FC = () => {
                           <h3 className="text-lg font-bold text-text-primary">Previsão: <span className="text-primary">{previsaoGeradaAtiva.semana}</span></h3>
                           <button onClick={() => setPrevisaoGeradaAtiva(null)} className="px-4 py-2 rounded-md bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Voltar</button>
                       </div>
-                      <div className="bg-card border border-border rounded-lg overflow-hidden shadow-sm"><table className="min-w-full divide-y divide-border text-sm text-left"><thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider"><tr><th className="px-6 py-3">Data</th><th className="px-6 py-3 text-right">Receitas</th><th className="px-6 py-3 text-right">Despesas</th><th className="px-6 py-3 text-right">Saldo</th></tr></thead><tbody className="divide-y divide-border bg-white">{previsaoGeradaAtiva.dias.map(dia => (<tr key={dia.data} className="hover:bg-secondary"><td className="px-6 py-4 font-medium text-text-primary">{formatDateToBR(dia.data)}</td><td className="px-6 py-4 text-right text-success font-semibold">{formatCurrency(dia.receitas)}</td><td className="px-6 py-4 text-right text-danger font-semibold">{formatCurrency(dia.despesas)}</td><td className={`px-6 py-4 text-right font-bold ${dia.saldo >= 0 ? 'text-success' : 'text-danger'}`}>{formatCurrency(dia.saldo)}</td></tr>))}</tbody><tfoot><tr className="bg-secondary/50 font-bold text-text-primary"><td colSpan={2} className="px-6 py-4 text-right uppercase text-xs tracking-wider">Total Despesas:</td><td className="px-6 py-4 text-danger">{formatCurrency(previsaoGeradaAtiva.totais.despesas)}</td><td className="px-6 py-4"></td></tr></tfoot></table></div>
+                      <div className="bg-card border border-border rounded-lg overflow-hidden shadow-sm"><table className="min-w-full divide-y divide-border text-sm text-left"><thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider"><tr><th className="px-6 py-3">Data</th><th className="px-6 py-3 text-right">Receitas</th><th className="px-6 py-3 text-right">Despesas</th><th className="px-6 py-3 text-right">Saldo</th></tr></thead><tbody className="divide-y divide-border bg-white">{previsaoGeradaAtiva.dias.map(dia => (<tr key={dia.data} className="hover:bg-secondary"><td className="px-6 py-4 font-medium text-text-primary">{formatDateToBR(dia.data)}</td><td className="px-6 py-4 text-right text-success font-semibold">{formatCurrency(dia.receitas)}</td><td className="px-6 py-4 text-right text-danger font-semibold">{formatCurrency(dia.despesas)}</td><td className={`px-6 py-4 text-right font-bold ${dia.saldo >= 0 ? 'text-success' : 'text-danger'}`}>{formatCurrency(dia.saldo)}</td></tr>))}</tbody><tfoot><tr className="bg-secondary/50 font-bold text-text-primary"><td colSpan={2} className="px-6 py-4 text-right uppercase text-xs tracking-wider">Total Despesas:</td><td className="px-6 py-4 text-danger">{formatCurrency(previsaoGeradaAtiva.totais.totalDespesas)}</td><td className="px-6 py-4"></td></tr></tfoot></table></div>
                         </div>
                     ) : (
                         <>
@@ -573,7 +575,7 @@ export const PrevisaoFabrica: React.FC = () => {
                               <div className="flex items-center gap-2"><button onClick={() => setDashboardSemanaFilter('')} className="px-3 py-2 rounded-md bg-secondary hover:bg-secondary/80 text-text-primary font-medium text-sm transition-colors">Limpar</button><button onClick={() => setIsGerarPrevisaoModalOpen(true)} className="flex items-center justify-center gap-2 bg-primary text-white font-medium py-2 px-4 rounded-md hover:bg-primary-hover transition-colors text-sm shadow-sm"><PlusIcon className="h-4 w-4" /> Criar Nova Previsão</button></div>
                           </div>
                           {filteredHistoricoGerado.length > 0 ? (
-                              <div className="bg-card border border-border rounded-lg overflow-hidden shadow-sm"><table className="min-w-full divide-y divide-border text-sm text-left"><thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider"><tr><th className="px-6 py-3">Semana</th><th className="px-6 py-3">Data da Geração</th><th className="px-6 py-3 text-right">Resultado Total</th><th className="px-6 py-3 text-center">Ações</th></tr></thead><tbody className="divide-y divide-border bg-white">{filteredHistoricoGerado.map(item => (<tr key={item.dataGeracao} className="hover:bg-secondary"><td className="px-6 py-4 font-medium text-text-primary">{item.semana}</td><td className="px-6 py-4 text-text-secondary">{new Date(item.dataGeracao).toLocaleString('pt-BR')}</td><td className={`px-6 py-4 text-right font-bold ${item.totais.resultado >= 0 ? 'text-success' : 'text-danger'}`}>{formatCurrency(item.totais.resultado)}</td><td className="px-6 py-4 text-center"><div className="flex items-center justify-center gap-2"><button onClick={() => setPrevisaoGeradaAtiva(item)} className="px-3 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 font-medium text-xs transition-colors border border-primary/30">Visualizar</button><button onClick={() => handleDeleteGeneratedForecastClick(item.dataGeracao)} className="text-danger hover:bg-danger/10 p-1.5 rounded-md transition-colors" aria-label="Excluir"><TrashIcon className="h-4 w-4"/></button></div></td></tr>))}</tbody></table></div>
+                              <div className="bg-card border border-border rounded-lg overflow-hidden shadow-sm"><table className="min-w-full divide-y divide-border text-sm text-left"><thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider"><tr><th className="px-6 py-3">Semana</th><th className="px-6 py-3">Data da Geração</th><th className="px-6 py-3 text-right">Resultado Total</th><th className="px-6 py-3 text-center">Ações</th></tr></thead><tbody className="divide-y divide-border bg-white">{filteredHistoricoGerado.map(item => (<tr key={item.dataGeracao} className="hover:bg-secondary"><td className="px-6 py-4 font-medium text-text-primary">{item.semana}</td><td className="px-6 py-4 text-text-secondary">{new Date(item.dataGeracao).toLocaleString('pt-BR')}</td><td className={`px-6 py-4 text-right font-bold ${item.totais.totalResultado >= 0 ? 'text-success' : 'text-danger'}`}>{formatCurrency(item.totais.totalResultado)}</td><td className="px-6 py-4 text-center"><div className="flex items-center justify-center gap-2"><button onClick={() => setPrevisaoGeradaAtiva(item)} className="px-3 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 font-medium text-xs transition-colors border border-primary/30">Visualizar</button><button onClick={() => handleDeleteGeneratedForecastClick(item.dataGeracao)} className="text-danger hover:bg-danger/10 p-1.5 rounded-md transition-colors" aria-label="Excluir"><TrashIcon className="h-4 w-4"/></button></div></td></tr>))}</tbody></table></div>
                           ) : (
                               <div className="text-center py-16"><div className="flex flex-col items-center justify-center text-text-secondary"><DatabaseIcon className="w-10 h-10 mb-3 text-gray-300" /><h3 className="text-lg font-medium text-text-primary">Nenhuma Previsão Gerada</h3><p className="text-sm mt-1">{dashboardSemanaFilter ? 'Nenhuma previsão encontrada.' : 'Crie uma nova previsão.'}</p></div></div>
                           )}

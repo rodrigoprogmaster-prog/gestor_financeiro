@@ -257,8 +257,18 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         vencido: { count: 0, value: 0 },
     };
 
-    // Calculate totals based on all cheques, not just filtered ones for the cards.
-    allChequesWithDynamicStatus.forEach(cheque => {
+    // Use a list filtered ONLY by search and date, but NOT by status, for the totals
+    const chequesForTotals = allChequesWithDynamicStatus.filter(cheque => {
+        const searchMatch = !searchTerm || Object.values(cheque).some(value =>
+            String(value).toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        const startDateMatch = !dateRange.start || cheque.dataVencimento >= dateRange.start;
+        const endDateMatch = !dateRange.end || cheque.dataVencimento <= dateRange.end;
+        
+        return searchMatch && startDateMatch && endDateMatch;
+    });
+
+    chequesForTotals.forEach(cheque => {
         const { dynamicStatus, valor } = cheque;
 
         switch (dynamicStatus) {
@@ -282,7 +292,7 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     });
 
     return result;
-  }, [allChequesWithDynamicStatus]);
+  }, [allChequesWithDynamicStatus, searchTerm, dateRange]);
 
 
   const handleOpenAddModal = () => {
@@ -501,56 +511,105 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             return;
         }
 
-        // Group by Loja, then by Emitente
-        const grouped = devolvidos.reduce<Record<string, Record<string, Cheque[]>>>((acc, cheque) => {
-            if (!acc[cheque.loja]) {
-                acc[cheque.loja] = {};
-            }
-            if (!acc[cheque.loja][cheque.emitente]) {
-                acc[cheque.loja][cheque.emitente] = [];
-            }
-            acc[cheque.loja][cheque.emitente].push(cheque);
-            return acc;
-        }, {});
+        // Sort by dataVencimento descending (Most Recent First), then by loja, then by emitente
+        const sortedDevolvidos = [...devolvidos].sort((a, b) => {
+            const dateA = new Date(a.dataVencimento).getTime();
+            const dateB = new Date(b.dataVencimento).getTime();
+            if (dateA !== dateB) return dateB - dateA; // Most recent date first (Desc)
+            if (a.loja !== b.loja) return a.loja.localeCompare(b.loja);
+            return a.emitente.localeCompare(b.emitente);
+        });
 
         const aoaData: any[][] = [];
-        aoaData.push(['Relatório de Cheques Devolvidos', null, null, null]); // Title
+        aoaData.push(['Relatório de Cheques Devolvidos - Por Data de Vencimento', null, null]); // Title
         aoaData.push([]); // Spacer
 
+        let currentVencimento: string | null = null;
+        let currentLoja: string | null = null;
+        let currentEmitente: string | null = null;
+
         let totalGeral = 0;
+        let totalVencimentoGroup = 0;
+        let totalLojaGroup = 0;
+        let totalEmitenteGroup = 0;
 
-        // Iterate over lojas, sorted alphabetically
-        for (const loja of Object.keys(grouped).sort()) {
-            aoaData.push([`Loja: ${loja}`, null, null, null]); // Loja Header
-            let totalLoja = 0;
-
-            // Iterate over emitentes in the loja, sorted alphabetically
-            for (const emitente of Object.keys(grouped[loja]).sort()) {
-                aoaData.push([`Emitente: ${emitente}`, null, null, null]); // Emitente Header
-                aoaData.push(['Número do Cheque', 'Vencimento', 'Valor']); // Cheque headers
-                
-                let totalEmitente = 0;
-                const chequesDoEmitente = grouped[loja][emitente];
-                
-                // List individual cheques for the emitente
-                for (const cheque of chequesDoEmitente) {
-                    aoaData.push([cheque.numero, formatDateToBR(cheque.dataVencimento), cheque.valor]);
-                    totalEmitente += cheque.valor;
+        sortedDevolvidos.forEach((cheque, index) => {
+            // Break grouping for Vencimento
+            if (cheque.dataVencimento !== currentVencimento) {
+                if (currentVencimento !== null) {
+                    // Close previous groups
+                     if (currentLoja !== null) {
+                        if (currentEmitente !== null) {
+                            aoaData.push(['    Subtotal Emitente:', null, totalEmitenteGroup]);
+                            aoaData.push([]);
+                            totalEmitenteGroup = 0;
+                        }
+                         aoaData.push([`  Total da Loja ${currentLoja}:`, null, totalLojaGroup]);
+                         aoaData.push([]);
+                         totalLojaGroup = 0;
+                     }
+                    // Add totals for previous Vencimento group
+                    aoaData.push([`TOTAL PARA VENCIMENTO ${formatDateToBR(currentVencimento)}:`, null, totalVencimentoGroup]);
+                    aoaData.push([]);
                 }
-                
-                // Subtotal for emitente
-                aoaData.push(['Subtotal Emitente:', null, totalEmitente]);
-                aoaData.push([]); // Spacer
-                totalLoja += totalEmitente;
+                currentVencimento = cheque.dataVencimento;
+                currentLoja = null; 
+                currentEmitente = null;
+                totalVencimentoGroup = 0;
+                aoaData.push([`VENCIMENTO: ${formatDateToBR(currentVencimento)}`, null, null]);
+                aoaData.push([]);
             }
 
-            // Total for loja
-            aoaData.push([`Total da Loja ${loja}:`, null, totalLoja]);
-            aoaData.push([]); // Spacer
-            totalGeral += totalLoja;
-        }
-        
-        // Grand Total
+            // Break grouping for Loja
+            if (cheque.loja !== currentLoja) {
+                 if (currentLoja !== null) {
+                     // Close previous emitente if exists
+                     if (currentEmitente !== null) {
+                        aoaData.push(['    Subtotal Emitente:', null, totalEmitenteGroup]);
+                        aoaData.push([]);
+                        totalEmitenteGroup = 0;
+                     }
+                    // Add totals for previous Loja group within same Vencimento
+                    aoaData.push([`  Total da Loja ${currentLoja}:`, null, totalLojaGroup]);
+                    aoaData.push([]);
+                }
+                currentLoja = cheque.loja;
+                currentEmitente = null; 
+                totalLojaGroup = 0;
+                aoaData.push([`  LOJA: ${currentLoja}`, null, null]);
+            }
+
+            // Break grouping for Emitente
+            if (cheque.emitente !== currentEmitente) {
+                if (currentEmitente !== null) {
+                    // Add totals for previous Emitente group within same Loja
+                    aoaData.push(['    Subtotal Emitente:', null, totalEmitenteGroup]);
+                    aoaData.push([]);
+                }
+                currentEmitente = cheque.emitente;
+                totalEmitenteGroup = 0;
+                aoaData.push([`    EMITENTE: ${currentEmitente}`, null, null]);
+                aoaData.push(['      Número do Cheque', 'Valor']); 
+            }
+
+            // Add cheque detail
+            aoaData.push([`      ${cheque.numero}`, cheque.valor]);
+            totalEmitenteGroup += cheque.valor;
+            totalLojaGroup += cheque.valor;
+            totalVencimentoGroup += cheque.valor;
+            totalGeral += cheque.valor;
+
+            // Handle totals for the very last item in the loop
+            if (index === sortedDevolvidos.length - 1) {
+                aoaData.push(['    Subtotal Emitente:', null, totalEmitenteGroup]);
+                aoaData.push([]);
+                aoaData.push([`  Total da Loja ${currentLoja}:`, null, totalLojaGroup]);
+                aoaData.push([]);
+                aoaData.push([`TOTAL PARA VENCIMENTO ${formatDateToBR(currentVencimento)}:`, null, totalVencimentoGroup]);
+                aoaData.push([]);
+            }
+        });
+
         aoaData.push([]);
         aoaData.push(['TOTAL GERAL DEVOLVIDO:', null, totalGeral]);
 
@@ -561,23 +620,30 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         worksheet['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }]; // Merge title
 
         const range = XLSX.utils.decode_range(worksheet['!ref'] as string);
-        for(let R = 2; R <= range.e.r; ++R) { // Start from row 2 to avoid headers
-            const cellRef = XLSX.utils.encode_cell({c: 2, r: R}); // Column C for values
-            if (worksheet[cellRef] && typeof worksheet[cellRef].v === 'number') {
-                worksheet[cellRef].t = 'n';
-                worksheet[cellRef].z = 'R$ #,##0.00';
+        for(let R = 0; R <= range.e.r; ++R) {
+            // Column C for subtotals/totals (index 2)
+            const cellRefC = XLSX.utils.encode_cell({c: 2, r: R});
+            if (worksheet[cellRefC] && typeof worksheet[cellRefC].v === 'number') {
+                worksheet[cellRefC].t = 'n';
+                worksheet[cellRefC].z = 'R$ #,##0.00';
+            }
+            // Column B for individual cheque values (index 1)
+            const cellRefB = XLSX.utils.encode_cell({c: 1, r: R});
+            if (worksheet[cellRefB] && typeof worksheet[cellRefB].v === 'number') {
+                worksheet[cellRefB].t = 'n';
+                worksheet[cellRefB].z = 'R$ #,##0.00';
             }
         }
-        
+
         worksheet['!cols'] = [
-            { wch: 40 }, // A: Loja/Emitente/Numero
-            { wch: 15 }, // B: Vencimento
-            { wch: 20 }, // C: Valor
+            { wch: 45 }, // A: Vencimento/Loja/Emitente/Cheque Number (long, so wider)
+            { wch: 15 }, // B: Value for individual cheques
+            { wch: 20 }, // C: Subtotals/Totals
         ];
 
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Cheques Devolvidos');
-        XLSX.writeFile(workbook, `devolvidos_detalhado_${new Date().toISOString().slice(0,10)}.xlsx`);
+        XLSX.writeFile(workbook, `devolvidos_por_vencimento_${new Date().toISOString().slice(0,10)}.xlsx`);
     };
 
     const handleFilterClick = (status: StatusCheque | 'Vencido' | 'Todos') => {
