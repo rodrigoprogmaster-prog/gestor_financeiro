@@ -290,14 +290,14 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
     return (
         <div className="animate-fade-in">
              <div className="flex items-center gap-4 mb-6">
-                <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors h-10">
+                <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">
                     <ArrowLeftIcon className="h-5 w-5" />
                     Voltar
                 </button>
                 <h3 className="text-xl md:text-2xl font-bold text-text-primary">{title}</h3>
             </div>
              <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                <div className="flex items-center gap-4 bg-secondary p-3 rounded-lg">
+                <div className="flex items-center gap-4 bg-secondary p-3 rounded-2xl">
                     <div className="text-center">
                         <p className="text-sm text-text-secondary font-semibold">VALOR TOTAL</p>
                         <p className="text-xl font-bold text-primary">{formatCurrency(totals.totalValue)}</p>
@@ -315,29 +315,29 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
                             placeholder="Filtrar por Mês Referência..."
                             value={mesReferenciaFilter}
                             onChange={(e) => setMesReferenciaFilter(e.target.value)}
-                            className="bg-background border border-border rounded-md px-3 py-2 pl-10 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10 w-full sm:w-64"
+                            className="bg-background border border-border rounded-xl px-3 py-2 pl-10 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10 w-full sm:w-64"
                         />
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <SearchIcon className="h-5 w-5 text-text-secondary" />
                         </div>
                     </div>
-                    <button onClick={() => setMesReferenciaFilter('')} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors h-10">Limpar</button>
+                    <button onClick={() => setMesReferenciaFilter('')} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">Limpar</button>
                     <button
                         onClick={handleExportXLSX}
-                        className="flex items-center gap-2 bg-success text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors duration-300 h-10"
+                        className="flex items-center gap-2 bg-success text-white font-semibold py-2 px-4 rounded-full hover:bg-green-700 transition-colors duration-300 h-10"
                     >
                         <DownloadIcon className="h-5 w-5" /> Emitir Fatura
                     </button>
                     <button
                         onClick={handleOpenAddModal}
-                        className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-hover transition-colors duration-300 h-10"
+                        className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-full hover:bg-primary-hover transition-colors duration-300 h-10"
                     >
                         <PlusIcon className="h-5 w-5" /> Incluir Transação
                     </button>
                 </div>
             </div>
             
-             <div className="bg-card shadow-md rounded-lg overflow-x-auto">
+             <div className="bg-card shadow-md rounded-2xl overflow-x-auto">
                 <table className="w-full text-base text-left text-text-secondary">
                     <thead className="text-sm text-text-primary uppercase bg-secondary">
                         <tr>
@@ -387,54 +387,54 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
 
              {isModalOpen && editingTransaction && (
                 <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-lg">
+                    <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-lg">
                         <h3 className="text-xl font-bold mb-6 text-text-primary">{editingTransaction.id ? 'Editar Transação' : 'Incluir Nova Transação'}</h3>
                         <div className="space-y-4">
                             <div>
                                 <label htmlFor="dataTransacao" className="block text-sm font-medium text-text-secondary mb-1">Data da Transação <span className="text-danger">*</span></label>
-                                <input id="dataTransacao" type="text" name="dataTransacao_br" value={editingTransaction.dataTransacao_br || ''} onChange={handleInputChange} onBlur={handleBlur} placeholder="DD/MM/AAAA" maxLength={10} className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.dataTransacao ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`} />
+                                <input id="dataTransacao" type="text" name="dataTransacao_br" value={editingTransaction.dataTransacao_br || ''} onChange={handleInputChange} onBlur={handleBlur} placeholder="DD/MM/AAAA" maxLength={10} className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.dataTransacao ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`} />
                                 {errors.dataTransacao && <p className="text-danger text-xs mt-1">{errors.dataTransacao}</p>}
                             </div>
                             <div>
                                 <label htmlFor="mesReferencia" className="block text-sm font-medium text-text-secondary mb-1">Mês Referência <span className="text-danger">*</span></label>
-                                <input id="mesReferencia" type="text" name="mesReferencia" placeholder="MM/AAAA" maxLength={7} value={editingTransaction.mesReferencia || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.mesReferencia ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`} />
+                                <input id="mesReferencia" type="text" name="mesReferencia" placeholder="MM/AAAA" maxLength={7} value={editingTransaction.mesReferencia || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.mesReferencia ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`} />
                                 {errors.mesReferencia && <p className="text-danger text-xs mt-1">{errors.mesReferencia}</p>}
                             </div>
                              <div>
                                 <label htmlFor="transacao" className="block text-sm font-medium text-text-secondary mb-1">Transação <span className="text-danger">*</span></label>
-                                <input id="transacao" type="text" name="transacao" placeholder="Ex: Compra de material" value={editingTransaction.transacao || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.transacao ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`} />
+                                <input id="transacao" type="text" name="transacao" placeholder="Ex: Compra de material" value={editingTransaction.transacao || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.transacao ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`} />
                                 {errors.transacao && <p className="text-danger text-xs mt-1">{errors.transacao}</p>}
                             </div>
                             <div>
                                 <label htmlFor="categoria" className="block text-sm font-medium text-text-secondary mb-1">Categoria <span className="text-danger">*</span></label>
-                                <input id="categoria" type="text" name="categoria" placeholder="Ex: Suprimentos" value={editingTransaction.categoria || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.categoria ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`} />
+                                <input id="categoria" type="text" name="categoria" placeholder="Ex: Suprimentos" value={editingTransaction.categoria || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.categoria ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`} />
                                 {errors.categoria && <p className="text-danger text-xs mt-1">{errors.categoria}</p>}
                             </div>
                             <div>
                                 <label htmlFor="valor" className="block text-sm font-medium text-text-secondary mb-1">Valor <span className="text-danger">*</span></label>
-                                <input id="valor" type="text" name="valor" value={formatCurrency(editingTransaction.valor || 0)} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.valor ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`} />
+                                <input id="valor" type="text" name="valor" value={formatCurrency(editingTransaction.valor || 0)} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.valor ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`} />
                                 {errors.valor && <p className="text-danger text-xs mt-1">{errors.valor}</p>}
                             </div>
                         </div>
                         <div className="mt-8 flex justify-end gap-4">
-                            <button onClick={handleCloseModal} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                            <button onClick={handleSaveChanges} className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">
+                            <button onClick={handleCloseModal} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
+                            <button onClick={handleSaveChanges} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">
                                 {editingTransaction.id ? 'Salvar Alterações' : 'Incluir Transação'}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
-            
+
             {isConfirmOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-sm">
+                    <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-sm">
                         <h3 className="text-lg font-bold mb-4 text-text-primary">Confirmar Ação</h3>
                         <p className="text-text-secondary mb-6">{confirmAction.message}</p>
                         <div className="flex justify-end gap-4">
-                            <button onClick={handleCancelConfirm} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
+                            <button onClick={handleCancelConfirm} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
                             {confirmAction.action && (
-                                <button onClick={handleConfirm} className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Confirmar</button>
+                                <button onClick={handleConfirm} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Confirmar</button>
                             )}
                         </div>
                     </div>

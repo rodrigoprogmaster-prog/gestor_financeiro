@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AppView } from './types';
 import Header from './components/Header';
+import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import BoletosAReceber from './components/ControleCheques'; // Renomeado para clareza
 import GestaoBoletos from './components/GestaoBoletos';
@@ -14,7 +15,6 @@ import ConfiguracaoSeguranca from './components/ConfiguracaoSeguranca';
 import PrevisaoFinanceiraHome from './components/PrevisaoFinanceiraHome';
 import PagamentosDiariosHome from './components/PagamentosDiariosHome';
 import GerenciadorTarefas from './components/GerenciadorTarefas';
-import MeuDiaModal from './components/MeuDiaModal';
 
 
 const App: React.FC = () => {
@@ -22,7 +22,7 @@ const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return sessionStorage.getItem('isAuthenticated') === 'true';
   });
-  const [isMeuDiaModalOpen, setIsMeuDiaModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     // Apply theme on load
@@ -71,12 +71,7 @@ const App: React.FC = () => {
     setCurrentView(AppView.DASHBOARD); 
   };
   
-  // Removed handleBackToDashboard as per request for side back buttons to be removed
-  // const handleBackToDashboard = () => {
-  //   setCurrentView(AppView.DASHBOARD);
-  // };
-
-  const handleOpenMeuDiaModal = () => setIsMeuDiaModalOpen(true);
+  const handleToggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   if (!isAuthenticated) {
     return <Login onLoginSuccess={handleLoginSuccess} />;
@@ -123,12 +118,25 @@ const App: React.FC = () => {
   const isDashboard = currentView === AppView.DASHBOARD;
 
   return (
-    <div className="min-h-screen bg-background font-sans flex flex-col">
-      <Header setView={setCurrentView} onLogout={handleLogout} onOpenMeuDia={handleOpenMeuDiaModal} />
-      <main className={`flex-grow flex flex-col ${isDashboard ? 'p-4 sm:p-6 lg:p-8' : ''}`}>
-        {renderView()}
-      </main>
-      {isMeuDiaModalOpen && <MeuDiaModal onClose={() => setIsMeuDiaModalOpen(false)} />}
+    <div className="h-screen bg-background font-sans flex flex-col overflow-hidden">
+      <Header 
+        setView={setCurrentView} 
+        onToggleSidebar={handleToggleSidebar} 
+      />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar 
+            currentView={currentView} 
+            setView={setCurrentView} 
+            isOpen={isSidebarOpen} 
+            onClose={() => setIsSidebarOpen(false)}
+            onLogout={handleLogout}
+        />
+        <main className={`flex-1 overflow-y-auto bg-background ${isDashboard ? 'p-4 sm:p-6 lg:p-8' : ''}`}>
+            <div className="max-w-full mx-auto">
+                {renderView()}
+            </div>
+        </main>
+      </div>
     </div>
   );
 };

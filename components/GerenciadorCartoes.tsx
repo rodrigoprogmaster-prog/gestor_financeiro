@@ -72,7 +72,7 @@ const GerenciadorCartoes: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 <>
                     <div className="flex items-center gap-4 mb-6">
                         {onBack && (
-                            <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors h-10">
+                            <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">
                                 <ArrowLeftIcon className="h-5 w-5" />
                                 Voltar
                             </button>

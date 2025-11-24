@@ -318,9 +318,9 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 <h2 className="text-2xl font-bold text-text-primary tracking-tight">Boletos a Pagar</h2>
             </div>
             <div className="flex items-center flex-wrap gap-2">
-                <button onClick={handleExportXLSX} className="flex items-center gap-2 bg-white border border-border text-text-primary font-medium py-2 px-4 rounded-md hover:bg-secondary text-sm h-9"><DownloadIcon className="h-4 w-4"/>Exportar</button>
-                <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 bg-white border border-border text-text-primary font-medium py-2 px-4 rounded-md hover:bg-secondary text-sm h-9"><UploadIcon className="h-4 w-4"/>Importar</button>
-                <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-primary text-white font-medium py-2 px-4 rounded-md hover:bg-primary-hover text-sm h-9 shadow-sm"><PlusIcon className="h-4 w-4"/>Incluir</button>
+                <button onClick={handleExportXLSX} className="flex items-center gap-2 bg-white border border-border text-text-primary font-medium py-2 px-4 rounded-full hover:bg-secondary text-sm h-9"><DownloadIcon className="h-4 w-4"/>Exportar</button>
+                <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 bg-white border border-border text-text-primary font-medium py-2 px-4 rounded-full hover:bg-secondary text-sm h-9"><UploadIcon className="h-4 w-4"/>Importar</button>
+                <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-primary text-white font-medium py-2 px-4 rounded-full hover:bg-primary-hover text-sm h-9 shadow-sm"><PlusIcon className="h-4 w-4"/>Incluir</button>
             </div>
         </div>
 
@@ -329,7 +329,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 const total = totals[status] || { count: 0, value: 0 };
                 const isActive = statusFilter === status;
                 return (
-                     <div key={status} onClick={() => setStatusFilter(status)} className={`p-4 rounded-lg border cursor-pointer transition-all ${isActive ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-gray-300'}`}>
+                     <div key={status} onClick={() => setStatusFilter(status)} className={`p-4 rounded-2xl border cursor-pointer transition-all ${isActive ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-gray-300'}`}>
                         <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">{status}</p>
                         <p className={`text-xl font-bold ${status === StatusBoleto.VENCIDO ? 'text-danger' : status === StatusBoleto.PAGO ? 'text-success' : 'text-primary'}`}>{formatCurrency(total.value)}</p>
                         <p className="text-xs text-text-secondary mt-1">{total.count} boletos</p>
@@ -338,23 +338,23 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             })}
         </div>
 
-         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 bg-white p-3 rounded-lg border border-border">
+         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 bg-white p-3 rounded-2xl border border-border">
             <div className="relative w-full sm:w-auto flex-grow sm:flex-grow-0">
-                <input type="text" placeholder="Buscar por Fornecedor ou Pagador..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full sm:w-80 pl-10 pr-3 py-2 bg-white border border-border rounded-md text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors h-9"/>
+                <input type="text" placeholder="Buscar por Fornecedor ou Pagador..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full sm:w-80 pl-10 pr-3 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors h-9"/>
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon className="h-4 w-4 text-text-secondary"/></div>
             </div>
              <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
                 <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-text-secondary">Vencimento:</span>
-                    <input type="date" value={dateRange.start} onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))} className="bg-white border border-border rounded-md px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/>
+                    <input type="date" value={dateRange.start} onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))} className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/>
                     <span className="text-xs text-text-secondary">até</span>
-                    <input type="date" value={dateRange.end} onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))} className="bg-white border border-border rounded-md px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/>
+                    <input type="date" value={dateRange.end} onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))} className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/>
                 </div>
-                <button onClick={handleClearFilters} className="px-3 py-1.5 rounded-md bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-9 transition-colors">Limpar</button>
+                <button onClick={handleClearFilters} className="px-3 py-1.5 rounded-full bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-9 transition-colors">Limpar</button>
             </div>
         </div>
 
-        <div className="bg-card border border-border rounded-lg overflow-hidden flex-grow shadow-sm">
+        <div className="bg-card border border-border rounded-2xl overflow-hidden flex-grow shadow-sm">
             <div ref={scrollRef} onScroll={handleScroll} className="overflow-x-auto overflow-y-auto h-full"> {/* Make scroll container fill height */}
                  <table className="min-w-full divide-y divide-border text-sm text-left">
                     <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider sticky top-0">
@@ -389,9 +389,9 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                 </td>
                                 <td className="px-6 py-4 text-center">
                                     <div className="flex items-center justify-center gap-2">
-                                        {!boleto.pago && <button onClick={() => handleMarkAsPaid(boleto)} title="Pagar" className="text-success p-1.5 rounded-md hover:bg-success/10 transition-colors"><CheckIcon className="h-4 w-4"/></button>}
-                                        <button onClick={() => handleEditClick(boleto)} title="Editar" className="text-primary p-1.5 rounded-md hover:bg-primary/10 transition-colors"><EditIcon className="h-4 w-4"/></button>
-                                        <button onClick={() => handleDeleteClick(boleto.id)} title="Excluir" className="text-danger p-1.5 rounded-md hover:bg-danger/10 transition-colors"><TrashIcon className="h-4 w-4"/></button>
+                                        {!boleto.pago && <button onClick={() => handleMarkAsPaid(boleto)} title="Pagar" className="text-success p-1.5 rounded-full hover:bg-success/10 transition-colors"><CheckIcon className="h-4 w-4"/></button>}
+                                        <button onClick={() => handleEditClick(boleto)} title="Editar" className="text-primary p-1.5 rounded-full hover:bg-primary/10 transition-colors"><EditIcon className="h-4 w-4"/></button>
+                                        <button onClick={() => handleDeleteClick(boleto.id)} title="Excluir" className="text-danger p-1.5 rounded-full hover:bg-danger/10 transition-colors"><TrashIcon className="h-4 w-4"/></button>
                                     </div>
                                 </td>
                             </tr>
@@ -421,37 +421,37 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
         {isModalOpen && editingBoleto && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                 <div className="bg-card rounded-lg shadow-lg border border-border w-full max-w-md overflow-hidden">
+                 <div className="bg-card rounded-2xl shadow-lg border border-border w-full max-w-md overflow-hidden">
                     <div className="px-6 py-4 border-b border-border bg-secondary/30">
                         <h3 className="text-lg font-bold text-text-primary">{editingBoleto.id ? 'Editar Boleto' : 'Novo Boleto'}</h3>
                     </div>
                     <div className="p-6 space-y-4">
                         <div>
                              <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Fornecedor</label>
-                            <input name="fornecedor" value={editingBoleto.fornecedor || ''} onChange={handleInputChange} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.fornecedor ? 'border-danger' : 'border-border'}`} />
+                            <input name="fornecedor" value={editingBoleto.fornecedor || ''} onChange={handleInputChange} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.fornecedor ? 'border-danger' : 'border-border'}`} />
                             {errors.fornecedor && <p className="text-danger text-xs mt-1">{errors.fornecedor}</p>}
                         </div>
                          <div>
                              <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Pagador</label>
-                            <input name="pagador" value={editingBoleto.pagador || ''} onChange={handleInputChange} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.pagador ? 'border-danger' : 'border-border'}`} />
+                            <input name="pagador" value={editingBoleto.pagador || ''} onChange={handleInputChange} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.pagador ? 'border-danger' : 'border-border'}`} />
                             {errors.pagador && <p className="text-danger text-xs mt-1">{errors.pagador}</p>}
                         </div>
                          <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Vencimento</label>
-                                <input name="vencimento_br" value={editingBoleto.vencimento_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.vencimento ? 'border-danger' : 'border-border'}`} />
+                                <input name="vencimento_br" value={editingBoleto.vencimento_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.vencimento ? 'border-danger' : 'border-border'}`} />
                                 {errors.vencimento && <p className="text-danger text-xs mt-1">{errors.vencimento}</p>}
                             </div>
                             <div>
                                  <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Valor</label>
-                                <input name="valor" value={formatCurrency(editingBoleto.valor || 0)} onChange={handleInputChange} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.valor ? 'border-danger' : 'border-border'}`} />
+                                <input name="valor" value={formatCurrency(editingBoleto.valor || 0)} onChange={handleInputChange} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.valor ? 'border-danger' : 'border-border'}`} />
                                 {errors.valor && <p className="text-danger text-xs mt-1">{errors.valor}</p>}
                             </div>
                         </div>
                     </div>
                      <div className="px-6 py-4 border-t border-border bg-secondary/30 flex justify-end gap-3">
-                        <button onClick={handleCloseModal} className="px-4 py-2 rounded-md bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
-                        <button onClick={handleSaveChanges} className="px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Salvar</button>
+                        <button onClick={handleCloseModal} className="px-4 py-2 rounded-full bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
+                        <button onClick={handleSaveChanges} className="px-4 py-2 rounded-full bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Salvar</button>
                     </div>
                 </div>
             </div>
@@ -459,12 +459,12 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
         {isConfirmOpen && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                <div className="bg-card rounded-lg shadow-xl border border-border w-full max-w-sm p-6">
+                <div className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-sm p-6">
                     <h3 className="text-lg font-bold mb-2 text-text-primary">Confirmar</h3>
                     <p className="text-sm text-text-secondary mb-6">{confirmAction.message}</p>
                     <div className="flex justify-end gap-3">
-                        <button onClick={() => setIsConfirmOpen(false)} className="px-4 py-2 rounded-md bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
-                        <button onClick={handleConfirm} className="px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Confirmar</button>
+                        <button onClick={() => setIsConfirmOpen(false)} className="px-4 py-2 rounded-full bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
+                        <button onClick={handleConfirm} className="px-4 py-2 rounded-full bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Confirmar</button>
                     </div>
                 </div>
             </div>

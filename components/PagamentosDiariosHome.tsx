@@ -23,46 +23,48 @@ const PagamentosDiariosHome: React.FC<PagamentosDiariosHomeProps> = ({ initialTa
   };
 
   return (
-    <div className="flex flex-col flex-grow w-full">
-        <div className="flex-shrink-0 px-4 sm:px-6 lg:px-8 pt-6">
-            <div className="flex items-center gap-4 mb-6">
-                {onBack && (
-                    <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors h-10">
-                        <ArrowLeftIcon className="h-5 w-5" />
-                        Voltar
-                    </button>
-                )}
-                <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
-                    Pagamentos Diários
-                </h2>
-            </div>
-            <div className="border-b border-border">
-                <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+    <div className="flex flex-col flex-grow w-full h-full bg-background">
+        <div className="flex-shrink-0 px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    {onBack && (
+                        <button onClick={onBack} className="flex items-center gap-2 py-1.5 px-3 rounded-full bg-white border border-border hover:bg-secondary font-medium transition-colors text-sm">
+                            <ArrowLeftIcon className="h-4 w-4" />
+                            Voltar
+                        </button>
+                    )}
+                    <h2 className="text-2xl font-bold text-text-primary tracking-tight">
+                        Pagamentos Diários
+                    </h2>
+                </div>
+
+                {/* Compact Segmented Control for Context Switching */}
+                <div className="bg-secondary p-1 rounded-full inline-flex border border-border">
                     <button
                         onClick={() => setActiveTab('fabrica')}
-                        className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
+                        className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
                             activeTab === 'fabrica'
-                            ? 'border-primary text-primary'
-                            : 'border-transparent text-text-secondary hover:text-text-primary hover:border-gray-300'
+                            ? 'bg-white text-primary shadow-sm ring-1 ring-black/5'
+                            : 'text-text-secondary hover:text-text-primary'
                         }`}
                     >
                         Fábrica
                     </button>
                     <button
                         onClick={() => setActiveTab('cristiano')}
-                        className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
+                        className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
                             activeTab === 'cristiano'
-                            ? 'border-primary text-primary'
-                            : 'border-transparent text-text-secondary hover:text-text-primary hover:border-gray-300'
+                            ? 'bg-white text-primary shadow-sm ring-1 ring-black/5'
+                            : 'text-text-secondary hover:text-text-primary'
                         }`}
                     >
                         Cristiano
                     </button>
-                </nav>
+                </div>
             </div>
         </div>
 
-        <div className="flex-grow flex flex-col">
+        <div className="flex-grow flex flex-col overflow-hidden">
           {renderContent()}
         </div>
     </div>

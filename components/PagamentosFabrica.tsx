@@ -71,7 +71,8 @@ const PagamentosFabrica: React.FC = () => {
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
         return saved ? JSON.parse(saved) : [];
     });
-    const [selectedDate, setSelectedDate] = useState<string>('');
+    // Initialize with current date
+    const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingPagamento, setEditingPagamento] = useState<Pagamento | null>(null);
     const [errors, setErrors] = useState<PagamentoErrors>({});
@@ -265,109 +266,92 @@ const PagamentosFabrica: React.FC = () => {
             case 'pagamentos':
                 return (
                     <>
-                        <div className="flex flex-col sm:flex-row justify-end sm:items-center mb-6 gap-4">
-                            <div className="flex items-center gap-2">
-                                <label htmlFor="date-selector" className="font-semibold text-sm text-text-secondary">Selecione o Dia:</label>
-                                <input
-                                    id="date-selector"
-                                    type="date"
-                                    value={selectedDate}
-                                    onChange={e => handleDateSelect(e.target.value)}
-                                    className="bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10"
-                                />
-                                <button 
-                                    onClick={handleClearDate}
-                                    className="py-2 px-4 rounded-md bg-secondary hover:bg-border font-medium text-sm text-text-primary transition-colors h-10"
-                                >
-                                    Limpar Tela
-                                </button>
-                            </div>
-                        </div>
-
                         {selectedDate && dailyData.length > 0 ? (
                             <>
-                                <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                                    <div className="bg-card p-4 rounded-lg shadow-md border border-border text-center">
-                                        <p className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Receitas do Dia</p>
-                                        <p className="text-2xl font-bold text-success">{formatCurrency(totais.receitasDoDia)}</p>
+                                <div className="mb-4 grid grid-cols-2 lg:grid-cols-5 gap-3">
+                                    <div className="bg-card p-3 rounded-2xl shadow-sm border border-border text-center">
+                                        <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Receitas</p>
+                                        <p className="text-lg font-bold text-success">{formatCurrency(totais.receitasDoDia)}</p>
                                     </div>
-                                    <div className="bg-card p-4 rounded-lg shadow-md border border-border text-center">
-                                        <p className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Despesas do Dia</p>
-                                        <p className="text-2xl font-bold text-danger">{formatCurrency(totais.despesas)}</p>
+                                    <div className="bg-card p-3 rounded-2xl shadow-sm border border-border text-center">
+                                        <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Despesas</p>
+                                        <p className="text-lg font-bold text-danger">{formatCurrency(totais.despesas)}</p>
                                     </div>
-                                    <div className="bg-card p-4 rounded-lg shadow-md border border-border text-center">
-                                        <p className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Envia</p>
-                                        <p className="text-2xl font-bold text-orange-500">{formatCurrency(totais.envia)}</p>
+                                    <div className="bg-card p-3 rounded-2xl shadow-sm border border-border text-center">
+                                        <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Envia</p>
+                                        <p className="text-lg font-bold text-orange-500">{formatCurrency(totais.envia)}</p>
                                     </div>
-                                    <div className="bg-card p-4 rounded-lg shadow-md border border-border text-center">
-                                        <p className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Recebe</p>
-                                        <p className="text-2xl font-bold text-blue-500">{formatCurrency(totais.recebe)}</p>
+                                    <div className="bg-card p-3 rounded-2xl shadow-sm border border-border text-center">
+                                        <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Recebe</p>
+                                        <p className="text-lg font-bold text-blue-500">{formatCurrency(totais.recebe)}</p>
                                     </div>
-                                    <div className="bg-card p-4 rounded-lg shadow-md border border-border text-center">
-                                        <p className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Resultado do Dia</p>
-                                        <p className={`text-2xl font-bold ${totais.resultado >= 0 ? 'text-success' : 'text-danger'}`}>{formatCurrency(totais.resultado)}</p>
+                                    <div className="bg-card p-3 rounded-2xl shadow-sm border border-border text-center col-span-2 lg:col-span-1">
+                                        <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Resultado</p>
+                                        <p className={`text-lg font-bold ${totais.resultado >= 0 ? 'text-success' : 'text-danger'}`}>{formatCurrency(totais.resultado)}</p>
                                     </div>
                                 </div>
-                                <div className="bg-card shadow-md rounded-lg overflow-x-auto">
-                                    <table className="w-full text-base text-left text-text-secondary">
-                                        <thead className="text-sm text-text-primary uppercase bg-secondary">
-                                            <tr>
-                                                <th scope="col" className="px-6 py-3">Data</th>
-                                                <th scope="col" className="px-6 py-3">Dia semana</th>
-                                                <th scope="col" className="px-6 py-3">Empresa</th>
-                                                <th scope="col" className="px-6 py-3">Banco</th>
-                                                <th scope="col" className="px-6 py-3 text-right">Receitas (R$)</th>
-                                                <th scope="col" className="px-6 py-3 text-right">Despesas (R$)</th>
-                                                <th scope="col" className="px-6 py-3 text-right">Envia (R$)</th>
-                                                <th scope="col" className="px-6 py-3 text-right">Recebe (R$)</th>
-                                                <th scope="col" className="px-6 py-3 text-right">Resultado (R$)</th>
-                                                <th scope="col" className="px-6 py-3 text-center">Ações</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {dailyData.map((item) => {
-                                                const resultado = (item.receitas + item.recebe) - (item.despesas + item.envia);
-                                                return (
-                                                    <tr
-                                                        key={item.id}
-                                                        onClick={() => handleRowClick(item)}
-                                                        className="bg-card border-b border-border hover:bg-secondary cursor-pointer transition-colors duration-200"
-                                                    >
-                                                        <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{formatDateToBR(item.data)}</td>
-                                                        <td className="px-6 py-4">{getDayOfWeek(item.data)}</td>
-                                                        <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{item.empresa}</td>
-                                                        <td className="px-6 py-4">{item.tipo}</td>
-                                                        <td className="px-6 py-4 text-right text-success font-semibold">{formatCurrency(item.receitas)}</td>
-                                                        <td className="px-6 py-4 text-right text-danger font-semibold">{formatCurrency(item.despesas)}</td>
-                                                        <td className="px-6 py-4 text-right text-orange-500 font-semibold">{formatCurrency(item.envia)}</td>
-                                                        <td className="px-6 py-4 text-right text-blue-500 font-semibold">{formatCurrency(item.recebe)}</td>
-                                                        <td className={`px-6 py-4 text-right font-bold ${resultado >= 0 ? 'text-success' : 'text-danger'}`}>{formatCurrency(resultado)}</td>
-                                                        <td className="px-6 py-4">
-                                                            <div className="flex items-center justify-center">
-                                                                <button
-                                                                    onClick={(e) => handleDeleteClick(e, item.id)}
-                                                                    className="text-danger hover:text-danger/80 p-2 rounded-full hover:bg-danger/10 transition-colors"
-                                                                    aria-label="Excluir lançamento"
-                                                                >
-                                                                    <TrashIcon className="h-5 w-5" />
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                )
-                                            })}
-                                        </tbody>
-                                    </table>
+                                <div className="bg-card shadow-md rounded-2xl overflow-hidden border border-border flex-grow flex flex-col">
+                                    <div className="overflow-auto flex-grow">
+                                        <table className="w-full text-sm text-left text-text-secondary">
+                                            <thead className="text-xs text-text-primary uppercase bg-secondary sticky top-0 z-10 shadow-sm">
+                                                <tr>
+                                                    <th scope="col" className="px-4 py-3">Data</th>
+                                                    <th scope="col" className="px-4 py-3">Dia</th>
+                                                    <th scope="col" className="px-4 py-3">Empresa</th>
+                                                    <th scope="col" className="px-4 py-3">Banco</th>
+                                                    <th scope="col" className="px-4 py-3 text-right">Receitas</th>
+                                                    <th scope="col" className="px-4 py-3 text-right">Despesas</th>
+                                                    <th scope="col" className="px-4 py-3 text-right">Envia</th>
+                                                    <th scope="col" className="px-4 py-3 text-right">Recebe</th>
+                                                    <th scope="col" className="px-4 py-3 text-right">Resultado</th>
+                                                    <th scope="col" className="px-4 py-3 text-center">Ações</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-border">
+                                                {dailyData.map((item) => {
+                                                    const resultado = (item.receitas + item.recebe) - (item.despesas + item.envia);
+                                                    return (
+                                                        <tr
+                                                            key={item.id}
+                                                            onClick={() => handleRowClick(item)}
+                                                            className="bg-card hover:bg-secondary cursor-pointer transition-colors duration-200"
+                                                        >
+                                                            <td className="px-4 py-3 font-medium text-text-primary whitespace-nowrap">{formatDateToBR(item.data)}</td>
+                                                            <td className="px-4 py-3">{getDayOfWeek(item.data)}</td>
+                                                            <td className="px-4 py-3 font-medium text-text-primary whitespace-nowrap">{item.empresa}</td>
+                                                            <td className="px-4 py-3">{item.tipo}</td>
+                                                            <td className="px-4 py-3 text-right text-success font-semibold">{formatCurrency(item.receitas)}</td>
+                                                            <td className="px-4 py-3 text-right text-danger font-semibold">{formatCurrency(item.despesas)}</td>
+                                                            <td className="px-4 py-3 text-right text-orange-500 font-semibold">{formatCurrency(item.envia)}</td>
+                                                            <td className="px-4 py-3 text-right text-blue-500 font-semibold">{formatCurrency(item.recebe)}</td>
+                                                            <td className={`px-4 py-3 text-right font-bold ${resultado >= 0 ? 'text-success' : 'text-danger'}`}>{formatCurrency(resultado)}</td>
+                                                            <td className="px-4 py-3">
+                                                                <div className="flex items-center justify-center">
+                                                                    <button
+                                                                        onClick={(e) => handleDeleteClick(e, item.id)}
+                                                                        className="text-danger hover:text-danger/80 p-1.5 rounded-full hover:bg-danger/10 transition-colors"
+                                                                        aria-label="Excluir lançamento"
+                                                                    >
+                                                                        <TrashIcon className="h-4 w-4" />
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    )
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </>
                         ) : (
-                            <div className="text-center py-16 bg-card rounded-lg shadow-md flex flex-col items-center justify-center border border-border">
-                                <ReportIcon className="w-16 h-16 mb-4 text-gray-300" />
-                                <h3 className="text-xl font-semibold text-text-primary">Nenhum Lançamento Encontrado</h3>
-                                <p className="mt-2 text-text-secondary max-w-md">
+                            <div className="text-center py-16 bg-card rounded-2xl shadow-sm flex flex-col items-center justify-center border border-border h-64">
+                                <ReportIcon className="w-12 h-12 mb-4 text-gray-300" />
+                                <h3 className="text-lg font-semibold text-text-primary">Nenhum Lançamento</h3>
+                                <p className="mt-2 text-text-secondary text-sm max-w-md">
                                     {selectedDate 
-                                        ? "Não há pagamentos registrados para esta data. Realize a transferência através do módulo de Previsão Financeira." 
-                                        : "Selecione uma data para visualizar os pagamentos."}
+                                        ? "Não há dados para esta data. Use a Previsão Financeira para transferir." 
+                                        : "Selecione uma data acima para visualizar."}
                                 </p>
                             </div>
                         )}
@@ -383,47 +367,73 @@ const PagamentosFabrica: React.FC = () => {
     };
     
     return (
-      <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in">
-        <div className="border-b border-border mb-6">
-            <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+      <div className="p-4 sm:p-6 w-full h-full flex flex-col animate-fade-in">
+        {/* Unified Toolbar: Sub-tabs + Date Filter */}
+        <div className="flex flex-col lg:flex-row justify-between items-center mb-4 gap-4 bg-card p-3 rounded-2xl border border-border shadow-sm">
+            
+            {/* Left: Sub-tabs (Pills) */}
+            <div className="flex p-1 bg-secondary rounded-full">
                 <button
                     onClick={() => setActiveTab('pagamentos')}
-                    className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
+                    className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all ${
                         activeTab === 'pagamentos'
-                        ? 'border-primary text-primary'
-                        : 'border-transparent text-text-secondary hover:text-text-primary hover:border-gray-300'
+                        ? 'bg-white text-primary shadow-sm'
+                        : 'text-text-secondary hover:text-text-primary'
                     }`}
                 >
                     Pagamentos
                 </button>
                 <button
                     onClick={() => setActiveTab('transferencias')}
-                    className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
+                    className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all ${
                         activeTab === 'transferencias'
-                        ? 'border-primary text-primary'
-                        : 'border-transparent text-text-secondary hover:text-text-primary hover:border-gray-300'
+                        ? 'bg-white text-primary shadow-sm'
+                        : 'text-text-secondary hover:text-text-primary'
                     }`}
                 >
                     Transferências
                 </button>
                 <button
                     onClick={() => setActiveTab('inserir_banco')}
-                    className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
+                    className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all ${
                         activeTab === 'inserir_banco'
-                        ? 'border-primary text-primary'
-                        : 'border-transparent text-text-secondary hover:text-text-primary hover:border-gray-300'
+                        ? 'bg-white text-primary shadow-sm'
+                        : 'text-text-secondary hover:text-text-primary'
                     }`}
                 >
                     Inserir no Banco
                 </button>
-            </nav>
+            </div>
+
+            {/* Right: Filters (Only show for Pagamentos tab) */}
+            {activeTab === 'pagamentos' && (
+                <div className="flex items-center gap-2 w-full lg:w-auto justify-end">
+                    <div className="flex items-center bg-secondary rounded-full px-3 border border-border">
+                        <span className="text-xs font-medium text-text-secondary mr-2">Data:</span>
+                        <input
+                            type="date"
+                            value={selectedDate}
+                            onChange={e => handleDateSelect(e.target.value)}
+                            className="bg-transparent border-none text-sm text-text-primary focus:ring-0 h-9"
+                        />
+                    </div>
+                    <button 
+                        onClick={handleClearDate}
+                        className="py-1.5 px-3 rounded-full bg-white border border-border hover:bg-secondary font-medium text-xs text-text-primary transition-colors h-9 shadow-sm"
+                    >
+                        Limpar
+                    </button>
+                </div>
+            )}
         </div>
         
-        {renderContent()}
+        <div className="flex-grow flex flex-col overflow-hidden">
+            {renderContent()}
+        </div>
 
         {activeTab === 'pagamentos' && isEditModalOpen && editingPagamento && (
           <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-            <div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-2xl">
+            <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-2xl">
               <h3 className="text-xl font-bold mb-2 text-text-primary">Editar Lançamento</h3>
               <p className="text-text-secondary mb-6">{editingPagamento.empresa} - {formatDateToBR(editingPagamento.data)}</p>
               
@@ -436,7 +446,7 @@ const PagamentosFabrica: React.FC = () => {
                         name="empresa"
                         value={editingPagamento.empresa}
                         onChange={handleInputChange}
-                        className="w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                 </div>
                 <div className="sm:col-span-2">
@@ -446,7 +456,7 @@ const PagamentosFabrica: React.FC = () => {
                         name="tipo"
                         value={editingPagamento.tipo}
                         onChange={handleInputChange}
-                        className="w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                     >
                         {BANK_OPTIONS.map(banco => (
                             <option key={banco} value={banco}>{banco}</option>
@@ -461,7 +471,7 @@ const PagamentosFabrica: React.FC = () => {
                       name="receitas" 
                       value={formatInputCurrency(tempCurrencyInput.receitas || '')} 
                       onChange={handleCurrencyInputChange} 
-                      className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.receitas ? 'border-danger' : 'border-border'}`}
+                      className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.receitas ? 'border-danger' : 'border-border'}`}
                   />
                   {errors.receitas && <p className="text-danger text-xs mt-1">{errors.receitas}</p>}
                 </div>
@@ -473,7 +483,7 @@ const PagamentosFabrica: React.FC = () => {
                       name="despesas" 
                       value={formatInputCurrency(tempCurrencyInput.despesas || '')} 
                       onChange={handleCurrencyInputChange} 
-                      className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.despesas ? 'border-danger' : 'border-border'}`}
+                      className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.despesas ? 'border-danger' : 'border-border'}`}
                   />
                    {errors.despesas && <p className="text-danger text-xs mt-1">{errors.despesas}</p>}
                 </div>
@@ -485,7 +495,7 @@ const PagamentosFabrica: React.FC = () => {
                       name="envia" 
                       value={formatInputCurrency(tempCurrencyInput.envia || '')} 
                       onChange={handleCurrencyInputChange} 
-                      className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.envia ? 'border-danger' : 'border-border'}`}
+                      className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.envia ? 'border-danger' : 'border-border'}`}
                   />
                    {errors.envia && <p className="text-danger text-xs mt-1">{errors.envia}</p>}
                 </div>
@@ -497,15 +507,15 @@ const PagamentosFabrica: React.FC = () => {
                       name="recebe" 
                       value={formatInputCurrency(tempCurrencyInput.recebe || '')} 
                       onChange={handleCurrencyInputChange} 
-                      className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.recebe ? 'border-danger' : 'border-border'}`}
+                      className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.recebe ? 'border-danger' : 'border-border'}`}
                   />
                   {errors.recebe && <p className="text-danger text-xs mt-1">{errors.recebe}</p>}
                 </div>
               </div>
 
               <div className="mt-8 flex justify-end gap-4">
-                <button onClick={handleCloseModal} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                <button onClick={handleSaveChanges} className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Salvar</button>
+                <button onClick={handleCloseModal} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
+                <button onClick={handleSaveChanges} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Salvar</button>
               </div>
             </div>
           </div>
@@ -513,12 +523,12 @@ const PagamentosFabrica: React.FC = () => {
 
         {activeTab === 'pagamentos' && isConfirmOpen && (
             <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                <div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-sm">
+                <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-sm">
                     <h3 className="text-lg font-bold mb-4 text-text-primary">Confirmar Ação</h3>
                     <p className="text-text-secondary mb-6">{confirmAction.message}</p>
                      <div className="flex justify-end gap-4">
-                        <button onClick={handleCancelConfirm} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                        <button onClick={handleConfirm} className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Confirmar</button>
+                        <button onClick={handleCancelConfirm} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
+                        <button onClick={handleConfirm} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Confirmar</button>
                      </div>
                 </div>
             </div>

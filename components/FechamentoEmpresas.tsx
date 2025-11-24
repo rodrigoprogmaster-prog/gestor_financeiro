@@ -96,6 +96,7 @@ const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageKey, tit
     const [errors, setErrors] = useState<FechamentoErrors>({});
     const [isDateModalOpen, setIsDateModalOpen] = useState(false);
     const [dateEditingFechamento, setDateEditingFechamento] = useState<Fechamento | null>(null);
+    const [tempDateEnvio, setTempDateEnvio] = useState('');
     
     const [filters, setFilters] = useState({
         mesReferencia: '',
@@ -249,6 +250,7 @@ const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageKey, tit
 
     const handleRowDoubleClick = (fechamento: Fechamento) => {
         setDateEditingFechamento(fechamento);
+        setTempDateEnvio(fechamento.dataEnvio || '');
         setIsDateModalOpen(true);
     };
     
@@ -320,7 +322,7 @@ const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageKey, tit
     return (
         <div className="animate-fade-in p-4 sm:p-6 lg:p-8 w-full">
             <div className="flex items-center gap-4 mb-6">
-                <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors h-10">
+                <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">
                     <ArrowLeftIcon className="h-5 w-5" />
                     Voltar
                 </button>
@@ -336,11 +338,11 @@ const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageKey, tit
                                 onChange={handleNewMonthChange}
                                 placeholder="MM/AAAA"
                                 maxLength={7}
-                                className={`bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 h-10 w-full ${newMonthError ? 'border-danger focus:ring-danger' : 'border-border focus:ring-primary'}`}
+                                className={`bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 h-10 w-full ${newMonthError ? 'border-danger focus:ring-danger' : 'border-border focus:ring-primary'}`}
                             />
                             <button
                                 onClick={handleGenerateMonth}
-                                className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-hover transition-colors duration-300 h-10 whitespace-nowrap"
+                                className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-full hover:bg-primary-hover transition-colors duration-300 h-10 whitespace-nowrap"
                             >
                                 <PlusIcon className="h-5 w-5" />
                                 Gerar Lançamentos
@@ -352,11 +354,11 @@ const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageKey, tit
             </div>
             <div className="flex flex-wrap items-center gap-4 mb-4 p-4 bg-secondary/50 rounded-lg">
                 <h4 className="font-semibold text-text-primary mr-2">Filtros:</h4>
-                <input name="mesReferencia" value={filters.mesReferencia} onChange={handleFilterChange} placeholder="Filtrar por Mês Referência..." className="bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10 flex-grow sm:flex-grow-0" />
-                <input name="empresa" value={filters.empresa} onChange={handleFilterChange} placeholder="Filtrar por Empresa..." className="bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10 flex-grow sm:flex-grow-0" />
-                <input name="contabilidade" value={filters.contabilidade} onChange={handleFilterChange} placeholder="Filtrar por Contabilidade..." className="bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10 flex-grow sm:flex-grow-0" />
-                <input name="portador" value={filters.portador} onChange={handleFilterChange} placeholder="Filtrar por Portador..." className="bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10 flex-grow sm:flex-grow-0" />
-                <button onClick={handleClearFilters} className="py-2 px-4 rounded-lg bg-gray-300 hover:bg-gray-400 font-semibold transition-colors h-10">Limpar Filtros</button>
+                <input name="mesReferencia" value={filters.mesReferencia} onChange={handleFilterChange} placeholder="Filtrar por Mês Referência..." className="bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10 flex-grow sm:flex-grow-0" />
+                <input name="empresa" value={filters.empresa} onChange={handleFilterChange} placeholder="Filtrar por Empresa..." className="bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10 flex-grow sm:flex-grow-0" />
+                <input name="contabilidade" value={filters.contabilidade} onChange={handleFilterChange} placeholder="Filtrar por Contabilidade..." className="bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10 flex-grow sm:flex-grow-0" />
+                <input name="portador" value={filters.portador} onChange={handleFilterChange} placeholder="Filtrar por Portador..." className="bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10 flex-grow sm:flex-grow-0" />
+                <button onClick={handleClearFilters} className="py-2 px-4 rounded-full bg-gray-300 hover:bg-gray-400 font-semibold transition-colors h-10">Limpar Filtros</button>
             </div>
             <div className="bg-card shadow-md rounded-lg overflow-x-auto">
                 <table className="w-full text-base text-left text-text-secondary">
@@ -436,49 +438,49 @@ const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageKey, tit
             
             {isModalOpen && editingFechamento && (
                 <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-2xl">
+                    <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-2xl">
                         <h3 className="text-xl font-bold mb-6 text-text-primary">{editingFechamento.id ? 'Editar Lançamento' : 'Adicionar Lançamento'}</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-text-secondary mb-1">Mês Referência <span className="text-danger">*</span></label>
-                                <input type="text" name="mesReferencia" placeholder="MM/AAAA" maxLength={7} value={editingFechamento.mesReferencia || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.mesReferencia ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`} />
+                                <input type="text" name="mesReferencia" placeholder="MM/AAAA" maxLength={7} value={editingFechamento.mesReferencia || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.mesReferencia ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`} />
                                 {errors.mesReferencia && <p className="text-danger text-xs mt-1">{errors.mesReferencia}</p>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-text-secondary mb-1">Empresa <span className="text-danger">*</span></label>
-                                <input type="text" value={editingFechamento.empresa || ''} disabled={isFabrica || isCristiano} className={`w-full rounded-md px-3 py-2 ${isFabrica || isCristiano ? 'bg-gray-100 border-gray-300 text-text-secondary cursor-not-allowed' : `bg-background border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.empresa ? 'border-danger' : 'border-border'}`}`} />
+                                <input type="text" value={editingFechamento.empresa || ''} disabled={isFabrica || isCristiano} className={`w-full rounded-xl px-3 py-2 ${isFabrica || isCristiano ? 'bg-gray-100 border-gray-300 text-text-secondary cursor-not-allowed' : `bg-background border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.empresa ? 'border-danger' : 'border-border'}`}`} />
                                 {!(isFabrica || isCristiano) && errors.empresa && <p className="text-danger text-xs mt-1">{errors.empresa}</p>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-text-secondary mb-1">Contabilidade <span className="text-danger">*</span></label>
-                                <input type="text" name="contabilidade" value={editingFechamento.contabilidade || ''} onChange={handleInputChange} disabled={isCristiano || isFabrica} className={`w-full rounded-md px-3 py-2 ${isCristiano || isFabrica ? 'bg-gray-100 border-gray-300 text-text-secondary cursor-not-allowed' : `bg-background border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.contabilidade ? 'border-danger' : 'border-border'}`}`} />
+                                <input type="text" name="contabilidade" value={editingFechamento.contabilidade || ''} onChange={handleInputChange} disabled={isCristiano || isFabrica} className={`w-full rounded-xl px-3 py-2 ${isCristiano || isFabrica ? 'bg-gray-100 border-gray-300 text-text-secondary cursor-not-allowed' : `bg-background border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.contabilidade ? 'border-danger' : 'border-border'}`}`} />
                                 {!(isCristiano || isFabrica) && errors.contabilidade && <p className="text-danger text-xs mt-1">{errors.contabilidade}</p>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-text-secondary mb-1">Portador <span className="text-danger">*</span></label>
-                                 <input type="text" value={editingFechamento.portador || ''} disabled={isFabrica || isCristiano} className={`w-full rounded-md px-3 py-2 ${isFabrica || isCristiano ? 'bg-gray-100 border-gray-300 text-text-secondary cursor-not-allowed' : `bg-background border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.portador ? 'border-danger' : 'border-border'}`}`} />
+                                 <input type="text" value={editingFechamento.portador || ''} disabled={isFabrica || isCristiano} className={`w-full rounded-xl px-3 py-2 ${isFabrica || isCristiano ? 'bg-gray-100 border-gray-300 text-text-secondary cursor-not-allowed' : `bg-background border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.portador ? 'border-danger' : 'border-border'}`}`} />
                                 {!(isFabrica || isCristiano) && errors.portador && <p className="text-danger text-xs mt-1">{errors.portador}</p>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-text-secondary mb-1">Valor Banco</label>
-                                <input type="text" name="valorBanco" value={formatCurrency(editingFechamento.valorBanco || 0)} onChange={handleInputChange} className="w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
+                                <input type="text" name="valorBanco" value={formatCurrency(editingFechamento.valorBanco || 0)} onChange={handleInputChange} className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-text-secondary mb-1">Valor Solinter</label>
-                                <input type="text" name="valorSolinter" value={formatCurrency(editingFechamento.valorSolinter || 0)} onChange={handleInputChange} className="w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
+                                <input type="text" name="valorSolinter" value={formatCurrency(editingFechamento.valorSolinter || 0)} onChange={handleInputChange} className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
                             </div>
                              <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-text-secondary mb-1">Data de Envio</label>
-                                <input type="date" name="dataEnvio" value={editingFechamento.dataEnvio || ''} onChange={handleInputChange} className="w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
+                                <input type="date" name="dataEnvio" value={editingFechamento.dataEnvio || ''} onChange={handleInputChange} className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
                             </div>
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-text-secondary mb-1">Anotações</label>
-                                <textarea name="anotacoes" value={editingFechamento.anotacoes || ''} onChange={handleInputChange} rows={3} className="w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
+                                <textarea name="anotacoes" value={editingFechamento.anotacoes || ''} onChange={handleInputChange} rows={3} className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
                             </div>
                         </div>
                         <div className="mt-8 flex justify-end gap-4">
-                            <button onClick={handleCloseModal} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                            <button onClick={handleSaveChanges} className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Salvar</button>
+                            <button onClick={handleCloseModal} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
+                            <button onClick={handleSaveChanges} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Salvar</button>
                         </div>
                     </div>
                 </div>
@@ -486,43 +488,34 @@ const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageKey, tit
 
             {isDateModalOpen && dateEditingFechamento && (
                 <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                    <form onSubmit={(e) => {
-                        e.preventDefault();
-                        const formData = new FormData(e.currentTarget);
-                        const newDate = formData.get('dataEnvioModal') as string;
-                        handleSaveDateEnvio(newDate);
-                    }}>
-                        <div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-sm">
-                            <h3 className="text-lg font-bold mb-4 text-text-primary">Definir Data de Envio</h3>
-                            <p className="text-text-secondary mb-4">Para: <span className="font-semibold">{dateEditingFechamento.empresa}</span></p>
-                            <div>
-                                <label htmlFor="dataEnvioModal" className="block text-sm font-medium text-text-secondary mb-1">Data de Envio</label>
-                                <input
-                                    id="dataEnvioModal"
-                                    type="date"
-                                    name="dataEnvioModal"
-                                    defaultValue={dateEditingFechamento.dataEnvio || new Date().toISOString().split('T')[0]}
-                                    required
-                                    className="w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                                />
-                            </div>
-                            <div className="mt-6 flex justify-end gap-4">
-                                <button type="button" onClick={handleCloseDateModal} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                                <button type="submit" className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Salvar Data</button>
-                            </div>
+                    <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-sm">
+                        <h3 className="text-lg font-bold mb-4 text-text-primary">Definir Data de Envio</h3>
+                        <p className="text-text-secondary mb-4">Empresa: <span className="font-semibold">{dateEditingFechamento.empresa}</span></p>
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-text-secondary mb-1">Data de Envio</label>
+                            <input 
+                                type="date" 
+                                value={tempDateEnvio} 
+                                onChange={(e) => setTempDateEnvio(e.target.value)} 
+                                className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" 
+                            />
                         </div>
-                    </form>
+                        <div className="flex justify-end gap-4">
+                            <button onClick={handleCloseDateModal} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
+                            <button onClick={() => handleSaveDateEnvio(tempDateEnvio)} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Salvar</button>
+                        </div>
+                    </div>
                 </div>
             )}
 
             {isConfirmOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-sm">
+                    <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-sm">
                         <h3 className="text-lg font-bold mb-4 text-text-primary">Confirmar Ação</h3>
                         <p className="text-text-secondary mb-6">{confirmAction.message}</p>
                         <div className="flex justify-end gap-4">
-                            <button onClick={handleCancelConfirm} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                            <button onClick={handleConfirm} className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Confirmar</button>
+                            <button onClick={handleCancelConfirm} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
+                            <button onClick={handleConfirm} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Confirmar</button>
                         </div>
                     </div>
                 </div>

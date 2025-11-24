@@ -272,7 +272,7 @@ const CartaoWorldWide: React.FC<CartaoWorldWideProps> = ({ onBack }) => {
     return (
         <div className="animate-fade-in">
             <div className="flex items-center gap-4 mb-6">
-                <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors h-10">
+                <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">
                     <ArrowLeftIcon className="h-5 w-5" />
                     Voltar
                 </button>
@@ -280,7 +280,7 @@ const CartaoWorldWide: React.FC<CartaoWorldWideProps> = ({ onBack }) => {
             </div>
             <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept=".csv" />
             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                <div className="flex items-center gap-4 bg-secondary p-3 rounded-lg">
+                <div className="flex items-center gap-4 bg-secondary p-3 rounded-2xl">
                     <div className="text-center">
                         <p className="text-sm text-text-secondary font-semibold">VALOR TOTAL</p>
                         <p className="text-xl font-bold text-primary">{totals.totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
@@ -295,7 +295,7 @@ const CartaoWorldWide: React.FC<CartaoWorldWideProps> = ({ onBack }) => {
                     <select
                         value={monthFilter}
                         onChange={(e) => setMonthFilter(e.target.value)}
-                        className="bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10"
+                        className="bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10"
                     >
                         <option value="">Todos os Meses</option>
                         {uniqueMonths.map(month => (
@@ -304,26 +304,26 @@ const CartaoWorldWide: React.FC<CartaoWorldWideProps> = ({ onBack }) => {
                     </select>
                      <button
                         onClick={() => setMonthFilter('')}
-                        className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors h-10"
+                        className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10"
                     >
                         Limpar
                     </button>
                      <button
                         onClick={handleExportXLSX}
-                        className="flex items-center gap-2 bg-success text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors duration-300 h-10"
+                        className="flex items-center gap-2 bg-success text-white font-semibold py-2 px-4 rounded-full hover:bg-green-700 transition-colors duration-300 h-10"
                     >
                         <DownloadIcon className="h-5 w-5" /> Emitir Fatura
                     </button>
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-hover transition-colors duration-300 h-10"
+                        className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-full hover:bg-primary-hover transition-colors duration-300 h-10"
                     >
                         <UploadIcon className="h-5 w-5" />
                         Subir Arquivo CSV
                     </button>
                 </div>
             </div>
-            <div className="bg-card shadow-md rounded-lg overflow-x-auto">
+            <div className="bg-card shadow-md rounded-2xl overflow-x-auto">
                 <table className="w-full text-base text-left text-text-secondary">
                     <thead className="text-sm text-text-primary uppercase bg-secondary">
                         <tr>

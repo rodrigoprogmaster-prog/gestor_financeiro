@@ -3,7 +3,7 @@ import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, ArrowLeftIcon,
 
 // Enum for status
 enum StatusTitulo {
-  PRORROGADO = 'Prorrogado',
+  PRORROGADO = 'Prorrogados',
   A_PRORROGAR = 'A Prorrogar',
 }
 
@@ -439,7 +439,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             {selectedTitles.size > 0 && (
                 <button
                     onClick={handleDeleteSelectedClick}
-                    className="flex items-center gap-2 bg-danger text-white font-semibold py-2 px-4 rounded-md hover:bg-danger/90 transition-colors duration-300 h-9"
+                    className="flex items-center gap-2 bg-danger text-white font-semibold py-2 px-4 rounded-full hover:bg-danger/90 transition-colors duration-300 h-9"
                 >
                     <TrashIcon className="h-4 w-4" />
                     Apagar ({selectedTitles.size})
@@ -447,14 +447,14 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             )}
            <button 
              onClick={handleOpenAddModal}
-             className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-md hover:bg-primary-hover transition-colors duration-300 h-9 shadow-sm"
+             className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-full hover:bg-primary-hover transition-colors duration-300 h-9 shadow-sm"
            >
              <PlusIcon className="h-4 w-4"/>
              Adicionar Título
            </button>
            <button
             onClick={handleExportXLSX}
-            className="flex items-center gap-2 bg-white border border-border text-text-primary font-semibold py-2 px-4 rounded-md hover:bg-secondary transition-colors duration-300 h-9"
+            className="flex items-center gap-2 bg-white border border-border text-text-primary font-semibold py-2 px-4 rounded-full hover:bg-secondary transition-colors duration-300 h-9"
             aria-label="Exportar para XLSX"
           >
             <DownloadIcon className="h-4 w-4" />
@@ -468,31 +468,31 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 placeholder="Buscar por Fornecedor, Devedor, Nº Título..."
                 value={searchTerm} 
                 onChange={(e) => setSearchTerm(e.target.value)} 
-                className="bg-white border border-border rounded-md px-3 py-2 pl-10 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 w-full sm:w-64"
+                className="bg-white border border-border rounded-xl px-3 py-2 pl-10 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 w-full sm:w-64"
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <SearchIcon className="h-4 w-4 text-text-secondary" />
               </div>
             </div>
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-white border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9">
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-white border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9">
                 <option value="Todos">Todos Status</option>
-                <option value={StatusTitulo.PRORROGADO}>Prorrogado</option>
+                <option value={StatusTitulo.PRORROGADO}>Prorrogados</option>
                 <option value={StatusTitulo.A_PRORROGAR}>A Prorrogar</option>
             </select>
-            <button onClick={handleClearFilters} className="py-2 px-4 rounded-md bg-secondary hover:bg-border font-semibold transition-colors h-9">Limpar</button>
+            <button onClick={handleClearFilters} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-9">Limpar</button>
         </div>
       </div>
        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-card p-4 rounded-lg shadow-sm border border-border text-center">
+        <div className="bg-card p-4 rounded-2xl shadow-sm border border-border text-center">
           <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Valor Total</p>
           <p className="text-xl font-bold text-primary">{totalValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
         </div>
-        <div className="bg-card p-4 rounded-lg shadow-sm border border-border text-center">
+        <div className="bg-card p-4 rounded-2xl shadow-sm border border-border text-center">
           <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Títulos</p>
           <p className="text-xl font-bold text-primary">{filteredTitles.length}</p>
         </div>
       </div>
-      <div className="bg-card shadow-sm rounded-lg overflow-hidden flex-grow border border-border">
+      <div className="bg-card shadow-sm rounded-2xl overflow-hidden flex-grow border border-border">
         <div ref={scrollRef} onScroll={handleScroll} className="overflow-x-auto overflow-y-auto h-full">
             <table className="min-w-full divide-y divide-border text-sm text-left text-text-secondary">
             <thead className="bg-secondary text-xs text-text-secondary uppercase font-medium tracking-wider sticky top-0">
@@ -554,14 +554,14 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                     e.stopPropagation();
                                     handleRowClick(title);
                                 }} 
-                                className="text-primary hover:text-primary/80 p-1.5 rounded-md hover:bg-primary/10 transition-colors"
+                                className="text-primary hover:text-primary/80 p-1.5 rounded-full hover:bg-primary/10 transition-colors"
                                 aria-label="Editar título"
                             >
                                 <EditIcon className="h-4 w-4"/>
                             </button>
                             <button 
                                 onClick={(e) => handleDeleteClick(e, title.id)} 
-                                className="text-danger hover:text-danger/80 p-1.5 rounded-md hover:bg-danger/10 transition-colors"
+                                className="text-danger hover:text-danger/80 p-1.5 rounded-full hover:bg-danger/10 transition-colors"
                                 aria-label="Excluir título"
                             >
                                 <TrashIcon className="h-4 w-4"/>
@@ -596,56 +596,56 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
       {isModalOpen && editingTitle && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
-          <div className="bg-card rounded-lg shadow-lg border border-border w-full max-w-lg overflow-hidden">
+          <div className="bg-card rounded-2xl shadow-lg border border-border w-full max-w-lg overflow-hidden">
             <div className="px-6 py-4 border-b border-border bg-secondary/30">
                 <h3 className="text-lg font-bold text-text-primary">{editingTitle.id ? 'Editar Título' : 'Adicionar Novo Título'}</h3>
             </div>
             <div className="p-6 space-y-4">
                 <div>
                   <label htmlFor="fornecedor" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Fornecedor <span className="text-danger">*</span></label>
-                  <input id="fornecedor" type="text" name="fornecedor" value={editingTitle.fornecedor || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.fornecedor ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
+                  <input id="fornecedor" type="text" name="fornecedor" value={editingTitle.fornecedor || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.fornecedor ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
                   {errors.fornecedor && <p className="text-danger text-xs mt-1">{errors.fornecedor}</p>}
                 </div>
                 <div>
                   <label htmlFor="numeroTitulo" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Número do Título <span className="text-danger">*</span></label>
-                  <input id="numeroTitulo" type="text" name="numeroTitulo" value={editingTitle.numeroTitulo || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.numeroTitulo ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
+                  <input id="numeroTitulo" type="text" name="numeroTitulo" value={editingTitle.numeroTitulo || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.numeroTitulo ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
                   {errors.numeroTitulo && <p className="text-danger text-xs mt-1">{errors.numeroTitulo}</p>}
                 </div>
                  <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label htmlFor="vencimentoOriginal" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Venc. Original <span className="text-danger">*</span></label>
-                        <input id="vencimentoOriginal" type="text" name="vencimentoOriginal" value={editingTitle.vencimentoOriginal || ''} onChange={handleInputChange} onBlur={handleBlur} placeholder="DD/MM/AAAA" maxLength={10} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.vencimentoOriginal ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
+                        <input id="vencimentoOriginal" type="text" name="vencimentoOriginal" value={editingTitle.vencimentoOriginal || ''} onChange={handleInputChange} onBlur={handleBlur} placeholder="DD/MM/AAAA" maxLength={10} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.vencimentoOriginal ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
                         {errors.vencimentoOriginal && <p className="text-danger text-xs mt-1">{errors.vencimentoOriginal}</p>}
                     </div>
                     <div>
                         <label htmlFor="novoVencimento" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Novo Vencimento <span className="text-danger">*</span></label>
-                        <input id="novoVencimento" type="text" name="novoVencimento" value={editingTitle.novoVencimento || ''} onChange={handleInputChange} onBlur={handleBlur} placeholder="DD/MM/AAAA" maxLength={10} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.novoVencimento ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
+                        <input id="novoVencimento" type="text" name="novoVencimento" value={editingTitle.novoVencimento || ''} onChange={handleInputChange} onBlur={handleBlur} placeholder="DD/MM/AAAA" maxLength={10} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.novoVencimento ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
                         {errors.novoVencimento && <p className="text-danger text-xs mt-1">{errors.novoVencimento}</p>}
                     </div>
                 </div>
                  <div>
                   <label htmlFor="devedor" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Devedor <span className="text-danger">*</span></label>
-                  <input id="devedor" type="text" name="devedor" value={editingTitle.devedor || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.devedor ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
+                  <input id="devedor" type="text" name="devedor" value={editingTitle.devedor || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.devedor ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
                   {errors.devedor && <p className="text-danger text-xs mt-1">{errors.devedor}</p>}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                      <div>
                         <label htmlFor="valor" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Valor (R$) <span className="text-danger">*</span></label>
-                        <input id="valor" type="text" name="valor" value={editingTitle.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.valor ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
+                        <input id="valor" type="text" name="valor" value={editingTitle.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.valor ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
                         {errors.valor && <p className="text-danger text-xs mt-1">{errors.valor}</p>}
                     </div>
                     <div>
                         <label htmlFor="status" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Status</label>
-                        <select id="status" name="status" value={editingTitle.status} onChange={handleInputChange} className="w-full bg-white border border-border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9">
+                        <select id="status" name="status" value={editingTitle.status} onChange={handleInputChange} className="w-full bg-white border border-border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9">
                             <option value={StatusTitulo.A_PRORROGAR}>A Prorrogar</option>
-                            <option value={StatusTitulo.PRORROGADO}>Prorrogado</option>
+                            <option value={StatusTitulo.PRORROGADO}>Prorrogados</option>
                         </select>
                     </div>
                 </div>
             </div>
             <div className="px-6 py-4 border-t border-border bg-secondary/30 flex justify-end gap-3">
-                <button onClick={handleCloseModal} className="py-2 px-4 rounded-md bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
-                <button onClick={handleSaveChanges} className="py-2 px-4 rounded-md bg-primary hover:bg-primary-hover text-white font-semibold text-sm shadow-sm">
+                <button onClick={handleCloseModal} className="py-2 px-4 rounded-full bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
+                <button onClick={handleSaveChanges} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold text-sm shadow-sm">
                     {editingTitle.id ? 'Salvar Alterações' : 'Adicionar Título'}
                 </button>
             </div>
@@ -655,12 +655,12 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       
       {isConfirmOpen && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
-                <div className="bg-card rounded-lg shadow-lg border border-border w-full max-w-sm p-6">
+                <div className="bg-card rounded-2xl shadow-lg border border-border w-full max-w-sm p-6">
                     <h3 className="text-lg font-bold mb-2 text-text-primary">Confirmar Ação</h3>
                     <p className="text-sm text-text-secondary mb-6">{confirmAction.message}</p>
                     <div className="flex justify-end gap-3">
-                        <button onClick={handleCancelConfirm} className="px-4 py-2 rounded-md bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
-                        <button onClick={handleConfirm} className="px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Confirmar</button>
+                        <button onClick={handleCancelConfirm} className="px-4 py-2 rounded-full bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
+                        <button onClick={handleConfirm} className="px-4 py-2 rounded-full bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Confirmar</button>
                     </div>
                 </div>
             </div>

@@ -83,7 +83,7 @@ const FormattedInput: React.FC<{name: keyof AuthValues, value: number, onChange:
         name={name}
         value={formatCurrency(value)}
         onChange={onChange}
-        className="w-full text-right bg-white border border-border rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+        className="w-full text-right bg-white border border-border rounded-xl px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
     />
 );
 
@@ -94,7 +94,7 @@ const NumberInput: React.FC<{name: keyof AuthValues, value: number, onChange: (e
         value={value === 0 ? '' : value}
         onChange={onChange}
         placeholder="0"
-        className="w-full text-right bg-white border border-border rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+        className="w-full text-right bg-white border border-border rounded-xl px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
     />
 );
 
@@ -212,8 +212,8 @@ const AutorizacaoPagamento: React.FC<AutorizacaoPagamentoProps> = ({ storageKeyS
   };
 
   return (
-    <div className="animate-fade-in p-4 bg-white border border-border max-w-4xl mx-auto rounded-lg shadow-sm">
-        <div className="bg-secondary border-b border-border p-4 rounded-t-lg flex justify-between items-center flex-wrap gap-4">
+    <div className="animate-fade-in p-4 bg-white border border-border max-w-4xl mx-auto rounded-2xl shadow-sm">
+        <div className="bg-secondary border-b border-border p-4 rounded-t-2xl flex justify-between items-center flex-wrap gap-4">
             <div>
                 <h2 className="text-xl font-bold text-text-primary">Aprovação</h2>
                 <div className="flex items-center gap-2 mt-2">
@@ -223,13 +223,13 @@ const AutorizacaoPagamento: React.FC<AutorizacaoPagamentoProps> = ({ storageKeyS
                         type="date"
                         value={selectedDate}
                         onChange={e => setSelectedDate(e.target.value)}
-                        className="bg-white border border-border rounded-md px-2 py-1 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm"
+                        className="bg-white border border-border rounded-xl px-2 py-1 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm"
                     />
                 </div>
             </div>
              <button
                 onClick={handleExportXLSX}
-                className="flex items-center gap-2 bg-success text-white font-medium py-1.5 px-4 rounded-md hover:bg-green-700 transition-colors text-sm shadow-sm"
+                className="flex items-center gap-2 bg-success text-white font-medium py-1.5 px-4 rounded-full hover:bg-green-700 transition-colors text-sm shadow-sm"
               >
                 <DownloadIcon className="h-4 w-4" />
                 Exportar

@@ -35,7 +35,7 @@ const FechamentoPeriodo: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const Card = ({ title, description, icon, onClick }: { title: string, description: string, icon: React.ReactNode, onClick: () => void }) => (
         <div
             onClick={onClick}
-            className="bg-card rounded-lg border border-border p-6 flex flex-col items-center text-center cursor-pointer hover:border-primary hover:shadow-sm transition-all duration-200 group"
+            className="bg-card rounded-2xl border border-border p-6 flex flex-col items-center text-center cursor-pointer hover:border-primary hover:shadow-sm transition-all duration-200 group"
         >
             <div className="bg-secondary p-4 rounded-full mb-4 border border-border group-hover:border-primary/30 transition-colors">
                 {icon}
@@ -49,7 +49,7 @@ const FechamentoPeriodo: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in">
             <div className="flex items-center gap-4 mb-8 pb-4 border-b border-border">
                 {onBack && (
-                    <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-md bg-white border border-border hover:bg-secondary font-medium transition-colors h-9 text-sm">
+                    <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-white border border-border hover:bg-secondary font-medium transition-colors h-9 text-sm">
                         <ArrowLeftIcon className="h-4 w-4" />
                         Voltar
                     </button>

@@ -79,7 +79,8 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<{ action: (() => void) | null, message: string }>({ action: null, message: '' });
     const [errors, setErrors] = useState<TransferenciaErrors>({});
-    const [reportDateFilter, setReportDateFilter] = useState<string>('');
+    // Initialize with current date
+    const [reportDateFilter, setReportDateFilter] = useState<string>(new Date().toISOString().split('T')[0]);
 
 
     useEffect(() => {
@@ -267,21 +268,21 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
                         type="date"
                         value={reportDateFilter}
                         onChange={e => setReportDateFilter(e.target.value)}
-                        className="bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10"
+                        className="bg-background border border-border rounded-full px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10"
                     />
-                    <button onClick={() => setReportDateFilter('')} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors h-10">Limpar</button>
+                    <button onClick={() => setReportDateFilter('')} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">Limpar</button>
                 </div>
                 <div className="flex items-center gap-2">
                     <button
                         onClick={handleExportXLSX}
-                        className="flex items-center justify-center gap-2 bg-success text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors duration-300 h-10"
+                        className="flex items-center justify-center gap-2 bg-success text-white font-semibold py-2 px-4 rounded-full hover:bg-green-700 transition-colors duration-300 h-10"
                     >
                         <DownloadIcon className="h-5 w-5" />
                         Relatório
                     </button>
                     <button
                         onClick={handleOpenAddModal}
-                        className="flex items-center justify-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-hover transition-colors duration-300 h-10"
+                        className="flex items-center justify-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-full hover:bg-primary-hover transition-colors duration-300 h-10"
                     >
                         <PlusIcon className="h-5 w-5" />
                         Adicionar
@@ -290,17 +291,17 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
             </div>
 
             <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-card p-4 rounded-lg shadow-md border border-border text-center">
+                <div className="bg-card p-4 rounded-2xl shadow-md border border-border text-center">
                     <p className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Valor Total</p>
                     <p className="text-2xl font-bold text-primary">{formatCurrency(totalValor)}</p>
                 </div>
-                <div className="bg-card p-4 rounded-lg shadow-md border border-border text-center">
+                <div className="bg-card p-4 rounded-2xl shadow-md border border-border text-center">
                     <p className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Transferências</p>
                     <p className="text-2xl font-bold text-primary">{filteredTransferencias.length}</p>
                 </div>
             </div>
             
-            <div className="bg-card shadow-md rounded-lg overflow-x-auto">
+            <div className="bg-card shadow-md rounded-2xl overflow-x-auto">
                 <table className="w-full text-base text-left text-text-secondary">
                     <thead className="text-sm text-text-primary uppercase bg-secondary">
                         <tr>
@@ -352,45 +353,45 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
 
             {isModalOpen && editingTransferencia && (
                 <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-lg">
+                    <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-lg">
                         <h3 className="text-xl font-bold mb-6 text-text-primary">
                             {editingTransferencia.id ? 'Editar Transferência' : 'Adicionar Transferência'}
                         </h3>
                         <div className="space-y-4">
                              <div>
                                 <label className="block text-sm font-medium text-text-secondary mb-1">Data</label>
-                                <input type="text" name="data_br" value={editingTransferencia.data_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" maxLength={10} className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.data ? 'border-danger' : 'border-border'}`} />
+                                <input type="text" name="data_br" value={editingTransferencia.data_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" maxLength={10} className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.data ? 'border-danger' : 'border-border'}`} />
                                 {errors.data && <p className="text-danger text-xs mt-1">{errors.data}</p>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-text-secondary mb-1">Empresa de Origem</label>
-                                <input type="text" name="empresaOrigem" placeholder="Digite a empresa de origem" value={editingTransferencia.empresaOrigem || ''} onChange={handleInputChange} className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.empresaOrigem ? 'border-danger' : 'border-border'}`} />
+                                <input type="text" name="empresaOrigem" placeholder="Digite a empresa de origem" value={editingTransferencia.empresaOrigem || ''} onChange={handleInputChange} className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.empresaOrigem ? 'border-danger' : 'border-border'}`} />
                                 {errors.empresaOrigem && <p className="text-danger text-xs mt-1">{errors.empresaOrigem}</p>}
                             </div>
                              <div>
                                 <label className="block text-sm font-medium text-text-secondary mb-1">Banco Origem</label>
-                                <input type="text" name="bancoOrigem" placeholder="Ex: Itaú" value={editingTransferencia.bancoOrigem || ''} onChange={handleInputChange} className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.bancoOrigem ? 'border-danger' : 'border-border'}`} />
+                                <input type="text" name="bancoOrigem" placeholder="Ex: Itaú" value={editingTransferencia.bancoOrigem || ''} onChange={handleInputChange} className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.bancoOrigem ? 'border-danger' : 'border-border'}`} />
                                 {errors.bancoOrigem && <p className="text-danger text-xs mt-1">{errors.bancoOrigem}</p>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-text-secondary mb-1">Empresa Destino</label>
-                                <input type="text" name="empresaDestino" placeholder="Digite a empresa de destino" value={editingTransferencia.empresaDestino || ''} onChange={handleInputChange} className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.empresaDestino ? 'border-danger' : 'border-border'}`} />
+                                <input type="text" name="empresaDestino" placeholder="Digite a empresa de destino" value={editingTransferencia.empresaDestino || ''} onChange={handleInputChange} className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.empresaDestino ? 'border-danger' : 'border-border'}`} />
                                 {errors.empresaDestino && <p className="text-danger text-xs mt-1">{errors.empresaDestino}</p>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-text-secondary mb-1">Banco Destino</label>
-                                <input type="text" name="bancoDestino" placeholder="Ex: Inter" value={editingTransferencia.bancoDestino || ''} onChange={handleInputChange} className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.bancoDestino ? 'border-danger' : 'border-border'}`} />
+                                <input type="text" name="bancoDestino" placeholder="Ex: Inter" value={editingTransferencia.bancoDestino || ''} onChange={handleInputChange} className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.bancoDestino ? 'border-danger' : 'border-border'}`} />
                                 {errors.bancoDestino && <p className="text-danger text-xs mt-1">{errors.bancoDestino}</p>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-text-secondary mb-1">Valor</label>
-                                <input type="text" name="valor" value={formatCurrency(editingTransferencia.valor || 0)} onChange={handleInputChange} className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.valor ? 'border-danger' : 'border-border'}`} />
+                                <input type="text" name="valor" value={formatCurrency(editingTransferencia.valor || 0)} onChange={handleInputChange} className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.valor ? 'border-danger' : 'border-border'}`} />
                                 {errors.valor && <p className="text-danger text-xs mt-1">{errors.valor}</p>}
                             </div>
                         </div>
                         <div className="mt-8 flex justify-end gap-4">
-                            <button onClick={handleCloseModal} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                            <button onClick={handleSaveChanges} className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Salvar</button>
+                            <button onClick={handleCloseModal} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
+                            <button onClick={handleSaveChanges} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Salvar</button>
                         </div>
                     </div>
                 </div>
@@ -398,12 +399,12 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
             
             {isConfirmOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-sm">
+                    <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-sm">
                         <h3 className="text-lg font-bold mb-4 text-text-primary">Confirmar Ação</h3>
                         <p className="text-text-secondary mb-6">{confirmAction.message}</p>
                         <div className="flex justify-end gap-4">
-                            <button onClick={handleCancelConfirm} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                            <button onClick={handleConfirm} className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Confirmar</button>
+                            <button onClick={handleCancelConfirm} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
+                            <button onClick={handleConfirm} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Confirmar</button>
                         </div>
                     </div>
                 </div>

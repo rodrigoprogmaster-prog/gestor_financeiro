@@ -40,6 +40,12 @@ const isValidBRDate = (dateString: string): boolean => {
 };
 
 const formatCurrency = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const getDayOfWeek = (dateString: string): string => {
+  if (!dateString) return '';
+  const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+  const date = new Date(`${dateString}T00:00:00`);
+  return days[date.getUTCDay()];
+};
 
 const parseImportedDate = (dateValue: any): string => {
     if (dateValue === null || dateValue === undefined || String(dateValue).trim() === '') return '';
@@ -68,7 +74,7 @@ const parseImportedDate = (dateValue: any): string => {
 };
 
 const ITEMS_PER_LOAD = 20;
-const SCROLL_THRESHOLD = 100; // pixels from the bottom to trigger loading
+const SCROLL_THRESHOLD = 100;
 
 const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const STORAGE_KEY = 'boletos_a_receber_data';
@@ -83,7 +89,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [confirmAction, setConfirmAction] = useState<{ action: (() => void) | null, message: string }>({ action: null, message: '' });
     const [errors, setErrors] = useState<BoletoErrors>({});
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState<StatusBoletoAReceber | 'Todos'>(StatusBoletoAReceber.A_VENCER); // Default to 'A Vencer'
+    const [statusFilter, setStatusFilter] = useState<StatusBoletoAReceber | 'Todos'>(StatusBoletoAReceber.VENCIDO);
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -107,7 +113,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const allBoletosWithStatus = useMemo(() => boletos.map(b => ({ ...b, dynamicStatus: getDynamicStatus(b) })), [boletos]);
 
     const filteredBoletos = useMemo(() => {
-        setDisplayCount(ITEMS_PER_LOAD); // Reset display count on filter change
+        setDisplayCount(ITEMS_PER_LOAD);
         return allBoletosWithStatus.filter(boleto => {
             const statusMatch = statusFilter === 'Todos' || boleto.dynamicStatus === statusFilter;
             const searchMatch = !searchTerm || boleto.credor.toLowerCase().includes(searchTerm.toLowerCase()) || boleto.cliente.toLowerCase().includes(searchTerm.toLowerCase());
@@ -168,7 +174,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setEditingBoleto(null);
-        setErrors({}); // Clear errors on modal close
+        setErrors({});
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -182,7 +188,6 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         }
         setEditingBoleto(prev => ({ ...prev, [name]: finalValue }));
 
-        // Clear error on change
         if (errors[name as keyof BoletoErrors]) {
             setErrors(prev => {
                 const newErrors = { ...prev };
@@ -208,7 +213,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         const boletoToSave = { ...editingBoleto, vencimento: formatDateToISO(editingBoleto.vencimento_br!) };
         const action = () => {
             if (boletoToSave.id) setBoletos(boletos.map(b => b.id === boletoToSave.id ? (boletoToSave as BoletoAReceber) : b));
-            else setBoletos([...boletos, { ...boletoToSave, id: `boleto-r-${Date.now()}` } as BoletoAReceber]);
+            else setBoletos([...boletos, { ...boletoToSave, id: `boleto-receber-${Date.now()}` } as BoletoAReceber]);
             handleCloseModal();
         };
         setConfirmAction({ action, message: `Deseja ${boletoToSave.id ? 'salvar as alterações' : 'adicionar este boleto'}?` });
@@ -232,10 +237,10 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 const newBoletos: BoletoAReceber[] = [];
 
                 for (const [index, row] of json.entries()) {
-                    const credor = row['CREDOR'] || row['Credor'];
-                    const cliente = row['CLIENTE'] || row['Cliente'];
-                    const vencimentoRaw = row['VENCIMENTO'] || row['Vencimento'];
-                    const valorRaw = row['VALOR'] || row['Valor'];
+                    const credor = row['credor'] || row['Credor'];
+                    const cliente = row['cliente'] || row['Cliente'];
+                    const vencimentoRaw = row['vencimento'] || row['Vencimento'];
+                    const valorRaw = row['valor'] || row['Valor'];
 
                     if (!credor || !cliente || !vencimentoRaw || valorRaw === undefined) { invalidCount++; continue; }
                     
@@ -249,7 +254,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     
                     if (existingKeys.has(duplicateKey)) { duplicateCount++; continue; }
 
-                    newBoletos.push({ ...newBoletoData, id: `import-r-${Date.now()}-${index}`, recebido: false });
+                    newBoletos.push({ ...newBoletoData, id: `import-receber-${Date.now()}-${index}`, recebido: false });
                     existingKeys.add(duplicateKey);
                     importedCount++;
                 }
@@ -263,7 +268,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
             } catch (err) {
                 console.error("Erro ao processar XLSX:", err);
-                alert('Erro ao ler o arquivo. Verifique se as colunas (CREDOR, CLIENTE, VENCIMENTO, VALOR) existem.');
+                alert('Erro ao ler o arquivo. Verifique as colunas (Credor, Cliente, Vencimento, Valor).');
             } finally {
                 if (e.target) e.target.value = '';
             }
@@ -277,6 +282,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             'Credor': b.credor,
             'Cliente': b.cliente,
             'Vencimento': formatDateToBR(b.vencimento),
+            'Dia da Semana': getDayOfWeek(b.vencimento),
             'Valor': b.valor,
             'Status': b.dynamicStatus,
         }));
@@ -296,7 +302,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 setTimeout(() => {
                     setDisplayCount(prevCount => Math.min(prevCount + ITEMS_PER_LOAD, filteredBoletos.length));
                     setIsLoadingMore(false);
-                }, 300); // Simulate network delay
+                }, 300);
             }
         }
     };
@@ -307,13 +313,12 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         
         <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
             <div className="flex items-center gap-4">
-                
                 <h2 className="text-2xl font-bold text-text-primary tracking-tight">Boletos a Receber</h2>
             </div>
             <div className="flex items-center flex-wrap gap-2">
-                <button onClick={handleExportXLSX} className="flex items-center gap-2 bg-white border border-border text-text-primary font-medium py-2 px-4 rounded-md hover:bg-secondary text-sm h-9"><DownloadIcon className="h-4 w-4"/>Exportar</button>
-                <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 bg-white border border-border text-text-primary font-medium py-2 px-4 rounded-md hover:bg-secondary text-sm h-9"><UploadIcon className="h-4 w-4"/>Importar</button>
-                <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-primary text-white font-medium py-2 px-4 rounded-md hover:bg-primary-hover text-sm h-9 shadow-sm"><PlusIcon className="h-4 w-4"/>Incluir</button>
+                <button onClick={handleExportXLSX} className="flex items-center gap-2 bg-white border border-border text-text-primary font-medium py-2 px-4 rounded-full hover:bg-secondary text-sm h-9"><DownloadIcon className="h-4 w-4"/>Exportar</button>
+                <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 bg-white border border-border text-text-primary font-medium py-2 px-4 rounded-full hover:bg-secondary text-sm h-9"><UploadIcon className="h-4 w-4"/>Importar</button>
+                <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-primary text-white font-medium py-2 px-4 rounded-full hover:bg-primary-hover text-sm h-9 shadow-sm"><PlusIcon className="h-4 w-4"/>Incluir</button>
             </div>
         </div>
 
@@ -322,7 +327,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 const total = totals[status] || { count: 0, value: 0 };
                 const isActive = statusFilter === status;
                 return (
-                    <div key={status} onClick={() => setStatusFilter(status)} className={`p-4 rounded-lg border cursor-pointer transition-all ${isActive ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-gray-300'}`}>
+                     <div key={status} onClick={() => setStatusFilter(status)} className={`p-4 rounded-2xl border cursor-pointer transition-all ${isActive ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-gray-300'}`}>
                         <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">{status}</p>
                         <p className={`text-xl font-bold ${status === StatusBoletoAReceber.VENCIDO ? 'text-danger' : status === StatusBoletoAReceber.RECEBIDO ? 'text-success' : 'text-primary'}`}>{formatCurrency(total.value)}</p>
                         <p className="text-xs text-text-secondary mt-1">{total.count} boletos</p>
@@ -331,30 +336,31 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             })}
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 bg-white p-3 rounded-lg border border-border">
+         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 bg-white p-3 rounded-2xl border border-border">
             <div className="relative w-full sm:w-auto flex-grow sm:flex-grow-0">
-                <input type="text" placeholder="Buscar por Credor ou Cliente..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full sm:w-80 pl-10 pr-3 py-2 bg-white border border-border rounded-md text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors h-9"/>
+                <input type="text" placeholder="Buscar por Credor ou Cliente..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full sm:w-80 pl-10 pr-3 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors h-9"/>
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon className="h-4 w-4 text-text-secondary"/></div>
             </div>
-            <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
+             <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
                 <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-text-secondary">Vencimento:</span>
-                    <input type="date" value={dateRange.start} onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))} className="bg-white border border-border rounded-md px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/>
+                    <input type="date" value={dateRange.start} onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))} className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/>
                     <span className="text-xs text-text-secondary">até</span>
-                    <input type="date" value={dateRange.end} onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))} className="bg-white border border-border rounded-md px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/>
+                    <input type="date" value={dateRange.end} onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))} className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/>
                 </div>
-                <button onClick={handleClearFilters} className="px-3 py-1.5 rounded-md bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-9 transition-colors">Limpar</button>
+                <button onClick={handleClearFilters} className="px-3 py-1.5 rounded-full bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-9 transition-colors">Limpar</button>
             </div>
         </div>
 
-        <div className="bg-card border border-border rounded-lg overflow-hidden flex-grow shadow-sm">
-            <div ref={scrollRef} onScroll={handleScroll} className="overflow-x-auto overflow-y-auto h-full"> {/* Make scroll container fill height */}
-                <table className="min-w-full divide-y divide-border text-sm text-left">
+        <div className="bg-card border border-border rounded-2xl overflow-hidden flex-grow shadow-sm">
+            <div ref={scrollRef} onScroll={handleScroll} className="overflow-x-auto overflow-y-auto h-full">
+                 <table className="min-w-full divide-y divide-border text-sm text-left">
                     <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider sticky top-0">
                         <tr>
                             <th className="px-6 py-3">Credor</th>
                             <th className="px-6 py-3">Cliente</th>
                             <th className="px-6 py-3">Vencimento</th>
+                            <th className="px-6 py-3">Dia</th>
                             <th className="px-6 py-3 text-right">Valor</th>
                             <th className="px-6 py-3 text-center">Status</th>
                             <th className="px-6 py-3 text-center">Ações</th>
@@ -364,8 +370,9 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         {filteredBoletos.length > 0 ? filteredBoletos.slice(0, displayCount).map(boleto => (
                             <tr key={boleto.id} className="hover:bg-secondary transition-colors">
                                 <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{boleto.credor}</td>
-                                <td className="px-6 py-4 text-text-secondary">{boleto.cliente}</td>
+                                <td className="px-6 py-4 text-text-secondary whitespace-nowrap">{boleto.cliente}</td>
                                 <td className="px-6 py-4 text-text-secondary whitespace-nowrap">{formatDateToBR(boleto.vencimento)}</td>
+                                <td className="px-6 py-4 text-text-secondary">{getDayOfWeek(boleto.vencimento)}</td>
                                 <td className="px-6 py-4 font-semibold text-text-primary text-right whitespace-nowrap">{formatCurrency(boleto.valor)}</td>
                                 <td className="px-6 py-4 text-center">
                                     <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded-full border ${
@@ -380,15 +387,15 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                 </td>
                                 <td className="px-6 py-4 text-center">
                                     <div className="flex items-center justify-center gap-2">
-                                        {!boleto.recebido && <button onClick={() => handleMarkAsReceived(boleto)} title="Marcar como Recebido" className="text-success p-1.5 rounded-md hover:bg-success/10 transition-colors"><CheckIcon className="h-4 w-4"/></button>}
-                                        <button onClick={() => handleEditClick(boleto)} title="Editar" className="text-primary p-1.5 rounded-md hover:bg-primary/10 transition-colors"><EditIcon className="h-4 w-4"/></button>
-                                        <button onClick={() => handleDeleteClick(boleto.id)} title="Excluir" className="text-danger p-1.5 rounded-md hover:bg-danger/10 transition-colors"><TrashIcon className="h-4 w-4"/></button>
+                                        {!boleto.recebido && <button onClick={() => handleMarkAsReceived(boleto)} title="Receber" className="text-success p-1.5 rounded-full hover:bg-success/10 transition-colors"><CheckIcon className="h-4 w-4"/></button>}
+                                        <button onClick={() => handleEditClick(boleto)} title="Editar" className="text-primary p-1.5 rounded-full hover:bg-primary/10 transition-colors"><EditIcon className="h-4 w-4"/></button>
+                                        <button onClick={() => handleDeleteClick(boleto.id)} title="Excluir" className="text-danger p-1.5 rounded-full hover:bg-danger/10 transition-colors"><TrashIcon className="h-4 w-4"/></button>
                                     </div>
                                 </td>
                             </tr>
                         )) : (
-                            <tr>
-                                <td colSpan={6} className="text-center py-16">
+                             <tr>
+                                <td colSpan={7} className="text-center py-16">
                                     <div className="flex flex-col items-center text-text-secondary">
                                         <SearchIcon className="w-10 h-10 mb-3 text-gray-300"/>
                                         <h3 className="text-lg font-medium text-text-primary">Nenhum Boleto Encontrado</h3>
@@ -399,7 +406,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         )}
                         {isLoadingMore && (
                             <tr>
-                                <td colSpan={6} className="text-center py-4 text-primary">
+                                <td colSpan={7} className="text-center py-4 text-primary">
                                     <SpinnerIcon className="h-5 w-5 animate-spin mx-auto" />
                                     Carregando mais...
                                 </td>
@@ -412,37 +419,37 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
         {isModalOpen && editingBoleto && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                <div className="bg-card rounded-lg shadow-lg border border-border w-full max-w-md overflow-hidden">
+                 <div className="bg-card rounded-2xl shadow-lg border border-border w-full max-w-md overflow-hidden">
                     <div className="px-6 py-4 border-b border-border bg-secondary/30">
-                         <h3 className="text-lg font-bold text-text-primary">{editingBoleto.id ? 'Editar Boleto' : 'Novo Boleto'}</h3>
+                        <h3 className="text-lg font-bold text-text-primary">{editingBoleto.id ? 'Editar Boleto' : 'Novo Boleto'}</h3>
                     </div>
                     <div className="p-6 space-y-4">
                         <div>
-                            <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Credor</label>
-                            <input name="credor" value={editingBoleto.credor || ''} onChange={handleInputChange} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.credor ? 'border-danger' : 'border-border'}`} />
+                             <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Credor</label>
+                            <input name="credor" value={editingBoleto.credor || ''} onChange={handleInputChange} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.credor ? 'border-danger' : 'border-border'}`} />
                             {errors.credor && <p className="text-danger text-xs mt-1">{errors.credor}</p>}
                         </div>
-                        <div>
-                            <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Cliente</label>
-                            <input name="cliente" value={editingBoleto.cliente || ''} onChange={handleInputChange} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.cliente ? 'border-danger' : 'border-border'}`} />
+                         <div>
+                             <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Cliente</label>
+                            <input name="cliente" value={editingBoleto.cliente || ''} onChange={handleInputChange} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.cliente ? 'border-danger' : 'border-border'}`} />
                             {errors.cliente && <p className="text-danger text-xs mt-1">{errors.cliente}</p>}
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Vencimento</label>
-                                <input name="vencimento_br" value={editingBoleto.vencimento_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.vencimento ? 'border-danger' : 'border-border'}`} />
+                                <input name="vencimento_br" value={editingBoleto.vencimento_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.vencimento ? 'border-danger' : 'border-border'}`} />
                                 {errors.vencimento && <p className="text-danger text-xs mt-1">{errors.vencimento}</p>}
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Valor</label>
-                                <input name="valor" value={formatCurrency(editingBoleto.valor || 0)} onChange={handleInputChange} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.valor ? 'border-danger' : 'border-border'}`} />
+                                 <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Valor</label>
+                                <input name="valor" value={formatCurrency(editingBoleto.valor || 0)} onChange={handleInputChange} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.valor ? 'border-danger' : 'border-border'}`} />
                                 {errors.valor && <p className="text-danger text-xs mt-1">{errors.valor}</p>}
                             </div>
                         </div>
                     </div>
-                    <div className="px-6 py-4 border-t border-border bg-secondary/30 flex justify-end gap-3">
-                        <button onClick={handleCloseModal} className="px-4 py-2 rounded-md bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
-                        <button onClick={handleSaveChanges} className="px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Salvar</button>
+                     <div className="px-6 py-4 border-t border-border bg-secondary/30 flex justify-end gap-3">
+                        <button onClick={handleCloseModal} className="px-4 py-2 rounded-full bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
+                        <button onClick={handleSaveChanges} className="px-4 py-2 rounded-full bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Salvar</button>
                     </div>
                 </div>
             </div>
@@ -450,12 +457,12 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
         {isConfirmOpen && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                <div className="bg-card rounded-lg shadow-xl border border-border w-full max-w-sm p-6">
+                <div className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-sm p-6">
                     <h3 className="text-lg font-bold mb-2 text-text-primary">Confirmar</h3>
                     <p className="text-sm text-text-secondary mb-6">{confirmAction.message}</p>
                     <div className="flex justify-end gap-3">
-                        <button onClick={() => setIsConfirmOpen(false)} className="px-4 py-2 rounded-md bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
-                        <button onClick={handleConfirm} className="px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Confirmar</button>
+                        <button onClick={() => setIsConfirmOpen(false)} className="px-4 py-2 rounded-full bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
+                        <button onClick={handleConfirm} className="px-4 py-2 rounded-full bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Confirmar</button>
                     </div>
                 </div>
             </div>

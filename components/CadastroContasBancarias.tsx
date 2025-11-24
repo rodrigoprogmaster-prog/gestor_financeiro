@@ -311,7 +311,7 @@ const CadastroContasBancarias: React.FC<{ onBack?: () => void }> = ({ onBack }) 
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
                 <div className="flex items-center gap-4">
                     {onBack && (
-                        <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors h-10">
+                        <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">
                             <ArrowLeftIcon className="h-5 w-5" />
                             Voltar
                         </button>
@@ -324,19 +324,19 @@ const CadastroContasBancarias: React.FC<{ onBack?: () => void }> = ({ onBack }) 
                    {selectedContas.size > 0 && (
                         <button
                             onClick={handleDeleteSelectedClick}
-                            className="flex items-center gap-2 bg-danger text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-300 h-10"
+                            className="flex items-center gap-2 bg-danger text-white font-semibold py-2 px-4 rounded-full hover:bg-red-700 transition-colors duration-300 h-10"
                         >
                             <TrashIcon className="h-5 w-5" />
                             Apagar ({selectedContas.size})
                         </button>
                     )}
-                   <button onClick={handleImportClick} className="flex items-center gap-2 bg-secondary text-text-primary font-semibold py-2 px-4 rounded-lg hover:bg-border transition-colors duration-300 h-10">
+                   <button onClick={handleImportClick} className="flex items-center gap-2 bg-secondary text-text-primary font-semibold py-2 px-4 rounded-full hover:bg-border transition-colors duration-300 h-10">
                         <UploadIcon className="h-5 w-5" /> Importar XLSX
                     </button>
-                    <button onClick={handleExportXLSX} className="flex items-center gap-2 bg-success text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors duration-300 h-10">
+                    <button onClick={handleExportXLSX} className="flex items-center gap-2 bg-success text-white font-semibold py-2 px-4 rounded-full hover:bg-green-700 transition-colors duration-300 h-10">
                         <DownloadIcon className="h-5 w-5" /> Exportar XLSX
                     </button>
-                    <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-hover transition-colors duration-300 h-10">
+                    <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-full hover:bg-primary-hover transition-colors duration-300 h-10">
                         <PlusIcon className="h-5 w-5" /> Adicionar Conta
                     </button>
                 </div>
@@ -347,19 +347,19 @@ const CadastroContasBancarias: React.FC<{ onBack?: () => void }> = ({ onBack }) 
                     placeholder="Buscar por qualquer campo..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="bg-background border border-border rounded-md px-3 py-2 pl-10 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10 w-full"
+                    className="bg-background border border-border rounded-xl px-3 py-2 pl-10 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10 w-full"
                 />
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <SearchIcon className="h-5 w-5 text-text-secondary" />
                 </div>
             </div>
              <div className="mb-6">
-                <div className="bg-card p-4 rounded-lg shadow-md border border-border text-center sm:max-w-sm">
+                <div className="bg-card p-4 rounded-2xl shadow-md border border-border text-center sm:max-w-sm">
                     <p className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Total de Contas</p>
                     <p className="text-2xl font-bold text-primary">{filteredContas.length}</p>
                 </div>
             </div>
-            <div className="bg-card shadow-md rounded-lg overflow-x-auto">
+            <div className="bg-card shadow-md rounded-2xl overflow-x-auto">
                 <table className="w-full text-base text-left text-text-secondary">
                     <thead className="text-sm text-text-primary uppercase bg-secondary">
                         <tr>
@@ -433,7 +433,7 @@ const CadastroContasBancarias: React.FC<{ onBack?: () => void }> = ({ onBack }) 
 
             {isModalOpen && editingConta && (
                 <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-lg">
+                    <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-lg">
                         <h3 className="text-xl font-bold mb-6 text-text-primary">{editingConta.id ? 'Editar Conta' : 'Adicionar Nova Conta'}</h3>
                         <div className="space-y-4">
                             {Object.entries({ titular: 'TITULAR', cnpj: 'CNPJ', pix: 'PIX', banco: 'BANCO', agencia: 'AGENCIA', contaCorrente: 'C/C' }).map(([key, label]) => (
@@ -446,14 +446,14 @@ const CadastroContasBancarias: React.FC<{ onBack?: () => void }> = ({ onBack }) 
                                        value={editingConta[key as keyof typeof editingConta] || ''} 
                                        onChange={handleInputChange} 
                                        {...(key === 'cnpj' && { maxLength: 18 })}
-                                       className={`w-full bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors[key as keyof ContaErrors] ? 'border-danger' : 'border-border'}`} />
+                                       className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors[key as keyof ContaErrors] ? 'border-danger' : 'border-border'}`} />
                                     {errors[key as keyof ContaErrors] && <p className="text-danger text-xs mt-1">{errors[key as keyof ContaErrors]}</p>}
                                 </div>
                             ))}
                         </div>
                         <div className="mt-8 flex justify-end gap-4">
-                            <button onClick={handleCloseModal} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                            <button onClick={handleSaveChanges} className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">
+                            <button onClick={handleCloseModal} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
+                            <button onClick={handleSaveChanges} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">
                                 {editingConta.id ? 'Salvar Alterações' : 'Adicionar Conta'}
                             </button>
                         </div>
@@ -463,13 +463,13 @@ const CadastroContasBancarias: React.FC<{ onBack?: () => void }> = ({ onBack }) 
 
             {isConfirmOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-sm">
+                    <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-sm">
                         <h3 className="text-lg font-bold mb-4 text-text-primary">Confirmar Ação</h3>
                         <p className="text-text-secondary mb-6">{confirmAction.message}</p>
                         <div className="flex justify-end gap-4">
-                            <button onClick={handleCancelConfirm} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
+                            <button onClick={handleCancelConfirm} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
                             {confirmAction.action && (
-                                <button onClick={handleConfirm} className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Confirmar</button>
+                                <button onClick={handleConfirm} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Confirmar</button>
                             )}
                         </div>
                     </div>
