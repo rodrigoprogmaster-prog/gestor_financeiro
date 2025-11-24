@@ -421,6 +421,7 @@ export const PrevisaoFabrica: React.FC = () => {
         const existingPaymentsForDateMap = new Map<string, Pagamento>();
         existingPagamentos.forEach(p => {
             if (p.data === transferDate) {
+                // Fix: Changed p.p.tipo to p.tipo
                 const key = `${p.empresa}-${p.tipo}`;
                 existingPaymentsForDateMap.set(key, p);
             }
@@ -491,7 +492,7 @@ export const PrevisaoFabrica: React.FC = () => {
                     type="date" 
                     value={reportDateFilter} 
                     onChange={e => setReportDateFilter(e.target.value)} 
-                    className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"
+                    className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
             </div>
             <div className="flex items-center gap-2">
@@ -501,12 +502,12 @@ export const PrevisaoFabrica: React.FC = () => {
                     placeholder="Ex: Semana 42" 
                     value={reportWeekFilter} 
                     onChange={e => setReportWeekFilter(e.target.value)} 
-                    className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 w-32"
+                    className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary w-32"
                 />
             </div>
             <button 
                 onClick={() => {setReportDateFilter(''); setReportWeekFilter('')}} 
-                className="px-3 py-1.5 rounded-full bg-secondary hover:bg-border text-text-primary font-medium text-sm h-9 transition-colors"
+                className="px-3 py-1.5 rounded-full bg-secondary hover:bg-border text-text-primary font-medium text-sm transition-colors"
             >
                 Limpar
             </button>
@@ -550,7 +551,7 @@ export const PrevisaoFabrica: React.FC = () => {
 
                 {filteredPrevisoes.length > 0 && (
                   <div className="mb-4 grid grid-cols-3 gap-3">
-                    <div className="bg-card p-3 rounded-2xl border border-border shadow-sm text-center">
+                    <div className="bg-card p-3 rounded-2xl shadow-sm border border-border text-center">
                       <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Receitas</p>
                       <p className="text-lg font-bold text-success">{formatCurrency(totais.totalReceitas)}</p>
                     </div>

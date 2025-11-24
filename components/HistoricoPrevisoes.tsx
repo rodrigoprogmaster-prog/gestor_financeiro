@@ -51,18 +51,17 @@ const NavCard: React.FC<NavCardProps> = ({ title, icon, onClick }) => (
     </div>
 );
 
-
-const CRISTIANO_PREDEFINED_ENTRIES = [
-    { empresa: 'FIBER ADM DE FRANQUIAS ITAU', tipo: 'ITAU' },
-    { empresa: 'WORLD WIDE ITAU', tipo: 'ITAU' },
-    { empresa: 'CACHOEIRINHA PISCINAS', tipo: 'INTER' },
-    { empresa: 'CAMARGOS PISCINAS E SPAS LTDA', tipo: 'INTER' },
-    { empresa: 'IPR INDUSTRIA E COMERCIO DE PLASTIC', tipo: 'INTER' },
-    { empresa: 'ZMR PISCINAS LTDA.', tipo: 'INTER' },
-    { empresa: 'WORLD WIDE SWIMMINGPOOLS NEGOCIOS D', tipo: 'INTER' },
-    { empresa: 'Saldo Inicial', tipo: 'INTER' },
-    { empresa: 'Cheques A Compensar', tipo: 'INTER' },
-    { empresa: 'Recebimento de boletos', tipo: 'INTER' },
+// Used only for autocomplete suggestions now, not auto-population
+const PREDEFINED_ENTRIES = [
+    { empresa: 'Fiber Adm De Franquias', tipo: 'ITAU' },
+    { empresa: 'World Wide Swimmingpools', tipo: 'ITAU' },
+    { empresa: 'Fiber Anel - Cachoeirinha', tipo: 'INTER' },
+    { empresa: 'Camargos Piscinas E Spas Ltda', tipo: 'INTER' },
+    { empresa: 'Ipr Industria E Comercio De Plastic', tipo: 'INTER' },
+    { empresa: 'Zmr Piscinas Ltda', tipo: 'INTER' },
+    { empresa: 'World Wide Swimmingpools Negocios D', tipo: 'XP' },
+    { empresa: 'World Wide Swimmingpools Negocios D', tipo: 'BB' },
+    { empresa: 'World Wide Swimmingpools Negocios D', tipo: 'SANTANDER' },
 ];
 
 const FIXED_BANKS = ['INTER', 'XP', 'ITAU', 'BB', 'SANTANDER'];
@@ -76,7 +75,6 @@ const formatCurrency = (value: number | undefined | null) => {
 const formatDateToBR = (isoDate: string): string => {
     if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return '';
     const [year, month, day] = isoDate.split('-');
-    // Create a UTC date to avoid timezone issues
     const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
     return date.toLocaleDateString('pt-BR', {
         timeZone: 'UTC',
@@ -86,15 +84,12 @@ const formatDateToBR = (isoDate: string): string => {
     });
 };
 
-
 type View = 'menu' | 'previsao' | 'dashboard' | 'banco' | 'empresa';
 
-// Constants for infinite scroll
+// Constants for infinite scroll (kept logic but simplified rendering for now)
 const ITEMS_PER_LOAD = 20;
-const SCROLL_THRESHOLD = 100; // pixels from the bottom to trigger loading
+const SCROLL_THRESHOLD = 100;
 
-
-// Fix: Changed to named export
 export const PrevisaoCristiano: React.FC = () => {
     const [previsoes, setPrevisoes] = useState<Previsao[]>(() => {
         const savedPrevisoes = localStorage.getItem('previsoes_cristiano');
@@ -116,7 +111,6 @@ export const PrevisaoCristiano: React.FC = () => {
         despesas: 0
     });
     
-    // Default to current date
     const [dateFilter, setDateFilter] = useState<string>(new Date().toISOString().split('T')[0]);
     const [closedDates, setClosedDates] = useState<Set<string>>(() => {
         const savedClosedDates = localStorage.getItem('closedDates_cristiano');
@@ -125,7 +119,6 @@ export const PrevisaoCristiano: React.FC = () => {
     
     const [view, setView] = useState<View>('previsao');
     
-    // New filters for Reports
     const [reportDateFilter, setReportDateFilter] = useState<string>('');
     const [reportWeekFilter, setReportWeekFilter] = useState<string>('');
     
@@ -139,9 +132,8 @@ export const PrevisaoCristiano: React.FC = () => {
     const [isTransferConfirmOpen, setIsTransferConfirmOpen] = useState(false);
     const [transferDate, setTransferDate] = useState('');
 
-    // Infinite scroll states for the 'previsao' table
     const scrollRef = useRef<HTMLDivElement>(null);
-    // const [displayCount, setDisplayCount] = useState(ITEMS_PER_LOAD); // Removed for stability
+    // const [displayCount, setDisplayCount] = useState(ITEMS_PER_LOAD); // Removed infinite scroll complexity for stability
 
     useEffect(() => {
         localStorage.setItem('previsoes_cristiano', JSON.stringify(previsoes));
@@ -168,12 +160,12 @@ export const PrevisaoCristiano: React.FC = () => {
         );
     }, [historicoPrevisoesGeradas, dashboardSemanaFilter]);
 
-    const uniqueEmpresas = useMemo(() => [...new Set(CRISTIANO_PREDEFINED_ENTRIES.map(e => e.empresa))].sort(), []);
+    const uniqueEmpresas = useMemo(() => [...new Set(PREDEFINED_ENTRIES.map(e => e.empresa))].sort(), []);
     
     const filteredPrevisoes = useMemo(() => {
         let filtered = previsoes;
         if (dateFilter) {
-          filtered = previsoes.filter(p => p.data === dateFilter);
+            filtered = previsoes.filter(p => p.data === dateFilter);
         }
         return [...filtered].sort((a, b) => a.tipo.localeCompare(b.tipo));
     }, [previsoes, dateFilter]);
@@ -215,16 +207,16 @@ export const PrevisaoCristiano: React.FC = () => {
     }, [filteredReportData]);
 
     const despesasPorEmpresa = useMemo(() => {
-        const porEmpresa = filteredReportData.reduce((acc, item) => {
+        const porEmpresa = filteredReportData.reduce<Record<string, { totalDespesas: number }>>((acc, item) => {
             if (!acc[item.empresa]) {
                 acc[item.empresa] = { totalDespesas: 0 };
             }
             acc[item.empresa].totalDespesas += item.despesas;
             return acc;
-        }, {} as Record<string, { totalDespesas: number; }>);
+        }, {});
         return Object.entries(porEmpresa).map(([empresa, value]) => ({ empresa, totalDespesas: (value as { totalDespesas: number }).totalDespesas })).filter(item => item.totalDespesas > 0).sort((a, b) => b.totalDespesas - a.totalDespesas);
     }, [filteredReportData]);
-
+    
     const totalDespesasGeral = useMemo(() => {
         return despesasPorEmpresa.reduce((acc, item) => acc + item.totalDespesas, 0);
     }, [despesasPorEmpresa]);
@@ -245,43 +237,6 @@ export const PrevisaoCristiano: React.FC = () => {
             despesas: 0
         });
         setIsAddEntryModalOpen(true);
-    };
-
-    const handleAddNewEntry = () => {
-        if (!newEntry.data || !newEntry.empresa || !newEntry.tipo) {
-            alert("Preencha Data, Empresa e Banco.");
-            return;
-        }
-
-        const action = () => {
-            const entryToAdd: Previsao = {
-                id: Date.now(),
-                data: newEntry.data!,
-                semana: newEntry.semana || '',
-                empresa: newEntry.empresa!,
-                tipo: newEntry.tipo!,
-                receitas: Number(newEntry.receitas) || 0,
-                despesas: Number(newEntry.despesas) || 0,
-            };
-            setPrevisoes(prev => [...prev, entryToAdd].sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime()));
-            setDateFilter(newEntry.data!);
-        };
-        
-        setConfirmAction({ action, message: `Deseja adicionar este lançamento?` });
-        setIsConfirmOpen(true);
-        setIsAddEntryModalOpen(false);
-    };
-
-    const handleNewEntryChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        if (name === 'receitas' || name === 'despesas') {
-             let numericValue = value.replace(/\D/g, '');
-             if (numericValue === '') numericValue = '0';
-             const numberValue = Number(numericValue) / 100;
-             setNewEntry(prev => ({ ...prev, [name]: numberValue }));
-        } else {
-             setNewEntry(prev => ({ ...prev, [name]: value }));
-        }
     };
     
     const handleProceedToConfirmGerar = () => {
@@ -335,8 +290,44 @@ export const PrevisaoCristiano: React.FC = () => {
         setView('dashboard');
         
         setIsGerarPrevisaoConfirmOpen(false);
-        setIsGerarPrevisaoModalOpen(false);
         setSemanaParaGerar('');
+    };
+
+    const handleAddNewEntry = () => {
+        if (!newEntry.data || !newEntry.empresa || !newEntry.tipo) {
+            alert("Preencha Data, Empresa e Banco.");
+            return;
+        }
+
+        const action = () => {
+            const entryToAdd: Previsao = {
+                id: Date.now(),
+                data: newEntry.data!,
+                semana: newEntry.semana || '',
+                empresa: newEntry.empresa!,
+                tipo: newEntry.tipo!,
+                receitas: Number(newEntry.receitas) || 0,
+                despesas: Number(newEntry.despesas) || 0,
+            };
+            setPrevisoes(prev => [...prev, entryToAdd].sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime()));
+            setDateFilter(newEntry.data!);
+        };
+        
+        setConfirmAction({ action, message: `Deseja adicionar este lançamento?` });
+        setIsConfirmOpen(true);
+        setIsAddEntryModalOpen(false);
+    };
+    
+    const handleNewEntryChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        if (name === 'receitas' || name === 'despesas') {
+             let numericValue = value.replace(/\D/g, '');
+             if (numericValue === '') numericValue = '0';
+             const numberValue = Number(numericValue) / 100;
+             setNewEntry(prev => ({ ...prev, [name]: numberValue }));
+        } else {
+             setNewEntry(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleDeleteClick = (e: React.MouseEvent, previsao: Previsao) => {
@@ -442,10 +433,10 @@ export const PrevisaoCristiano: React.FC = () => {
                     envia: existingPayment.envia || 0, 
                     recebe: existingPayment.recebe || 0,
                 });
-                existingPaymentsForDateMap.delete(key);
+                existingPaymentsForDateMap.delete(key); 
             } else {
                 updatedPaymentsForDate.push({
-                    id: `${prev.data}-${prev.empresa}-${prev.tipo}-${Date.now()}`,
+                    id: `${prev.data}-${prev.empresa}-${prev.tipo}-${Date.now()}`, 
                     data: prev.data,
                     empresa: prev.empresa,
                     tipo: prev.tipo,
@@ -464,10 +455,6 @@ export const PrevisaoCristiano: React.FC = () => {
         localStorage.setItem(LOCAL_STORAGE_KEY_PAGAMENTOS, JSON.stringify(finalPagamentos));
         alert(`${updatedPaymentsForDate.length} lançamentos do dia ${formatDateToBR(transferDate)} transferidos/atualizados com sucesso para Pagamentos Diários Cristiano!`);
         setIsTransferConfirmOpen(false);
-    };
-
-    const handleScroll = () => {
-        // Placeholder for infinite scroll if reintroduced
     };
 
     if (view === 'menu') {
@@ -495,7 +482,7 @@ export const PrevisaoCristiano: React.FC = () => {
                     type="date" 
                     value={reportDateFilter} 
                     onChange={e => setReportDateFilter(e.target.value)} 
-                    className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"
+                    className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
             </div>
             <div className="flex items-center gap-2">
@@ -505,12 +492,12 @@ export const PrevisaoCristiano: React.FC = () => {
                     placeholder="Ex: Semana 42" 
                     value={reportWeekFilter} 
                     onChange={e => setReportWeekFilter(e.target.value)} 
-                    className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 w-32"
+                    className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary w-32"
                 />
             </div>
             <button 
                 onClick={() => {setReportDateFilter(''); setReportWeekFilter('')}} 
-                className="px-3 py-1.5 rounded-full bg-secondary hover:bg-border text-text-primary font-medium text-sm h-9 transition-colors"
+                className="px-3 py-1.5 rounded-full bg-secondary hover:bg-border text-text-primary font-medium text-sm transition-colors"
             >
                 Limpar
             </button>
@@ -554,7 +541,7 @@ export const PrevisaoCristiano: React.FC = () => {
 
                 {filteredPrevisoes.length > 0 && (
                   <div className="mb-4 grid grid-cols-3 gap-3">
-                    <div className="bg-card p-3 rounded-2xl border border-border shadow-sm text-center">
+                    <div className="bg-card p-3 rounded-2xl shadow-sm border border-border text-center">
                       <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Receitas</p>
                       <p className="text-lg font-bold text-success">{formatCurrency(totais.totalReceitas)}</p>
                     </div>
@@ -740,7 +727,7 @@ export const PrevisaoCristiano: React.FC = () => {
                 </div>
               )}
 
-               {isGerarPrevisaoModalOpen && (
+              {isGerarPrevisaoModalOpen && (
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
                         <div className="bg-card rounded-2xl shadow-lg border border-border w-full max-w-sm overflow-hidden">
                             <div className="px-6 py-4 border-b border-border bg-secondary/30">
@@ -783,5 +770,3 @@ export const PrevisaoCristiano: React.FC = () => {
             </div>
           );
         };
-
-export default PrevisaoCristiano;

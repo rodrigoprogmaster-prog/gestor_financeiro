@@ -9,17 +9,17 @@ enum StatusCheque {
   DEVOLVIDO = 'Devolvido',
 }
 
-// Data structure
+// Data structure for a cheque
 interface Cheque {
-  id: string;
-  emitente: string;
-  numero: string;
-  valor: number;
-  dataVencimento: string; // Vencimento
-  loja: string;
-  contaDeposito: string;
-  dataDeposito: string; // Data Depósito
-  status: StatusCheque;
+    id: string;
+    emitente: string;
+    numero: string;
+    valor: number;
+    dataVencimento: string; // YYYY-MM-DD
+    loja: string;
+    contaDeposito: string;
+    dataDeposito: string; // YYYY-MM-DD
+    status: StatusCheque;
 }
 
 const statusOrder: Record<string, number> = {
@@ -102,10 +102,7 @@ const parseImportedDate = (dateValue: any): string => {
             // The xlsx library is loaded from a CDN in index.html
             const date = (window as any).XLSX.SSF.parse_date_code(dateValue);
             if (date && date.y && date.m && date.d) {
-                const year = date.y;
-                const month = String(date.m).padStart(2, '0');
-                const day = String(date.d).padStart(2, '0');
-                return `${year}-${month}-${day}`;
+                return `${date.y}-${String(date.m).padStart(2, '0')}-${String(date.d).padStart(2, '0')}`;
             }
         } catch(e) {
             console.error("Could not parse excel date serial number:", dateValue, e);

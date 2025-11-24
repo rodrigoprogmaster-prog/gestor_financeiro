@@ -112,13 +112,13 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
 
       {/* Sidebar Container */}
       <aside className={`
-        fixed top-0 left-0 z-50 h-full w-64 bg-card border-r border-border transform transition-transform duration-300 ease-in-out flex flex-col
+        fixed top-0 left-0 z-50 h-full w-64 bg-slate-900 border-r border-slate-800 transform transition-transform duration-300 ease-in-out flex flex-col
         lg:translate-x-0 lg:static lg:h-auto lg:shadow-none shadow-2xl
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        <div className="h-16 flex items-center justify-between px-6 border-b border-border shrink-0">
-            <span className="text-lg font-bold text-text-primary font-heading tracking-tight">Menu</span>
-            <button onClick={onClose} className="lg:hidden text-text-secondary hover:text-text-primary p-1">
+        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800 shrink-0">
+            <span className="text-lg font-bold text-white font-heading tracking-tight">Menu</span>
+            <button onClick={onClose} className="lg:hidden text-slate-400 hover:text-white p-1 rounded-full transition-colors">
                 <XIcon className="h-6 w-6" />
             </button>
         </div>
@@ -133,7 +133,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
                     <button
                       onClick={() => toggleSubMenu(module.name)}
                       className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-full text-sm transition-colors font-medium
-                        ${isActive ? 'text-primary bg-primary/5' : 'text-text-secondary hover:text-text-primary hover:bg-secondary'}
+                        ${isActive ? 'text-white bg-slate-800' : 'text-slate-400 hover:text-white hover:bg-slate-800'}
                       `}
                     >
                       <div className="flex items-center gap-3">
@@ -145,15 +145,15 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
                     
                     {/* Submenu */}
                     <div className={`overflow-hidden transition-all duration-300 ${openSubMenus[module.name] ? 'max-h-96 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
-                      <ul className="pl-4 space-y-1 border-l border-border ml-4">
+                      <ul className="pl-4 space-y-1 border-l border-slate-700 ml-4">
                         {module.children.map(child => (
                           <li key={child.view}>
                             <button
                               onClick={() => handleNavigation(child.view)}
                               className={`w-full flex items-center gap-3 px-4 py-2 rounded-full text-sm transition-colors
                                 ${currentView === child.view 
-                                  ? 'text-primary font-semibold bg-primary/10' 
-                                  : 'text-text-secondary hover:text-text-primary hover:bg-secondary'}
+                                  ? 'text-white font-semibold bg-blue-600 shadow-md' 
+                                  : 'text-slate-400 hover:text-white hover:bg-slate-800'}
                               `}
                             >
                               <span>{child.name}</span>
@@ -172,11 +172,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
                       onClick={() => handleNavigation(module.view)}
                       className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-sm transition-colors font-medium
                         ${isSelected 
-                          ? 'bg-primary text-white shadow-sm' 
-                          : 'text-text-secondary hover:text-text-primary hover:bg-secondary'}
+                          ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/10' 
+                          : 'text-slate-400 hover:text-white hover:bg-slate-800'}
                       `}
                     >
-                      <span className={isSelected ? 'text-white' : 'text-text-secondary group-hover:text-primary'}>
+                      <span className={isSelected ? 'text-white' : 'text-slate-400 group-hover:text-white'}>
                         {module.icon}
                       </span>
                       <span>{module.name}</span>
@@ -188,15 +188,15 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
           </ul>
         </div>
         
-        <div className="p-4 border-t border-border shrink-0 space-y-2">
+        <div className="p-4 border-t border-slate-800 shrink-0 space-y-2">
             <button 
                 onClick={onLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-full text-sm transition-colors font-medium text-danger hover:bg-danger/10"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-full text-sm transition-colors font-medium text-red-400 hover:bg-red-950/30 hover:text-red-300"
             >
                 <LogoutIcon className="h-5 w-5" />
                 <span>Sair</span>
             </button>
-            <p className="text-xs text-center text-text-secondary pt-2">&copy; 2025 Gerenciador PJ</p>
+            <p className="text-xs text-center text-slate-600 pt-2">&copy; 2025 Gerenciador PJ</p>
         </div>
       </aside>
     </>

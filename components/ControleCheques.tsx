@@ -313,7 +313,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         
         <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
             <div className="flex items-center gap-4">
-                <h2 className="text-2xl font-bold text-text-primary tracking-tight">Boletos a Receber</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Boletos a Receber</h2>
             </div>
             <div className="flex items-center flex-wrap gap-2">
                 <button onClick={handleExportXLSX} className="flex items-center gap-2 bg-white border border-border text-text-primary font-medium py-2 px-4 rounded-full hover:bg-secondary text-sm h-9"><DownloadIcon className="h-4 w-4"/>Exportar</button>

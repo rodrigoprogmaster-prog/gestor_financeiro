@@ -134,6 +134,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   // Filter states
   const [statusFilter, setStatusFilter] = useState<string>('Todos');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
   // Infinite scroll states
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -142,7 +143,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
   useEffect(() => {
     setSelectedTitles(new Set());
-  }, [statusFilter, searchTerm]);
+  }, [statusFilter, searchTerm, dateRange]);
 
   const filteredTitles = useMemo(() => {
     setDisplayCount(ITEMS_PER_LOAD); // Reset display count on filter change
@@ -153,9 +154,13 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         title.fornecedor.toLowerCase().includes(lowercasedSearchTerm) ||
         title.devedor.toLowerCase().includes(lowercasedSearchTerm) ||
         title.numeroTitulo.toLowerCase().includes(lowercasedSearchTerm);
-      return statusMatch && searchMatch;
+      
+      const startDateMatch = !dateRange.start || title.vencimentoOriginal >= dateRange.start;
+      const endDateMatch = !dateRange.end || title.vencimentoOriginal <= dateRange.end;
+
+      return statusMatch && searchMatch && startDateMatch && endDateMatch;
     });
-  }, [titles, statusFilter, searchTerm]);
+  }, [titles, statusFilter, searchTerm, dateRange]);
 
   const totalValor = useMemo(() => {
     return filteredTitles.reduce((acc, title) => acc + title.valor, 0);
@@ -164,6 +169,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const handleClearFilters = () => {
     setStatusFilter('Todos');
     setSearchTerm('');
+    setDateRange({ start: '', end: '' });
   };
 
   const handleExportXLSX = () => {
@@ -461,25 +467,43 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             Exportar XLSX
           </button>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <div className="relative w-full sm:w-auto">
+        <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-2">
+            <div className="relative w-full xl:w-auto flex-grow">
               <input 
                 type="text" 
                 placeholder="Buscar por Fornecedor, Devedor, Nº Título..."
                 value={searchTerm} 
                 onChange={(e) => setSearchTerm(e.target.value)} 
-                className="bg-white border border-border rounded-xl px-3 py-2 pl-10 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 w-full sm:w-64"
+                className="bg-white border border-border rounded-xl px-3 py-2 pl-10 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 w-full"
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <SearchIcon className="h-4 w-4 text-text-secondary" />
               </div>
             </div>
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-white border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9">
+            
+            <div className="flex items-center gap-2 bg-white border border-border rounded-xl px-3 h-9">
+                <span className="text-xs font-medium text-text-secondary whitespace-nowrap">Venc. Original:</span>
+                <input 
+                    type="date" 
+                    value={dateRange.start} 
+                    onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))} 
+                    className="bg-transparent border-none text-sm text-text-primary focus:ring-0 p-0 w-28"
+                />
+                <span className="text-xs text-text-secondary">-</span>
+                <input 
+                    type="date" 
+                    value={dateRange.end} 
+                    onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))} 
+                    className="bg-transparent border-none text-sm text-text-primary focus:ring-0 p-0 w-28"
+                />
+            </div>
+
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-white border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 w-full xl:w-auto">
                 <option value="Todos">Todos Status</option>
                 <option value={StatusTitulo.PRORROGADO}>Prorrogados</option>
                 <option value={StatusTitulo.A_PRORROGAR}>A Prorrogar</option>
             </select>
-            <button onClick={handleClearFilters} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-9">Limpar</button>
+            <button onClick={handleClearFilters} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-9 whitespace-nowrap">Limpar</button>
         </div>
       </div>
        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -500,7 +524,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 <th scope="col" className="px-6 py-3">
                     <input
                         type="checkbox"
-                        className="h-4 w-4 text-primary bg-white border-border rounded focus:ring-primary"
+                        className="h-4 w-4 text-primary bg-white border-border rounded-xl focus:ring-primary"
                         checked={filteredTitles.length > 0 && selectedTitles.size === filteredTitles.length}
                         onChange={handleSelectAll}
                         aria-label="Selecionar todos os títulos"
@@ -526,7 +550,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                         <input
                             type="checkbox"
-                            className="h-4 w-4 text-primary bg-white border-border rounded focus:ring-primary"
+                            className="h-4 w-4 text-primary bg-white border-border rounded-xl focus:ring-primary"
                             checked={selectedTitles.has(title.id)}
                             onChange={() => handleSelectTitle(title.id)}
                             aria-label={`Selecionar título de ${title.fornecedor}`}

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { PlusIcon, TrashIcon, SearchIcon, EditIcon, CheckIcon, CalendarClockIcon, ArrowLeftIcon } from './icons';
+import { PlusIcon, TrashIcon, SearchIcon, EditIcon, CheckIcon, CalendarClockIcon, ArrowLeftIcon, ListIcon, KanbanIcon } from './icons';
 
 // Enums
 enum StatusTarefa {
@@ -75,6 +75,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [lembretes, setLembretes] = useState<Tarefa[]>([]);
     const [isLembreteOpen, setIsLembreteOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'tarefas' | 'analise'>('tarefas');
+    const [viewMode, setViewMode] = useState<'list' | 'board'>('list'); // New state for view mode
 
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(tarefas));
@@ -254,17 +255,118 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         }
     };
 
+    // New render function for a single task card (used by both list and kanban)
+    const renderTaskCard = (tarefa: any) => {
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        const vencimento = new Date(tarefa.dataVencimento + 'T00:00:00');
+        const isOverdue = vencimento < hoje && tarefa.status !== StatusTarefa.CONCLUIDA;
+
+        return (
+            <div
+                key={tarefa.id}
+                className="bg-card rounded-2xl border border-border p-4 flex flex-col justify-between hover:shadow-md transition-shadow duration-200 min-h-[180px] relative group"
+            >
+                <div>
+                    <div className="flex justify-between items-start mb-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wide bg-secondary text-text-secondary px-2 py-0.5 rounded-full border border-border">{tarefa.categoria}</span>
+                        <span className={`text-xs font-bold ${getPriorityColor(tarefa.prioridade)}`}>{tarefa.prioridade}</span>
+                    </div>
+                    <h4 className="font-semibold text-base text-text-primary mb-2 line-clamp-2">{tarefa.titulo}</h4>
+                </div>
+
+                <p className="text-sm text-text-secondary my-3 line-clamp-3 flex-grow">{tarefa.descricao || 'Sem descrição.'}</p>
+
+                <div className="mt-auto pt-3 border-t border-border space-y-3">
+                    <div className="flex justify-between items-center">
+                        {renderStatusPill(tarefa.dynamicStatus)}
+                        <div className={`flex items-center gap-1.5 text-xs font-medium ${isOverdue ? 'text-danger' : 'text-text-secondary'}`}>
+                            <CalendarClockIcon className="h-3 w-3" />
+                            <span>{formatDateToBR(tarefa.dataVencimento)}</span>
+                        </div>
+                    </div>
+                    <div className="flex items-center justify-end gap-2">
+                        {tarefa.status !== StatusTarefa.CONCLUIDA && (
+                            <button onClick={(e) => { e.stopPropagation(); handleMarkAsDone(tarefa); }} className="p-1.5 rounded-full text-success hover:bg-green-50 border border-transparent hover:border-green-100 transition-colors">
+                                <CheckIcon className="h-4 w-4" />
+                            </button>
+                        )}
+                        <button onClick={(e) => { e.stopPropagation(); handleEditClick(tarefa); }} className="p-1.5 rounded-full text-primary hover:bg-blue-50 border border-transparent hover:border-blue-100 transition-colors">
+                            <EditIcon className="h-4 w-4" />
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(tarefa.id); }} className="p-1.5 rounded-full text-danger hover:bg-red-50 border border-transparent hover:border-red-100 transition-colors">
+                            <TrashIcon className="h-4 w-4" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // New render function for Kanban board
+    const renderKanban = () => {
+        const columns = [
+            { id: 'Atrasada', title: 'Atrasadas', color: 'bg-red-100 text-red-800 border-red-200', dot: 'bg-red-500' },
+            { id: StatusTarefa.PENDENTE, title: 'Pendentes', color: 'bg-yellow-100 text-yellow-800 border-yellow-200', dot: 'bg-yellow-500' },
+            { id: StatusTarefa.EM_ANDAMENTO, title: 'Em Andamento', color: 'bg-blue-100 text-blue-800 border-blue-200', dot: 'bg-blue-500' },
+            { id: StatusTarefa.CONCLUIDA, title: 'Concluídas', color: 'bg-green-100 text-green-800 border-green-200', dot: 'bg-green-500' },
+        ];
+
+        return (
+            <div className="flex gap-4 overflow-x-auto pb-4 h-full items-start">
+                {columns.map(col => {
+                    const colTasks = filteredTarefas.filter(t => t.dynamicStatus === col.id);
+                    return (
+                        <div key={col.id} className="min-w-[320px] w-[320px] flex-shrink-0 bg-secondary/30 rounded-2xl p-3 border border-border flex flex-col max-h-full">
+                            <div className={`flex items-center gap-2 mb-3 px-3 py-2 rounded-xl font-bold text-sm border shadow-sm ${col.color}`}>
+                                <div className={`w-2 h-2 rounded-full ${col.dot}`}></div>
+                                {col.title}
+                                <span className="ml-auto text-xs bg-white/50 px-2 py-0.5 rounded-full">{colTasks.length}</span>
+                            </div>
+                            <div className="flex-1 overflow-y-auto space-y-3 min-h-0 pr-1 custom-scrollbar">
+                                {colTasks.map(tarefa => renderTaskCard(tarefa))}
+                                {colTasks.length === 0 && (
+                                    <div className="text-center py-8 text-text-secondary text-xs italic opacity-60 border-2 border-dashed border-border rounded-xl">
+                                        Nenhuma tarefa
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
+
     const renderTarefas = () => (
         <>
-            <div className="flex flex-col sm:flex-row justify-end sm:items-center mb-6 gap-4">
-                <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-primary text-white font-medium py-2 px-4 rounded-md hover:bg-primary-hover text-sm h-9 shadow-sm"><PlusIcon className="h-4 w-4"/>Incluir Tarefa</button>
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
+                {/* View Mode Toggle */}
+                <div className="flex items-center bg-secondary p-1 rounded-full border border-border">
+                    <button
+                        onClick={() => setViewMode('list')}
+                        className={`p-2 rounded-full transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-text-secondary hover:text-text-primary'}`}
+                        title="Visualização em Lista"
+                    >
+                        <ListIcon className="h-5 w-5" />
+                    </button>
+                    <button
+                        onClick={() => setViewMode('board')}
+                        className={`p-2 rounded-full transition-all ${viewMode === 'board' ? 'bg-white shadow-sm text-primary' : 'text-text-secondary hover:text-text-primary'}`}
+                        title="Visualização em Kanban"
+                    >
+                        <KanbanIcon className="h-5 w-5" />
+                    </button>
+                </div>
+                <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-primary text-white font-medium py-2 px-4 rounded-full hover:bg-primary-hover text-sm h-9 shadow-sm"><PlusIcon className="h-4 w-4"/>Incluir Tarefa</button>
             </div>
+            
             <div className="mb-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {(['Atrasada', StatusTarefa.PENDENTE, StatusTarefa.EM_ANDAMENTO, StatusTarefa.CONCLUIDA] as const).map(status => {
                     const count = totals[status] || 0;
                     const isActive = statusFilter === status;
                     return (
-                        <div key={status} onClick={() => setStatusFilter(status)} className={`p-4 rounded-lg border cursor-pointer transition-all ${isActive ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-gray-300'}`}>
+                        <div key={status} onClick={() => setStatusFilter(status)} className={`p-4 rounded-2xl border cursor-pointer transition-all ${isActive ? 'border-primary bg-primary/5 shadow-sm' : 'border-border bg-card hover:border-gray-300'}`}>
                             <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">{status}</p>
                             <p className="text-xl font-bold text-text-primary">{count}</p>
                         </div>
@@ -272,70 +374,32 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 })}
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 bg-white p-3 rounded-lg border border-border">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 bg-white p-3 rounded-2xl border border-border">
                  <div className="relative w-full sm:w-auto flex-grow sm:flex-grow-0">
-                    <input type="text" placeholder="Buscar por título ou descrição..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full sm:w-80 pl-10 pr-3 py-2 bg-background border border-border rounded-md text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"/>
+                    <input type="text" placeholder="Buscar por título ou descrição..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full sm:w-80 pl-10 pr-3 py-2 bg-background border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors h-9"/>
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon className="h-4 w-4 text-text-secondary"/></div>
                 </div>
                  <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
                     <div className="flex items-center gap-2">
                         <span className="text-xs font-medium text-text-secondary">Vencimento:</span>
-                        <input type="date" value={dateRange.start} onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))} className="bg-background border border-border rounded-md px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/>
+                        <input type="date" value={dateRange.start} onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))} className="bg-background border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/>
                         <span className="text-xs text-text-secondary">até</span>
-                        <input type="date" value={dateRange.end} onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))} className="bg-background border border-border rounded-md px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/>
+                        <input type="date" value={dateRange.end} onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))} className="bg-background border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/>
                     </div>
-                    <button onClick={handleClearFilters} className="px-3 py-1.5 rounded-md bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-9 transition-colors">Limpar</button>
+                    <button onClick={handleClearFilters} className="px-3 py-1.5 rounded-full bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-9 transition-colors">Limpar</button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 flex-grow content-start">
-                {filteredTarefas.length > 0 ? filteredTarefas.map(tarefa => {
-                    const hoje = new Date();
-                    hoje.setHours(0, 0, 0, 0);
-                    const vencimento = new Date(tarefa.dataVencimento + 'T00:00:00');
-                    const isOverdue = vencimento < hoje && tarefa.status !== StatusTarefa.CONCLUIDA;
-            
-                    return (
-                        <div
-                            key={tarefa.id}
-                            className="bg-card rounded-lg border border-border p-4 flex flex-col justify-between hover:shadow-md transition-shadow duration-200 min-h-[200px]"
-                        >
-                            <div>
-                                <div className="flex justify-between items-start mb-2">
-                                    <span className="text-[10px] font-bold uppercase tracking-wide bg-secondary text-text-secondary px-2 py-0.5 rounded-sm border border-border">{tarefa.categoria}</span>
-                                    <span className={`text-xs font-bold ${getPriorityColor(tarefa.prioridade)}`}>{tarefa.prioridade}</span>
-                                </div>
-                                <h4 className="font-semibold text-base text-text-primary mb-2 line-clamp-2">{tarefa.titulo}</h4>
-                            </div>
-
-                            <p className="text-sm text-text-secondary my-3 line-clamp-3 flex-grow">{tarefa.descricao || 'Sem descrição.'}</p>
-
-                            <div className="mt-auto pt-3 border-t border-border space-y-3">
-                                <div className="flex justify-between items-center">
-                                    {renderStatusPill(tarefa.dynamicStatus)}
-                                    <div className={`flex items-center gap-1.5 text-xs font-medium ${isOverdue ? 'text-danger' : 'text-text-secondary'}`}>
-                                        <CalendarClockIcon className="h-3 w-3" />
-                                        <span>{formatDateToBR(tarefa.dataVencimento)}</span>
-                                    </div>
-                                </div>
-                                <div className="flex items-center justify-end gap-2">
-                                    {tarefa.status !== StatusTarefa.CONCLUIDA && (
-                                        <button onClick={(e) => { e.stopPropagation(); handleMarkAsDone(tarefa); }} className="p-1.5 rounded-md text-success hover:bg-green-50 border border-transparent hover:border-green-100 transition-colors">
-                                            <CheckIcon className="h-4 w-4" />
-                                        </button>
-                                    )}
-                                    <button onClick={(e) => { e.stopPropagation(); handleEditClick(tarefa); }} className="p-1.5 rounded-md text-primary hover:bg-blue-50 border border-transparent hover:border-blue-100 transition-colors">
-                                        <EditIcon className="h-4 w-4" />
-                                    </button>
-                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(tarefa.id); }} className="p-1.5 rounded-md text-danger hover:bg-red-50 border border-transparent hover:border-red-100 transition-colors">
-                                        <TrashIcon className="h-4 w-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )
-                }) : <div className="col-span-full flex flex-col items-center justify-center text-text-secondary py-16"><SearchIcon className="w-10 h-10 mb-3 text-gray-300"/><h3 className="text-lg font-medium text-text-primary">Nenhuma Tarefa Encontrada</h3><p className="text-sm">Tente ajustar os filtros ou inclua uma nova tarefa.</p></div>}
-            </div>
+            {/* Conditional Rendering based on viewMode */}
+            {viewMode === 'list' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 flex-grow content-start overflow-y-auto">
+                    {filteredTarefas.length > 0 ? filteredTarefas.map(tarefa => renderTaskCard(tarefa)) : <div className="col-span-full flex flex-col items-center justify-center text-text-secondary py-16"><SearchIcon className="w-10 h-10 mb-3 text-gray-300"/><h3 className="text-lg font-medium text-text-primary">Nenhuma Tarefa Encontrada</h3><p className="text-sm">Tente ajustar os filtros ou inclua uma nova tarefa.</p></div>}
+                </div>
+            ) : (
+                <div className="flex-grow overflow-hidden">
+                    {renderKanban()}
+                </div>
+            )}
         </>
     );
 
@@ -353,7 +417,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="bg-card p-5 rounded-lg border border-border shadow-sm">
+                <div className="bg-card p-5 rounded-2xl border border-border shadow-sm">
                     <h4 className="font-bold text-base text-text-primary mb-4 border-b border-border pb-2">Por Status</h4>
                     <ul className="space-y-4">
                         {Object.entries(statusCounts).map(([status, count]) => (
@@ -367,7 +431,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         ))}
                     </ul>
                 </div>
-                 <div className="bg-card p-5 rounded-lg border border-border shadow-sm">
+                 <div className="bg-card p-5 rounded-2xl border border-border shadow-sm">
                     <h4 className="font-bold text-base text-text-primary mb-4 border-b border-border pb-2">Por Prioridade</h4>
                     <ul className="space-y-4">
                         {Object.entries(priorityCounts).map(([priority, count]) => (
@@ -381,9 +445,9 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         ))}
                     </ul>
                 </div>
-                 <div className="bg-card p-5 rounded-lg border border-border shadow-sm">
+                 <div className="bg-card p-5 rounded-2xl border border-border shadow-sm">
                     <h4 className="font-bold text-base text-text-primary mb-4 border-b border-border pb-2">Por Categoria</h4>
-                     <ul className="space-y-4 max-h-60 overflow-y-auto pr-2">
+                     <ul className="space-y-4 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                         {Object.entries(categoryCounts).sort(([,a],[,b]) => (b as number) - (a as number)).map(([category, count]) => (
                              <li key={category} className="text-sm">
                                 <div className="flex justify-between items-center mb-1">
@@ -404,7 +468,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in flex flex-col h-full">
             <div className="flex items-center gap-4 mb-6">
                 {onBack && (
-                    <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-md bg-white border border-border hover:bg-secondary text-text-primary font-medium transition-colors h-10 text-sm">
+                    <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-white border border-border hover:bg-secondary text-text-primary font-medium transition-colors h-10 text-sm">
                         <ArrowLeftIcon className="h-4 w-4" />
                         Voltar
                     </button>
@@ -419,42 +483,42 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 </nav>
             </div>
 
-            <div className="flex-grow flex flex-col">
+            <div className="flex-grow flex flex-col overflow-hidden">
                 {activeTab === 'tarefas' ? renderTarefas() : renderAnalise()}
             </div>
 
             {isModalOpen && editingTarefa && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                    <div className="bg-card rounded-lg shadow-lg border border-border w-full max-w-lg overflow-hidden">
+                    <div className="bg-card rounded-2xl shadow-lg border border-border w-full max-w-lg overflow-hidden">
                         <div className="px-6 py-4 border-b border-border bg-secondary/30">
                             <h3 className="text-lg font-bold text-text-primary">{editingTarefa.id ? 'Editar Tarefa' : 'Nova Tarefa'}</h3>
                         </div>
                         <div className="p-6 space-y-4">
                             <div>
                                 <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Título</label>
-                                <input id="titulo" name="titulo" value={editingTarefa.titulo || ''} onChange={handleInputChange} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none ${errors.titulo ? 'border-danger' : 'border-border'}`} />
+                                <input id="titulo" name="titulo" value={editingTarefa.titulo || ''} onChange={handleInputChange} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.titulo ? 'border-danger' : 'border-border'}`} />
                                 {errors.titulo && <p className="text-danger text-xs mt-1">{errors.titulo}</p>}
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Descrição</label>
-                                <textarea id="descricao" name="descricao" value={editingTarefa.descricao || ''} onChange={handleInputChange} rows={3} className="w-full bg-white border border-border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none resize-none" />
+                                <textarea id="descricao" name="descricao" value={editingTarefa.descricao || ''} onChange={handleInputChange} rows={3} className="w-full bg-white border border-border rounded-xl px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none resize-none" />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Categoria</label>
-                                    <input id="categoria" name="categoria" value={editingTarefa.categoria || ''} onChange={handleInputChange} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none ${errors.categoria ? 'border-danger' : 'border-border'}`} />
+                                    <input id="categoria" name="categoria" value={editingTarefa.categoria || ''} onChange={handleInputChange} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.categoria ? 'border-danger' : 'border-border'}`} />
                                     {errors.categoria && <p className="text-danger text-xs mt-1">{errors.categoria}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Vencimento</label>
-                                    <input id="dataVencimento_br" name="dataVencimento_br" value={editingTarefa.dataVencimento_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none ${errors.dataVencimento ? 'border-danger' : 'border-border'}`} />
+                                    <input id="dataVencimento_br" name="dataVencimento_br" value={editingTarefa.dataVencimento_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.dataVencimento ? 'border-danger' : 'border-border'}`} />
                                     {errors.dataVencimento && <p className="text-danger text-xs mt-1">{errors.dataVencimento}</p>}
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Prioridade</label>
-                                    <select id="prioridade" name="prioridade" value={editingTarefa.prioridade || PrioridadeTarefa.MEDIA} onChange={handleInputChange} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none ${errors.prioridade ? 'border-danger' : 'border-border'}`}>
+                                    <select id="prioridade" name="prioridade" value={editingTarefa.prioridade || PrioridadeTarefa.MEDIA} onChange={handleInputChange} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.prioridade ? 'border-danger' : 'border-border'}`}>
                                         <option value={PrioridadeTarefa.ALTA}>Alta</option>
                                         <option value={PrioridadeTarefa.MEDIA}>Média</option>
                                         <option value={PrioridadeTarefa.BAIXA}>Baixa</option>
@@ -462,7 +526,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Status</label>
-                                    <select id="status" name="status" value={editingTarefa.status || StatusTarefa.PENDENTE} onChange={handleInputChange} className={`w-full bg-white border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none ${errors.status ? 'border-danger' : 'border-border'}`}>
+                                    <select id="status" name="status" value={editingTarefa.status || StatusTarefa.PENDENTE} onChange={handleInputChange} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none h-9 ${errors.status ? 'border-danger' : 'border-border'}`}>
                                         <option value={StatusTarefa.PENDENTE}>Pendente</option>
                                         <option value={StatusTarefa.EM_ANDAMENTO}>Em Andamento</option>
                                         <option value={StatusTarefa.CONCLUIDA}>Concluída</option>
@@ -471,16 +535,16 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             </div>
                         </div>
                         <div className="px-6 py-4 border-t border-border bg-secondary/30 flex justify-end gap-3">
-                            <button onClick={handleCloseModal} className="px-4 py-2 rounded-md bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
-                            <button onClick={handleSaveChanges} className="px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Salvar</button>
+                            <button onClick={handleCloseModal} className="px-4 py-2 rounded-full bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
+                            <button onClick={handleSaveChanges} className="px-4 py-2 rounded-full bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Salvar</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {isConfirmOpen && <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"><div className="bg-card rounded-lg shadow-xl border border-border w-full max-w-sm p-6"><h3 className="text-lg font-bold mb-2 text-text-primary">Confirmar</h3><p className="text-sm text-text-secondary mb-6">{confirmAction.message}</p><div className="flex justify-end gap-3"><button onClick={() => setIsConfirmOpen(false)} className="px-4 py-2 rounded-md bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button><button onClick={handleConfirm} className="px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Confirmar</button></div></div></div>}
+            {isConfirmOpen && <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"><div className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-sm p-6"><h3 className="text-lg font-bold mb-2 text-text-primary">Confirmar</h3><p className="text-sm text-text-secondary mb-6">{confirmAction.message}</p><div className="flex justify-end gap-3"><button onClick={() => setIsConfirmOpen(false)} className="px-4 py-2 rounded-full bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button><button onClick={handleConfirm} className="px-4 py-2 rounded-full bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Confirmar</button></div></div></div>}
 
-            {isLembreteOpen && <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"><div className="bg-card rounded-lg shadow-xl border border-border w-full max-w-lg overflow-hidden"><div className="px-6 py-4 border-b border-border bg-secondary/30 flex items-center gap-2"><CalendarClockIcon className="h-5 w-5 text-primary" /><h3 className="text-lg font-bold text-text-primary">Lembretes</h3></div><div className="p-6"><p className="text-sm text-text-secondary mb-4">Tarefas vencendo hoje ou atrasadas:</p><div className="max-h-60 overflow-y-auto bg-background rounded-md border border-border p-2"><ul className="space-y-2">{lembretes.map(tarefa => (<li key={tarefa.id} className="flex justify-between items-center text-sm p-2 hover:bg-white rounded"><span className="font-medium text-text-primary">{tarefa.titulo}</span><span className={`text-xs font-bold ${getDynamicStatus(tarefa) === 'Atrasada' ? 'text-danger' : 'text-warning'}`}>{formatDateToBR(tarefa.dataVencimento)}</span></li>))}</ul></div></div><div className="px-6 py-4 border-t border-border bg-secondary/30 flex justify-end"><button onClick={() => setIsLembreteOpen(false)} className="px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Fechar</button></div></div></div>}
+            {isLembreteOpen && <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"><div className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-lg overflow-hidden"><div className="px-6 py-4 border-b border-border bg-secondary/30 flex items-center gap-2"><CalendarClockIcon className="h-5 w-5 text-primary" /><h3 className="text-lg font-bold text-text-primary">Lembretes</h3></div><div className="p-6"><p className="text-sm text-text-secondary mb-4">Tarefas vencendo hoje ou atrasadas:</p><div className="max-h-60 overflow-y-auto bg-background rounded-xl border border-border p-2"><ul className="space-y-2">{lembretes.map(tarefa => (<li key={tarefa.id} className="flex justify-between items-center text-sm p-2 hover:bg-white rounded-lg"><span className="font-medium text-text-primary">{tarefa.titulo}</span><span className={`text-xs font-bold ${getDynamicStatus(tarefa) === 'Atrasada' ? 'text-danger' : 'text-warning'}`}>{formatDateToBR(tarefa.dataVencimento)}</span></li>))}</ul></div></div><div className="px-6 py-4 border-t border-border bg-secondary/30 flex justify-end"><button onClick={() => setIsLembreteOpen(false)} className="px-4 py-2 rounded-full bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Fechar</button></div></div></div>}
         </div>
     );
 };

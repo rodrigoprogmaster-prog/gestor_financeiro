@@ -93,7 +93,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 type="password"
                 autoComplete="current-password"
                 required
-                className={`appearance-none rounded-full relative block w-full px-4 py-3 bg-white border placeholder-text-secondary/50 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition-all ${error ? 'border-danger animate-shake' : 'border-border'}`}
+                className={`appearance-none rounded-xl relative block w-full px-4 py-3 bg-white border placeholder-text-secondary/50 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition-all ${error ? 'border-danger animate-shake' : 'border-border'}`}
                 placeholder="Senha de Acesso"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

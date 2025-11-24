@@ -150,7 +150,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
         }
         
         return (
-             <div key={item.id} className="bg-card p-4 rounded-2xl flex items-center justify-between gap-4 border border-border hover:shadow-sm transition-shadow">
+             <div key={item.id} className="bg-background p-4 rounded-2xl flex items-center justify-between gap-4 border border-border hover:shadow-sm transition-shadow">
                 <div>
                     <p className="font-semibold text-text-primary">{title}</p>
                     <p className="text-sm text-text-secondary">{details}</p>
