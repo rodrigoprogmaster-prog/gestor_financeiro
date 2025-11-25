@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, ArrowLeftIcon, SpinnerIcon } from './icons';
+import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, ArrowLeftIcon, SpinnerIcon, ChevronDownIcon } from './icons';
 
 // Enum for status
 enum StatusTitulo {
@@ -476,15 +476,20 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             </div>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-             <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-white border border-border rounded-xl px-3 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"
-            >
-                <option value="Todos">Todos Status</option>
-                <option value={StatusTitulo.PRORROGADO}>Prorrogados</option>
-                <option value={StatusTitulo.A_PRORROGAR}>A Prorrogar</option>
-            </select>
+             <div className="relative">
+                <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="bg-white border border-border rounded-xl px-3 py-1.5 pr-8 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 appearance-none"
+                >
+                    <option value="Todos">Todos Status</option>
+                    <option value={StatusTitulo.PRORROGADO}>Prorrogados</option>
+                    <option value={StatusTitulo.A_PRORROGAR}>A Prorrogar</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-text-secondary">
+                    <ChevronDownIcon className="h-4 w-4" />
+                </div>
+            </div>
             <button onClick={handleClearFilters} className="px-3 py-1.5 rounded-full bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-9 transition-colors">Limpar</button>
         </div>
       </div>
@@ -589,48 +594,51 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             <div className="space-y-4">
                 <div>
                     <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Fornecedor</label>
-                    <input name="fornecedor" value={editingTitle.fornecedor || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.fornecedor ? 'border-danger' : ''}`} />
+                    <input name="fornecedor" value={editingTitle.fornecedor || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.fornecedor ? 'border-danger' : ''}`} />
                     {errors.fornecedor && <p className="text-danger text-xs mt-1 ml-1">{errors.fornecedor}</p>}
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Nº Título</label>
-                        <input name="numeroTitulo" value={editingTitle.numeroTitulo || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.numeroTitulo ? 'border-danger' : ''}`} />
+                        <input name="numeroTitulo" value={editingTitle.numeroTitulo || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.numeroTitulo ? 'border-danger' : ''}`} />
                         {errors.numeroTitulo && <p className="text-danger text-xs mt-1 ml-1">{errors.numeroTitulo}</p>}
                     </div>
                     <div>
                         <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Valor</label>
-                        <input name="valor" value={(editingTitle.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.valor ? 'border-danger' : ''}`} />
+                        <input name="valor" value={(editingTitle.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.valor ? 'border-danger' : ''}`} />
                         {errors.valor && <p className="text-danger text-xs mt-1 ml-1">{errors.valor}</p>}
                     </div>
                 </div>
 
                 <div>
                     <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Devedor</label>
-                    <input name="devedor" value={editingTitle.devedor || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.devedor ? 'border-danger' : ''}`} />
+                    <input name="devedor" value={editingTitle.devedor || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.devedor ? 'border-danger' : ''}`} />
                     {errors.devedor && <p className="text-danger text-xs mt-1 ml-1">{errors.devedor}</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Venc. Original</label>
-                        <input name="vencimentoOriginal" value={editingTitle.vencimentoOriginal || ''} onChange={handleInputChange} onBlur={handleBlur} placeholder="DD/MM/AAAA" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.vencimentoOriginal ? 'border-danger' : ''}`} />
+                        <input name="vencimentoOriginal" value={editingTitle.vencimentoOriginal || ''} onChange={handleInputChange} onBlur={handleBlur} placeholder="DD/MM/AAAA" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.vencimentoOriginal ? 'border-danger' : ''}`} />
                         {errors.vencimentoOriginal && <p className="text-danger text-xs mt-1 ml-1">{errors.vencimentoOriginal}</p>}
                     </div>
                     <div>
                         <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Novo Vencimento</label>
-                        <input name="novoVencimento" value={editingTitle.novoVencimento || ''} onChange={handleInputChange} onBlur={handleBlur} placeholder="DD/MM/AAAA" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.novoVencimento ? 'border-danger' : ''}`} />
+                        <input name="novoVencimento" value={editingTitle.novoVencimento || ''} onChange={handleInputChange} onBlur={handleBlur} placeholder="DD/MM/AAAA" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.novoVencimento ? 'border-danger' : ''}`} />
                         {errors.novoVencimento && <p className="text-danger text-xs mt-1 ml-1">{errors.novoVencimento}</p>}
                     </div>
                 </div>
 
                 <div>
                     <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Status</label>
-                    <select name="status" value={editingTitle.status || StatusTitulo.A_PRORROGAR} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 appearance-none">
-                        <option value={StatusTitulo.A_PRORROGAR}>{StatusTitulo.A_PRORROGAR}</option>
-                        <option value={StatusTitulo.PRORROGADO}>{StatusTitulo.PRORROGADO}</option>
-                    </select>
+                    <div className="relative">
+                        <select name="status" value={editingTitle.status || StatusTitulo.A_PRORROGAR} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 appearance-none">
+                            <option value={StatusTitulo.A_PRORROGAR}>{StatusTitulo.A_PRORROGAR}</option>
+                            <option value={StatusTitulo.PRORROGADO}>{StatusTitulo.PRORROGADO}</option>
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
+                    </div>
                 </div>
             </div>
 

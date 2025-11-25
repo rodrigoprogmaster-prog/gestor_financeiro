@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { PlusIcon, TrashIcon, SearchIcon, EditIcon, CheckIcon, CalendarClockIcon, ArrowLeftIcon, ListIcon, KanbanIcon } from './icons';
+import { PlusIcon, TrashIcon, SearchIcon, EditIcon, CheckIcon, CalendarClockIcon, ArrowLeftIcon, ListIcon, KanbanIcon, ChevronDownIcon } from './icons';
 
 // Enums
 enum StatusTarefa {
@@ -331,13 +331,6 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><SearchIcon className="h-5 w-5 text-text-secondary"/></div>
                     </div>
                     
-                    <div className="flex items-center bg-secondary rounded-full px-4 h-11 w-full sm:w-auto border border-transparent focus-within:bg-white focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-                        <span className="text-xs font-bold text-text-secondary uppercase mr-2 whitespace-nowrap">Vencimento:</span>
-                        <input type="date" value={dateRange.start} onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))} className="bg-transparent border-none text-sm text-text-primary focus:ring-0 p-0 w-full sm:w-24"/>
-                        <span className="text-text-secondary mx-2">-</span>
-                        <input type="date" value={dateRange.end} onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))} className="bg-transparent border-none text-sm text-text-primary focus:ring-0 p-0 w-full sm:w-24"/>
-                    </div>
-
                     {activeTab === 'tarefas' && (
                         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto pb-2 sm:pb-0">
                             {(['Todas', 'Atrasada', StatusTarefa.PENDENTE, StatusTarefa.EM_ANDAMENTO, StatusTarefa.CONCLUIDA] as const).map(status => (
@@ -488,72 +481,69 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
             {isModalOpen && editingTarefa && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl">
-                        <div className="bg-secondary/30 px-8 py-6 border-b border-border rounded-t-3xl">
-                            <h3 className="text-2xl font-bold text-text-primary">{editingTarefa.id ? 'Editar Tarefa' : 'Nova Tarefa'}</h3>
-                            <p className="text-sm text-text-secondary mt-1">Preencha os detalhes da tarefa abaixo.</p>
-                        </div>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-8">
+                        <h3 className="text-2xl font-bold text-text-primary mb-6 text-center">{editingTarefa.id ? 'Editar Tarefa' : 'Nova Tarefa'}</h3>
                         
-                        <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="md:col-span-2">
                                 <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2 ml-1">Título <span className="text-danger">*</span></label>
-                                <input id="titulo" name="titulo" value={editingTarefa.titulo || ''} onChange={handleInputChange} className={`w-full bg-background border rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-medium h-12 ${errors.titulo ? 'border-danger' : 'border-border'}`} placeholder="O que precisa ser feito?" />
+                                <input id="titulo" name="titulo" value={editingTarefa.titulo || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-medium h-12 ${errors.titulo ? 'border-danger' : ''}`} placeholder="O que precisa ser feito?" />
                                 {errors.titulo && <p className="text-danger text-xs mt-1 ml-1">{errors.titulo}</p>}
                             </div>
                             
                             <div className="md:col-span-2">
                                 <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2 ml-1">Descrição</label>
-                                <textarea id="descricao" name="descricao" value={editingTarefa.descricao || ''} onChange={handleInputChange} rows={3} className="w-full bg-background border border-border rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none resize-none" placeholder="Detalhes adicionais..." />
+                                <textarea id="descricao" name="descricao" value={editingTarefa.descricao || ''} onChange={handleInputChange} rows={3} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none resize-none" placeholder="Detalhes adicionais..." />
                             </div>
 
                             <div>
                                 <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2 ml-1">Categoria <span className="text-danger">*</span></label>
-                                <input id="categoria" name="categoria" value={editingTarefa.categoria || ''} onChange={handleInputChange} className={`w-full bg-background border rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.categoria ? 'border-danger' : 'border-border'}`} placeholder="Ex: Financeiro" />
+                                <input id="categoria" name="categoria" value={editingTarefa.categoria || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.categoria ? 'border-danger' : ''}`} placeholder="Ex: Financeiro" />
                                 {errors.categoria && <p className="text-danger text-xs mt-1 ml-1">{errors.categoria}</p>}
                             </div>
                             
                             <div>
                                 <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2 ml-1">Vencimento <span className="text-danger">*</span></label>
-                                <input id="dataVencimento_br" name="dataVencimento_br" value={editingTarefa.dataVencimento_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-background border rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.dataVencimento ? 'border-danger' : 'border-border'}`} />
+                                <input id="dataVencimento_br" name="dataVencimento_br" value={editingTarefa.dataVencimento_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.dataVencimento ? 'border-danger' : ''}`} />
                                 {errors.dataVencimento && <p className="text-danger text-xs mt-1 ml-1">{errors.dataVencimento}</p>}
                             </div>
 
                             <div>
                                 <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2 ml-1">Prioridade</label>
                                 <div className="relative">
-                                    <select id="prioridade" name="prioridade" value={editingTarefa.prioridade || PrioridadeTarefa.MEDIA} onChange={handleInputChange} className="w-full bg-background border border-border rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none h-12">
+                                    <select id="prioridade" name="prioridade" value={editingTarefa.prioridade || PrioridadeTarefa.MEDIA} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none h-12">
                                         <option value={PrioridadeTarefa.ALTA}>Alta</option>
                                         <option value={PrioridadeTarefa.MEDIA}>Média</option>
                                         <option value={PrioridadeTarefa.BAIXA}>Baixa</option>
                                     </select>
-                                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ArrowLeftIcon className="h-4 w-4 -rotate-90" /></div>
+                                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
                                 </div>
                             </div>
                             
                             <div>
                                 <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2 ml-1">Status</label>
                                 <div className="relative">
-                                    <select id="status" name="status" value={editingTarefa.status || StatusTarefa.PENDENTE} onChange={handleInputChange} className="w-full bg-background border border-border rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none h-12">
+                                    <select id="status" name="status" value={editingTarefa.status || StatusTarefa.PENDENTE} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none h-12">
                                         <option value={StatusTarefa.PENDENTE}>Pendente</option>
                                         <option value={StatusTarefa.EM_ANDAMENTO}>Em Andamento</option>
                                         <option value={StatusTarefa.CONCLUIDA}>Concluída</option>
                                     </select>
-                                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ArrowLeftIcon className="h-4 w-4 -rotate-90" /></div>
+                                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
                                 </div>
                             </div>
                         </div>
                         
-                        <div className="bg-secondary/30 px-8 py-6 border-t border-border flex justify-end gap-4 rounded-b-3xl">
-                            <button onClick={handleCloseModal} className="px-6 py-3 rounded-full bg-white border border-border text-text-primary font-bold hover:bg-secondary transition-colors h-12">Cancelar</button>
-                            <button onClick={handleSaveChanges} className="px-8 py-3 rounded-full bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-all transform hover:-translate-y-0.5 h-12">Salvar Tarefa</button>
+                        <div className="flex justify-center gap-3 mt-8">
+                            <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
+                            <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar Tarefa</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {isConfirmOpen && <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"><div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center"><h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar</h3><p className="text-text-secondary mb-8">{confirmAction.message}</p><div className="flex justify-center gap-4"><button onClick={() => setIsConfirmOpen(false)} className="px-6 py-2.5 rounded-full bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button><button onClick={handleConfirm} className="px-6 py-2.5 rounded-full bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button></div></div></div>}
+            {isConfirmOpen && <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"><div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center"><h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar</h3><p className="text-text-secondary mb-8">{confirmAction.message}</p><div className="flex justify-center gap-4"><button onClick={() => setIsConfirmOpen(false)} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button><button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button></div></div></div>}
 
-            {isLembreteOpen && <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"><div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden p-8"><div className="flex items-center justify-center gap-2 mb-6"><CalendarClockIcon className="h-6 w-6 text-primary" /><h3 className="text-xl font-bold text-text-primary">Lembretes</h3></div><div className=""><p className="text-text-secondary mb-6 text-center">Tarefas vencendo hoje ou atrasadas:</p><div className="max-h-60 overflow-y-auto bg-secondary rounded-xl border border-transparent p-4 custom-scrollbar"><ul className="space-y-3">{lembretes.map(tarefa => (<li key={tarefa.id} className="flex justify-between items-center text-sm p-3 bg-white rounded-lg shadow-sm"><span className="font-medium text-text-primary">{tarefa.titulo}</span><span className={`text-xs font-bold ${getDynamicStatus(tarefa) === 'Atrasada' ? 'text-danger' : 'text-warning'}`}>{formatDateToBR(tarefa.dataVencimento)}</span></li>))}</ul></div></div><div className="flex justify-center mt-8"><button onClick={() => setIsLembreteOpen(false)} className="px-6 py-3 rounded-full bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Fechar</button></div></div></div>}
+            {isLembreteOpen && <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"><div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden p-8"><div className="flex items-center justify-center gap-2 mb-6"><CalendarClockIcon className="h-6 w-6 text-primary" /><h3 className="text-xl font-bold text-text-primary">Lembretes</h3></div><div className=""><p className="text-text-secondary mb-6 text-center">Tarefas vencendo hoje ou atrasadas:</p><div className="max-h-60 overflow-y-auto bg-secondary rounded-xl border border-transparent p-4 custom-scrollbar"><ul className="space-y-3">{lembretes.map(tarefa => (<li key={tarefa.id} className="flex justify-between items-center text-sm p-3 bg-white rounded-lg shadow-sm"><span className="font-medium text-text-primary">{tarefa.titulo}</span><span className={`text-xs font-bold ${getDynamicStatus(tarefa) === 'Atrasada' ? 'text-danger' : 'text-warning'}`}>{formatDateToBR(tarefa.dataVencimento)}</span></li>))}</ul></div></div><div className="flex justify-center mt-8"><button onClick={() => setIsLembreteOpen(false)} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Fechar</button></div></div></div>}
         </div>
     );
 };

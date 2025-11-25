@@ -667,23 +667,23 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             <>
                                 <div>
                                     <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Fornecedor</label>
-                                    <input name="fornecedor" value={editingBoleto.fornecedor || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${boletoErrors.fornecedor ? 'border-danger' : ''}`} />
+                                    <input name="fornecedor" value={editingBoleto.fornecedor || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.fornecedor ? 'border-danger' : ''}`} />
                                     {boletoErrors.fornecedor && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.fornecedor}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Pagador</label>
-                                    <input name="pagador" value={editingBoleto.pagador || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${boletoErrors.pagador ? 'border-danger' : ''}`} />
+                                    <input name="pagador" value={editingBoleto.pagador || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.pagador ? 'border-danger' : ''}`} />
                                     {boletoErrors.pagador && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.pagador}</p>}
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Vencimento</label>
-                                        <input name="vencimento_br" value={editingBoleto.vencimento_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${boletoErrors.vencimento ? 'border-danger' : ''}`} />
+                                        <input name="vencimento_br" value={editingBoleto.vencimento_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.vencimento ? 'border-danger' : ''}`} />
                                         {boletoErrors.vencimento && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.vencimento}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Valor</label>
-                                        <input name="valor" value={formatCurrency(editingBoleto.valor || 0)} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${boletoErrors.valor ? 'border-danger' : ''}`} />
+                                        <input name="valor" value={formatCurrency(editingBoleto.valor || 0)} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.valor ? 'border-danger' : ''}`} />
                                         {boletoErrors.valor && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.valor}</p>}
                                     </div>
                                 </div>
@@ -692,35 +692,41 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             <>
                                 <div>
                                     <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Empresa</label>
-                                    <input name="empresa" value={editingDespesa.empresa || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${despesaErrors.empresa ? 'border-danger' : ''}`} />
+                                    <input name="empresa" value={editingDespesa.empresa || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.empresa ? 'border-danger' : ''}`} />
                                     {despesaErrors.empresa && <p className="text-danger text-xs mt-1 ml-1">{despesaErrors.empresa}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Despesa (Descrição)</label>
-                                    <input name="descricao" value={editingDespesa.descricao || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${despesaErrors.descricao ? 'border-danger' : ''}`} />
+                                    <input name="descricao" value={editingDespesa.descricao || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.descricao ? 'border-danger' : ''}`} />
                                     {despesaErrors.descricao && <p className="text-danger text-xs mt-1 ml-1">{despesaErrors.descricao}</p>}
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Dia de Vencimento</label>
-                                        <input type="number" min="1" max="31" name="diaVencimento" value={editingDespesa.diaVencimento || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${despesaErrors.diaVencimento ? 'border-danger' : ''}`} />
+                                        <input type="number" min="1" max="31" name="diaVencimento" value={editingDespesa.diaVencimento || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.diaVencimento ? 'border-danger' : ''}`} />
                                         {despesaErrors.diaVencimento && <p className="text-danger text-xs mt-1 ml-1">{despesaErrors.diaVencimento}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Recorrência</label>
-                                        <select name="recorrencia" value={editingDespesa.recorrencia || 'Mensal'} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none">
-                                            <option value="Mensal">Mensal</option>
-                                            <option value="Semanal">Semanal</option>
-                                            <option value="Anual">Anual</option>
-                                        </select>
+                                        <div className="relative">
+                                            <select name="recorrencia" value={editingDespesa.recorrencia || 'Mensal'} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 appearance-none">
+                                                <option value="Mensal">Mensal</option>
+                                                <option value="Semanal">Semanal</option>
+                                                <option value="Anual">Anual</option>
+                                            </select>
+                                            <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Status</label>
-                                    <select name="status" value={editingDespesa.status || 'Pendente'} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none">
-                                        <option value="Pendente">Pendente</option>
-                                        <option value="Lançado">Lançado</option>
-                                    </select>
+                                    <div className="relative">
+                                        <select name="status" value={editingDespesa.status || 'Pendente'} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 appearance-none">
+                                            <option value="Pendente">Pendente</option>
+                                            <option value="Lançado">Lançado</option>
+                                        </select>
+                                        <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
+                                    </div>
                                 </div>
                             </>
                         ) : null}

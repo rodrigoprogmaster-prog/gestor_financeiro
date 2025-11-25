@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import PasswordModal from './PasswordModal';
-import { UserIcon, KeyIcon, ArrowLeftIcon, EditIcon, CheckIcon } from './icons';
+import { UserIcon, KeyIcon, ArrowLeftIcon, EditIcon, CheckIcon, ChevronDownIcon, UploadIcon, DownloadIcon, DatabaseIcon, SpinnerIcon } from './icons';
 
 // Modal for managing users (placeholder)
 const ManageUsersModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
@@ -60,9 +61,9 @@ const ChangePasswordModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             <div className="bg-card rounded-2xl shadow-lg border border-border p-8 w-full max-w-md">
                 <h3 className="text-xl font-bold mb-6 text-text-primary">Alterar Senha de Acesso</h3>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <input type="password" placeholder="Senha Atual" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required className="w-full bg-white border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" autoFocus />
-                    <input type="password" placeholder="Nova Senha" value={newPassword} onChange={e => setNewPassword(e.target.value)} required className="w-full bg-white border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
-                    <input type="password" placeholder="Confirmar Nova Senha" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="w-full bg-white border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input type="password" placeholder="Senha Atual" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required className="w-full bg-white border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12" autoFocus />
+                    <input type="password" placeholder="Nova Senha" value={newPassword} onChange={e => setNewPassword(e.target.value)} required className="w-full bg-white border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12" />
+                    <input type="password" placeholder="Confirmar Nova Senha" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="w-full bg-white border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12" />
                     
                     {error && <p className="text-danger text-sm">{error}</p>}
                     {success && <p className="text-success text-sm">{success}</p>}
@@ -93,10 +94,10 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
     const [bodyFont, setBodyFont] = useState(() => localStorage.getItem('fontBody') || 'Inter');
     const [headingFont, setHeadingFont] = useState(() => localStorage.getItem('fontHeading') || 'Inter');
     const [fontTarget, setFontTarget] = useState<'all' | 'headings'>('all');
-    const [previewText, setPreviewText] = useState('A rápida raposa marrom salta sobre o cão preguiçoso. 1234567890');
     const [loadedFonts, setLoadedFonts] = useState<string[]>(['Roboto', 'Inter']);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {
         if (isDarkMode) {
@@ -176,191 +177,293 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
     };
     
     const handleBackup = () => {
-        const backupData: { [key: string]: any } = {};
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key) {
-                try { backupData[key] = JSON.parse(localStorage.getItem(key)!); } 
-                catch (e) { backupData[key] = localStorage.getItem(key); }
+        try {
+            setIsProcessing(true);
+            // 1. Estrutura do Backup (Versionado para evitar incompatibilidades futuras)
+            const backupPayload = {
+                meta: {
+                    timestamp: new Date().toISOString(),
+                    version: '2.2', // Versão atualizada
+                    appName: 'Gerenciador Financeiro',
+                    itemCount: 0
+                },
+                data: {} as Record<string, any>
+            };
+
+            let count = 0;
+            // 2. Itera sobre o LocalStorage
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key) {
+                    const value = localStorage.getItem(key);
+                    if (value) {
+                        try {
+                            // Tenta fazer o parse para salvar como Objeto JSON no arquivo (fica legível)
+                            // Se for uma string pura (ex: tema 'dark'), salva como string
+                            backupPayload.data[key] = JSON.parse(value);
+                        } catch (e) {
+                            // Se falhar o parse, salva como string mesmo (ex: senhas ou tokens simples)
+                            backupPayload.data[key] = value;
+                        }
+                        count++;
+                    }
+                }
             }
+            backupPayload.meta.itemCount = count;
+
+            // 3. Gera e baixa o arquivo
+            const blob = new Blob([JSON.stringify(backupPayload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const dateStr = new Date().toISOString().slice(0, 10);
+            a.download = `backup_financeiro_v2_${dateStr}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification('Backup gerado com sucesso!', 'success');
+        } catch (error) {
+            console.error("Backup error:", error);
+            showNotification('Erro ao gerar backup.', 'error');
+        } finally {
+            setIsProcessing(false);
         }
-        const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `backup_financeiro_${new Date().toISOString().slice(0, 10)}.json`;
-        a.click();
-        URL.revokeObjectURL(a.href);
-        showNotification('Backup criado com sucesso!');
     };
 
     const handleRestore = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
+
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
-                const backupData = JSON.parse(e.target?.result as string);
+                setIsProcessing(true);
+                const content = e.target?.result as string;
+                
+                // 1. Parse do arquivo
+                let parsed: any;
+                try {
+                    parsed = JSON.parse(content);
+                } catch (jsonError) {
+                    throw new Error("O arquivo selecionado não é um JSON válido.");
+                }
+                
+                let dataToRestore: Record<string, any> = {};
+
+                // 2. Detecção de Formato: V2+ (Meta + Data) ou Legado (Objeto Plano)
+                if (parsed && typeof parsed === 'object' && parsed.meta && parsed.data) {
+                    // Formato Novo
+                    dataToRestore = parsed.data;
+                } else if (parsed && typeof parsed === 'object') {
+                    // Formato Legado (apenas chaves e valores)
+                    dataToRestore = parsed;
+                } else {
+                    throw new Error("Formato de backup não reconhecido ou corrompido.");
+                }
+
+                if (Object.keys(dataToRestore).length === 0) {
+                    throw new Error("O arquivo de backup está vazio.");
+                }
+
+                // Validação básica para garantir que é um backup do sistema
+                const knownKeys = ['boletos_a_receber_data', 'gerenciador_cheques_data', 'theme', 'user_password', 'contas_bancarias', 'boletos_a_pagar_data'];
+                const hasKnownKey = Object.keys(dataToRestore).some(k => knownKeys.some(known => k.includes(known) || k === known));
+
+                if (!hasKnownKey) {
+                    // Se não encontrar nenhuma chave conhecida, alerta o usuário mas permite continuar se ele quiser (arriscado)
+                    if(!confirm("Atenção: Este arquivo não parece conter dados reconhecidos deste sistema. Deseja restaurar mesmo assim?")) {
+                        setIsProcessing(false);
+                        return;
+                    }
+                }
+
+                // 3. Solicita senha antes de sobrescrever dados
                 requestPassword(() => {
-                    localStorage.clear();
-                    Object.keys(backupData).forEach(key => localStorage.setItem(key, typeof backupData[key] === 'object' ? JSON.stringify(backupData[key]) : backupData[key]));
-                    setIsRestoreSuccessModalOpen(true);
+                    try {
+                        // Limpa dados atuais
+                        localStorage.clear();
+                        
+                        // Lógica de Restauração Corrigida
+                        Object.entries(dataToRestore).forEach(([key, value]) => {
+                            if (typeof value === 'object' && value !== null) {
+                                // CRUCIAL: Se for objeto/array, converte para string JSON antes de salvar no localStorage.
+                                // O localStorage só aceita strings. Se salvar objeto direto, vira "[object Object]" e quebra o app.
+                                localStorage.setItem(key, JSON.stringify(value));
+                            } else if (typeof value === 'string') {
+                                // Se já for string, salva direto.
+                                localStorage.setItem(key, value);
+                            } else {
+                                // Números, booleanos, etc. converte para string simples.
+                                localStorage.setItem(key, String(value));
+                            }
+                        });
+                        
+                        setIsRestoreSuccessModalOpen(true);
+                    } catch (restoreError) {
+                        console.error("Restore execution error:", restoreError);
+                        showNotification('Erro crítico durante a gravação dos dados.', 'error');
+                    }
                 });
-            } catch (error) { 
-                showNotification('Erro ao ler o arquivo de backup.', 'error'); 
+
+            } catch (err: any) {
+                console.error("Restore parsing error:", err);
+                showNotification(err.message || 'Erro ao processar arquivo de backup.', 'error');
+            } finally {
+                if (event.target) event.target.value = '';
+                setIsProcessing(false);
             }
         };
         reader.readAsText(file);
     };
 
-    const handleRestoreSuccess = () => {
-        setIsRestoreSuccessModalOpen(false);
-        window.location.href = window.location.protocol + '//' + window.location.host + window.location.pathname;
-    };
-    
-    if (!isUnlocked) {
-        return (
-            <div className="p-4 sm:p-6 lg:p-8 w-full">
-                {isPasswordModalOpen && <PasswordModal onSuccess={handleInitialUnlockSuccess} onClose={() => { /* No close on initial unlock */ }} isInitialUnlock />}
-            </div>
-        );
-    }
-
     return (
         <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in">
-            <div className="flex items-center gap-4 mb-8">
+            {/* Header */}
+            <div className="flex items-center gap-4 mb-8 border-b border-border pb-4">
                 {onBack && (
-                    <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">
+                    <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10 text-sm">
                         <ArrowLeftIcon className="h-5 w-5" />
                         Voltar
                     </button>
                 )}
-                <h2 className="text-2xl md:text-3xl font-bold text-text-primary font-heading">Configuração e Segurança</h2>
+                <h2 className="text-2xl font-bold text-text-primary">Configurações</h2>
             </div>
-            
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+            {/* Main Content - Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl">
                 
-                 <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
-                    <h3 className="text-lg font-bold text-text-primary mb-4 font-heading flex items-center gap-3">
-                        <UserIcon className="h-6 w-6 text-primary" />
-                        Perfil de Usuário
+                {/* Profile Section */}
+                <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+                    <h3 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
+                        <UserIcon className="h-5 w-5 text-primary"/> Perfil
                     </h3>
                     <div className="flex items-center gap-6">
-                        <div className="relative">
+                        <div className="relative group cursor-pointer" onClick={() => photoInputRef.current?.click()}>
                             {profilePicture ? (
-                                <img src={profilePicture} alt="Foto de Perfil" className="h-24 w-24 rounded-full object-cover border-2 border-primary" />
+                                <img src={profilePicture} alt="Profile" className="h-24 w-24 rounded-full object-cover border-2 border-border group-hover:border-primary transition-colors" />
                             ) : (
-                                <div className="h-24 w-24 rounded-full bg-secondary flex items-center justify-center border-2 border-border">
-                                    <UserIcon className="h-12 w-12 text-text-secondary" />
+                                <div className="h-24 w-24 rounded-full bg-secondary flex items-center justify-center border-2 border-border group-hover:border-primary transition-colors">
+                                    <UserIcon className="h-10 w-10 text-text-secondary" />
                                 </div>
                             )}
-                            <button
-                                onClick={() => photoInputRef.current?.click()}
-                                className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full hover:bg-primary-hover transition-colors shadow-sm"
-                                aria-label="Alterar foto"
-                            >
-                                <EditIcon className="h-4 w-4" />
-                            </button>
-                            <input
-                                type="file"
-                                ref={photoInputRef}
-                                onChange={handlePhotoChange}
-                                className="hidden"
-                                accept="image/png, image/jpeg"
-                            />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-4">
-                                <span className="font-semibold text-text-primary">Nome de Usuário:</span>
-                                <span className="text-text-secondary">Rodrigo Moraes</span>
+                            <div className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <EditIcon className="h-6 w-6 text-white" />
                             </div>
                         </div>
+                        <div>
+                            <p className="font-medium text-text-primary">Foto de Perfil</p>
+                            <p className="text-sm text-text-secondary mb-3">Clique na imagem para alterar</p>
+                            <input type="file" ref={photoInputRef} onChange={handlePhotoChange} className="hidden" accept="image/*" />
+                        </div>
                     </div>
                 </div>
 
-
+                {/* Appearance Section */}
                 <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
-                    <h3 className="text-lg font-bold text-text-primary mb-4 font-heading flex items-center gap-3">
-                        <KeyIcon className="h-6 w-6 text-primary" />
-                        Segurança e Acesso
-                    </h3>
-                    <div className="space-y-4 md:space-y-0 md:flex md:items-center md:gap-4">
-                        <button onClick={() => setIsChangePasswordModalOpen(true)} className="w-full md:w-auto py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">
-                            Alterar Senha de Acesso
-                        </button>
-                        <button onClick={() => setIsManageUsersModalOpen(true)} className="w-full md:w-auto py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">
-                            Gerenciar Usuários
-                        </button>
-                    </div>
-                </div>
-
-                <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
-                    <h3 className="text-lg font-bold text-text-primary mb-4 font-heading">Aparência</h3>
+                    <h3 className="text-lg font-bold text-text-primary mb-4">Aparência</h3>
                     <div className="space-y-6">
-                        <div className="flex items-center justify-between"><span className="font-semibold text-text-primary">Tema Escuro</span><label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" checked={isDarkMode} onChange={() => setIsDarkMode(!isDarkMode)} className="sr-only peer" /><div className="w-11 h-6 bg-secondary rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div></label></div>
-                        <div>
-                           <label className="block text-sm font-medium text-text-secondary mb-2">Alterar Fontes</label>
-                           <div className="space-y-4">
-                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                   <select value={currentFont} onChange={(e) => { const f = e.target.value; fontTarget === 'all' ? setBodyFont(f) : setHeadingFont(f); }} className="sm:col-span-1 bg-white border border-border rounded-xl px-3 py-2 text-text-primary h-10"><option key="Inter" value="Inter">Padrão (Inter)</option>{googleFonts.filter(f => f !== 'Inter').map(f => (<option key={f} value={f}>{f}</option>))}</select>
-                                   <select value={fontTarget} onChange={(e) => setFontTarget(e.target.value as any)} className="sm:col-span-1 bg-white border border-border rounded-xl px-3 py-2 text-text-primary h-10"><option value="all">Todo o Sistema</option><option value="headings">Apenas Cabeçalhos</option></select>
-                                   <button onClick={() => requestPassword(handleApplyFont)} className="sm:col-span-1 py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold h-10">Aplicar</button>
-                               </div>
-                               <div><textarea value={previewText} onChange={(e) => setPreviewText(e.target.value)} style={{ fontFamily: `'${currentFont}', sans-serif` }} className="w-full h-24 p-4 bg-white border border-border rounded-xl text-text-primary text-lg" placeholder="Digite para pré-visualizar..."/></div>
-                           </div>
+                        <div className="flex items-center justify-between">
+                            <span className="text-text-primary">Modo Escuro</span>
+                            <button 
+                                onClick={() => setIsDarkMode(!isDarkMode)}
+                                className={`w-12 h-6 rounded-full transition-colors relative ${isDarkMode ? 'bg-primary' : 'bg-gray-300'}`}
+                            >
+                                <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${isDarkMode ? 'left-7' : 'left-1'}`} />
+                            </button>
+                        </div>
+                        <div className="space-y-3">
+                            <label className="block text-sm font-medium text-text-secondary">Fonte do Sistema</label>
+                            <div className="flex gap-2">
+                                <select 
+                                    value={bodyFont} 
+                                    onChange={(e) => setBodyFont(e.target.value)}
+                                    className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm"
+                                >
+                                    {googleFonts.map(font => <option key={font} value={font}>{font}</option>)}
+                                </select>
+                                <button onClick={() => { setFontTarget('all'); handleApplyFont(); }} className="px-3 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary-hover transition-colors">Aplicar</button>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                {/* Security Section */}
                 <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
-                    <h3 className="text-lg font-bold text-text-primary mb-4 font-heading">Gerenciamento de Dados</h3>
-
-                     <div className="mb-6 p-4 bg-blue-50 text-blue-800 border border-blue-100 rounded-xl">
-                        <p className="text-sm">
-                            <strong>Salvamento Automático:</strong> Todas as suas informações são salvas automaticamente no seu navegador.
-                        </p>
+                    <h3 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
+                        <KeyIcon className="h-5 w-5 text-primary"/> Segurança
+                    </h3>
+                    <div className="space-y-3">
+                        <button onClick={() => requestPassword(() => setIsChangePasswordModalOpen(true))} className="w-full text-left px-4 py-3 bg-secondary hover:bg-border rounded-xl transition-colors text-text-primary flex justify-between items-center group">
+                            <span>Alterar Senha de Acesso</span>
+                            <ChevronDownIcon className="h-4 w-4 -rotate-90 text-text-secondary group-hover:text-text-primary" />
+                        </button>
+                        <button onClick={() => setIsManageUsersModalOpen(true)} className="w-full text-left px-4 py-3 bg-secondary hover:bg-border rounded-xl transition-colors text-text-primary flex justify-between items-center group">
+                            <span>Gerenciar Usuários</span>
+                            <ChevronDownIcon className="h-4 w-4 -rotate-90 text-text-secondary group-hover:text-text-primary" />
+                        </button>
                     </div>
+                </div>
 
-                    <div className="space-y-4">
-                        <div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <button onClick={handleBackup} className="py-3 px-4 rounded-full bg-secondary hover:bg-border font-semibold border border-border transition-colors">Backup Geral</button>
-                                <button onClick={() => fileInputRef.current?.click()} className="py-3 px-4 rounded-full bg-secondary hover:bg-border font-semibold border border-border transition-colors">Restaurar Backup</button>
-                            </div>
-                            <p className="text-xs text-text-secondary mt-2">
-                                <strong>Backup:</strong> Salva um arquivo com TODOS os dados do sistema. Guarde em local seguro.
-                            </p>
-                             <p className="text-xs text-text-secondary mt-1">
-                                <strong>Restaurar:</strong> Carrega todos os dados de um arquivo de backup. A sessão atual será perdida.
-                            </p>
-                        </div>
+                {/* Data Management */}
+                <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+                    <h3 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
+                        <DatabaseIcon className="h-5 w-5 text-primary"/> Backup e Dados
+                    </h3>
+                    <p className="text-sm text-text-secondary mb-4">Faça cópias de segurança ou restaure seus dados para manter seu histórico seguro.</p>
+                    <div className="grid grid-cols-2 gap-4">
+                        <button onClick={() => requestPassword(handleBackup)} disabled={isProcessing} className="flex flex-col items-center justify-center p-4 bg-secondary hover:bg-border rounded-xl transition-colors gap-2 border border-transparent hover:border-primary/20 disabled:opacity-50 disabled:cursor-not-allowed">
+                            {isProcessing ? <SpinnerIcon className="h-6 w-6 text-primary animate-spin" /> : <DownloadIcon className="h-6 w-6 text-primary" />}
+                            <span className="text-sm font-bold text-text-primary">Fazer Backup</span>
+                        </button>
+                        <button onClick={() => !isProcessing && fileInputRef.current?.click()} disabled={isProcessing} className="flex flex-col items-center justify-center p-4 bg-secondary hover:bg-border rounded-xl transition-colors gap-2 relative border border-transparent hover:border-primary/20 disabled:opacity-50 disabled:cursor-not-allowed">
+                            {isProcessing ? <SpinnerIcon className="h-6 w-6 text-primary animate-spin" /> : <UploadIcon className="h-6 w-6 text-primary" />}
+                            <span className="text-sm font-bold text-text-primary">Restaurar</span>
+                            <input type="file" ref={fileInputRef} onChange={handleRestore} className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed" accept=".json" disabled={isProcessing} />
+                        </button>
                     </div>
                 </div>
             </div>
-            <input type="file" ref={fileInputRef} onChange={handleRestore} className="hidden" accept=".json" />
-            
-            {isActionPasswordModalOpen && <PasswordModal onSuccess={handleActionPasswordSuccess} onClose={() => setIsActionPasswordModalOpen(false)}/>}
 
-            {isChangePasswordModalOpen && <ChangePasswordModal onClose={() => setIsChangePasswordModalOpen(false)} />}
-            {isManageUsersModalOpen && <ManageUsersModal onClose={() => setIsManageUsersModalOpen(false)} />}
+            {/* Modals */}
+            {isPasswordModalOpen && (
+                <PasswordModal
+                    isInitialUnlock
+                    onSuccess={handleInitialUnlockSuccess}
+                    onClose={() => { if(onBack) onBack(); }}
+                />
+            )}
             
+            {isActionPasswordModalOpen && (
+                <PasswordModal
+                    onSuccess={handleActionPasswordSuccess}
+                    onClose={() => setIsActionPasswordModalOpen(false)}
+                />
+            )}
+
+            {isChangePasswordModalOpen && (
+                <ChangePasswordModal onClose={() => setIsChangePasswordModalOpen(false)} />
+            )}
+
+            {isManageUsersModalOpen && (
+                <ManageUsersModal onClose={() => setIsManageUsersModalOpen(false)} />
+            )}
+
             {isRestoreSuccessModalOpen && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
                     <div className="bg-card rounded-2xl shadow-lg border border-border p-8 w-full max-w-sm text-center">
-                        <div className="mb-4 flex justify-center">
-                            <div className="bg-success/20 p-4 rounded-full">
-                                <CheckIcon className="h-12 w-12 text-success" />
-                            </div>
-                        </div>
-                        <h3 className="text-lg font-bold mb-2 text-text-primary">BACKUP EFETUADO COM SUCESSO</h3>
-                        <p className="text-text-secondary mb-6">Os dados foram restaurados. O sistema será reiniciado para aplicar as alterações.</p>
-                        <div className="flex justify-center">
-                            <button onClick={handleRestoreSuccess} className="w-full py-3 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">OK</button>
-                        </div>
+                        <CheckIcon className="h-12 w-12 text-success mx-auto mb-4" />
+                        <h3 className="text-lg font-bold mb-2 text-text-primary">Restauração Concluída!</h3>
+                        <p className="text-text-secondary mb-6">Seus dados foram restaurados com sucesso. A página será recarregada para aplicar as alterações.</p>
+                        <button onClick={() => window.location.reload()} className="py-2 px-6 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">OK, Recarregar</button>
                     </div>
                 </div>
             )}
 
+            {/* Toast Notification */}
             {notification && (
-                <div className={`fixed bottom-8 right-8 text-white py-3 px-6 rounded-xl shadow-lg animate-fade-in z-50 ${notification.type === 'success' ? 'bg-success' : 'bg-danger'}`}>
+                <div className={`fixed bottom-8 right-8 py-3 px-6 rounded-xl shadow-lg animate-fade-in z-50 font-medium text-white ${notification.type === 'error' ? 'bg-danger' : 'bg-success'}`}>
                     {notification.message}
                 </div>
             )}

@@ -1,7 +1,8 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import TransferenciasEmpresas from './TransferenciasEmpresas';
 import AutorizacaoPagamento from './AutorizacaoPagamento';
-import { CalendarClockIcon, TrashIcon, ReportIcon } from './icons';
+import { CalendarClockIcon, TrashIcon, ReportIcon, ChevronDownIcon } from './icons';
 
 // Interface for a payment entry
 interface Pagamento {
@@ -446,22 +447,25 @@ const PagamentosFabrica: React.FC = () => {
                         name="empresa"
                         value={editingPagamento.empresa}
                         onChange={handleInputChange}
-                        className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12"
                     />
                 </div>
                 <div className="sm:col-span-2">
                     <label htmlFor="tipo" className="block text-sm font-medium text-text-secondary mb-1">Banco</label>
-                    <select
-                        id="tipo"
-                        name="tipo"
-                        value={editingPagamento.tipo}
-                        onChange={handleInputChange}
-                        className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                    >
-                        {BANK_OPTIONS.map(banco => (
-                            <option key={banco} value={banco}>{banco}</option>
-                        ))}
-                    </select>
+                    <div className="relative">
+                        <select
+                            id="tipo"
+                            name="tipo"
+                            value={editingPagamento.tipo}
+                            onChange={handleInputChange}
+                            className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary appearance-none h-12"
+                        >
+                            {BANK_OPTIONS.map(banco => (
+                                <option key={banco} value={banco}>{banco}</option>
+                            ))}
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
+                    </div>
                 </div>
                 <div>
                   <label htmlFor="receitas" className="block text-sm font-medium text-text-secondary mb-1">Receitas (R$)</label>
@@ -471,7 +475,7 @@ const PagamentosFabrica: React.FC = () => {
                       name="receitas" 
                       value={formatInputCurrency(tempCurrencyInput.receitas || '')} 
                       onChange={handleCurrencyInputChange} 
-                      className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.receitas ? 'border-danger' : 'border-border'}`}
+                      className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12 ${errors.receitas ? 'border-danger' : 'border-border'}`}
                   />
                   {errors.receitas && <p className="text-danger text-xs mt-1">{errors.receitas}</p>}
                 </div>
@@ -483,7 +487,7 @@ const PagamentosFabrica: React.FC = () => {
                       name="despesas" 
                       value={formatInputCurrency(tempCurrencyInput.despesas || '')} 
                       onChange={handleCurrencyInputChange} 
-                      className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.despesas ? 'border-danger' : 'border-border'}`}
+                      className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12 ${errors.despesas ? 'border-danger' : 'border-border'}`}
                   />
                    {errors.despesas && <p className="text-danger text-xs mt-1">{errors.despesas}</p>}
                 </div>
@@ -495,7 +499,7 @@ const PagamentosFabrica: React.FC = () => {
                       name="envia" 
                       value={formatInputCurrency(tempCurrencyInput.envia || '')} 
                       onChange={handleCurrencyInputChange} 
-                      className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.envia ? 'border-danger' : 'border-border'}`}
+                      className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12 ${errors.envia ? 'border-danger' : 'border-border'}`}
                   />
                    {errors.envia && <p className="text-danger text-xs mt-1">{errors.envia}</p>}
                 </div>
@@ -507,7 +511,7 @@ const PagamentosFabrica: React.FC = () => {
                       name="recebe" 
                       value={formatInputCurrency(tempCurrencyInput.recebe || '')} 
                       onChange={handleCurrencyInputChange} 
-                      className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.recebe ? 'border-danger' : 'border-border'}`}
+                      className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12 ${errors.recebe ? 'border-danger' : 'border-border'}`}
                   />
                   {errors.recebe && <p className="text-danger text-xs mt-1">{errors.recebe}</p>}
                 </div>
