@@ -1,7 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { AppView } from '../types';
-import { CheckIcon, CalendarClockIcon, SparklesIcon, SearchIcon, RefreshIcon } from './icons';
+import { 
+    CheckIcon, 
+    CalendarClockIcon, 
+    SparklesIcon, 
+    SearchIcon, 
+    RefreshIcon,
+    ArrowUpCircleIcon,
+    ArrowDownCircleIcon,
+    ClipboardListIcon,
+    TrendingUpIcon
+} from './icons';
 
 interface DashboardProps {
   setView: (view: AppView) => void;
@@ -142,8 +152,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
                  updateLocalStorage(item.type === 'cheque' ? 'gerenciador_cheques_data' : 'gerenciador_tarefas_data', item.id, { dataVencimento: tomorrow });
                 break;
             case 'lembreteRecorrente':
-                // Recorrentes aren't really "delayed" in the same way, they are fixed dates. 
-                // We just dismiss it from today's view.
                 break;
         }
         setItems(prev => prev.filter(i => i.id !== item.id));
@@ -153,106 +161,196 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
         let title = '';
         let details = '';
         let icon = null;
+        let typeColorClass = '';
+        let amountClass = '';
         const valor = 'valor' in item ? (item.valor || 0) : 0;
         const valorFormatted = valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
         switch(item.type) {
             case 'boletoReceber':
-                title = `Boleto a Receber: ${item.cliente || item.credor}`;
-                details = `Valor: ${valorFormatted}`;
+                title = item.cliente || item.credor || 'Cliente';
+                details = `Boleto a Receber`;
+                typeColorClass = 'border-l-4 border-l-success';
+                amountClass = 'text-success font-bold';
                 break;
             case 'cheque':
-                title = `Cheque: ${item.emitente}`;
-                details = `Nº ${item.numero}, Valor: ${valorFormatted}`;
+                title = item.emitente;
+                details = `Cheque Nº ${item.numero}`;
+                typeColorClass = 'border-l-4 border-l-success';
+                amountClass = 'text-success font-bold';
                 break;
             case 'tarefa':
-                title = `Tarefa: ${item.titulo}`;
+                title = item.titulo;
                 details = `Prioridade: ${item.prioridade}`;
+                typeColorClass = 'border-l-4 border-l-warning';
                 break;
             case 'boletoPagar':
-                title = `Boleto a Pagar: ${item.fornecedor || item.pagador}`;
-                details = `Valor: ${valorFormatted}`;
+                title = item.fornecedor || item.pagador || 'Fornecedor';
+                details = `Boleto a Pagar`;
+                typeColorClass = 'border-l-4 border-l-danger';
+                amountClass = 'text-danger font-bold';
                 break;
             case 'lembreteRecorrente':
-                title = `Lançar Despesa: ${item.descricao}`;
-                details = `${item.empresa} - Vence dia ${item.diaVencimento}`;
-                icon = <RefreshIcon className="h-5 w-5 text-primary" />;
+                title = item.descricao;
+                details = `${item.empresa} (Amanhã)`;
+                icon = <RefreshIcon className="h-4 w-4 text-text-secondary" />;
+                typeColorClass = 'border-l-4 border-l-primary';
                 break;
         }
         
         return (
-             <div key={item.id} className="bg-background p-4 rounded-2xl flex items-center justify-between gap-4 border border-border hover:shadow-sm transition-shadow">
-                <div className="flex items-center gap-3">
-                    {icon && <div className="p-2 bg-primary/10 rounded-full">{icon}</div>}
-                    <div>
-                        <p className="font-semibold text-text-primary">{title}</p>
-                        <p className="text-sm text-text-secondary">{details}</p>
+             <div key={item.id} className={`bg-card p-4 rounded-xl shadow-sm border border-border hover:shadow-md transition-all duration-200 group flex justify-between items-start gap-3 ${typeColorClass}`}>
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                        {icon}
+                        <h5 className="font-semibold text-text-primary truncate" title={title}>{title}</h5>
                     </div>
+                    <p className="text-xs text-text-secondary truncate">{details}</p>
+                    {'valor' in item && (
+                        <p className={`text-sm mt-1 ${amountClass}`}>{valorFormatted}</p>
+                    )}
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                    <button onClick={() => handleConcluir(item)} title="Concluir" className="p-2 rounded-full text-success hover:bg-success/10 transition-colors border border-success/20"><CheckIcon className="h-5 w-5"/></button>
+                
+                <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                        onClick={() => handleConcluir(item)} 
+                        title="Concluir" 
+                        className="p-1.5 rounded-full bg-success/10 text-success hover:bg-success hover:text-white transition-colors"
+                    >
+                        <CheckIcon className="h-4 w-4"/>
+                    </button>
                     {item.type !== 'lembreteRecorrente' && (
-                        <button onClick={() => handleAdiar(item)} title="Adiar para amanhã" className="p-2 rounded-full text-warning hover:bg-warning/10 transition-colors border border-warning/20"><CalendarClockIcon className="h-5 w-5"/></button>
+                        <button 
+                            onClick={() => handleAdiar(item)} 
+                            title="Adiar para amanhã" 
+                            className="p-1.5 rounded-full bg-warning/10 text-warning hover:bg-warning hover:text-white transition-colors"
+                        >
+                            <CalendarClockIcon className="h-4 w-4"/>
+                        </button>
                     )}
                 </div>
             </div>
         );
     };
 
-    const sections: { title: string, type: Item['type'] }[] = [
-        { title: 'Lembretes de Despesas (Amanhã)', type: 'lembreteRecorrente' },
-        { title: 'Boletos a Receber', type: 'boletoReceber' },
-        { title: 'Cheques a Compensar', type: 'cheque' },
-        { title: 'Tarefas do Dia', type: 'tarefa' },
-        { title: 'Boletos a Pagar', type: 'boletoPagar' },
-    ];
+    // Categorize items
+    const priorities = items.filter(i => i.type === 'tarefa' || i.type === 'lembreteRecorrente');
+    const inflows = items.filter(i => i.type === 'boletoReceber' || i.type === 'cheque');
+    const outflows = items.filter(i => i.type === 'boletoPagar');
 
-    const renderedSections = sections
-        .map(section => {
-            const sectionItems = items.filter(item => item.type === section.type);
-            if (sectionItems.length === 0) return null;
-            return (
-                <div key={section.type} className="mb-6">
-                    <h4 className="font-bold text-text-primary mb-3 text-lg border-b border-border pb-2">{section.title}</h4>
-                    <div className="space-y-3">
-                        {sectionItems.map(renderItem)}
-                    </div>
-                </div>
-            );
-        })
-        .filter(Boolean);
+    const counts = {
+        receber: inflows.length,
+        pagar: outflows.length,
+        tarefas: priorities.length,
+        total: items.length
+    };
 
-    return (
-        <div className="animate-fade-in flex flex-col flex-grow w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
-            <div className="mb-8 text-center sm:text-left">
-                <div className="flex items-center justify-center sm:justify-start gap-3 mb-2">
-                    <div className="p-2 bg-warning/10 rounded-full">
-                        <SparklesIcon className="h-6 w-6 text-warning"/>
-                    </div>
-                    <h2 className="text-3xl font-bold text-text-primary font-heading tracking-tight">Meu Dia</h2>
-                </div>
-                <p className="text-text-secondary max-w-2xl">
-                    Resumo de todas as pendências financeiras e tarefas agendadas para hoje.
-                </p>
+    // Greeting
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
+    const todayDate = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+    const SummaryCard = ({ icon, label, count, colorClass, bgClass }: any) => (
+        <div className={`flex items-center gap-3 p-4 rounded-2xl border border-border bg-card shadow-sm`}>
+            <div className={`p-3 rounded-full ${bgClass}`}>
+                {React.cloneElement(icon, { className: `h-6 w-6 ${colorClass}` })}
             </div>
-            
-            <div className="flex-grow">
-                {isLoading ? (
-                    <div className="flex items-center justify-center h-64">
-                        <p className="text-text-secondary">Carregando...</p>
-                    </div>
-                ) : renderedSections.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-6">
-                        {renderedSections}
-                    </div>
+            <div>
+                <p className="text-2xl font-bold text-text-primary">{count}</p>
+                <p className="text-xs font-medium text-text-secondary uppercase tracking-wide">{label}</p>
+            </div>
+        </div>
+    );
+
+    const SectionColumn = ({ title, icon, items, emptyMessage }: any) => (
+        <div className="flex flex-col h-full">
+            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-border">
+                {icon}
+                <h3 className="text-lg font-bold text-text-primary">{title}</h3>
+                <span className="ml-auto text-xs font-bold bg-secondary px-2 py-1 rounded-full text-text-secondary">{items.length}</span>
+            </div>
+            <div className="flex-grow space-y-3">
+                {items.length > 0 ? (
+                    items.map(renderItem)
                 ) : (
-                    <div className="text-center py-20 bg-card rounded-2xl border border-border">
-                        <CheckIcon className="h-16 w-16 text-success mx-auto mb-4" />
-                        <h3 className="text-xl font-bold text-text-primary mb-2">Tudo em ordem!</h3>
-                        <p className="text-text-secondary">Você não tem pendências para o dia de hoje.</p>
+                    <div className="flex flex-col items-center justify-center h-32 text-text-secondary bg-secondary/30 rounded-xl border border-dashed border-border/60">
+                        <CheckIcon className="h-8 w-8 mb-2 opacity-20" />
+                        <p className="text-sm font-medium opacity-60">{emptyMessage}</p>
                     </div>
                 )}
             </div>
+        </div>
+    );
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-full w-full">
+                <div className="flex flex-col items-center gap-3 animate-pulse">
+                    <div className="h-8 w-8 rounded-full bg-secondary"></div>
+                    <p className="text-text-secondary font-medium">Carregando seu dia...</p>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="p-6 lg:p-10 max-w-7xl mx-auto animate-fade-in flex flex-col gap-8 h-full overflow-y-auto">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl md:text-4xl font-bold text-text-primary tracking-tight mb-1">
+                        {greeting}!
+                    </h1>
+                    <p className="text-text-secondary capitalize text-sm md:text-base font-medium">
+                        {todayDate}
+                    </p>
+                </div>
+                
+                {/* Optional Global Actions could go here */}
+            </div>
+
+            {/* Summary Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <SummaryCard icon={<ArrowDownCircleIcon/>} label="A Pagar" count={counts.pagar} colorClass="text-danger" bgClass="bg-danger/10" />
+                <SummaryCard icon={<ArrowUpCircleIcon/>} label="A Receber" count={counts.receber} colorClass="text-success" bgClass="bg-success/10" />
+                <SummaryCard icon={<ClipboardListIcon/>} label="Tarefas" count={counts.tarefas} colorClass="text-warning" bgClass="bg-warning/10" />
+                <SummaryCard icon={<SparklesIcon/>} label="Total" count={counts.total} colorClass="text-primary" bgClass="bg-primary/10" />
+            </div>
+
+            {/* Main Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-grow">
+                {/* Column 1: Priorities */}
+                <SectionColumn 
+                    title="Prioridades" 
+                    icon={<ClipboardListIcon className="h-5 w-5 text-warning" />}
+                    items={priorities}
+                    emptyMessage="Nenhuma tarefa pendente."
+                />
+
+                {/* Column 2: Inflows */}
+                <SectionColumn 
+                    title="Entradas" 
+                    icon={<TrendingUpIcon className="h-5 w-5 text-success" />}
+                    items={inflows}
+                    emptyMessage="Sem recebimentos hoje."
+                />
+
+                {/* Column 3: Outflows */}
+                <SectionColumn 
+                    title="Saídas" 
+                    icon={<ArrowDownCircleIcon className="h-5 w-5 text-danger" />}
+                    items={outflows}
+                    emptyMessage="Nada a pagar hoje."
+                />
+            </div>
+            
+            {counts.total === 0 && (
+                <div className="text-center py-12 opacity-50">
+                    <SparklesIcon className="h-16 w-16 mx-auto text-primary mb-4 opacity-20" />
+                    <h3 className="text-xl font-bold text-text-primary">Tudo Limpo!</h3>
+                    <p className="text-text-secondary">Você não tem pendências registradas para hoje.</p>
+                </div>
+            )}
         </div>
     );
 };
