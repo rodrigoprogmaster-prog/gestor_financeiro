@@ -352,59 +352,59 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
             </div>
 
             {isModalOpen && editingTransferencia && (
-                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-lg">
-                        <h3 className="text-xl font-bold mb-6 text-text-primary">
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg">
+                        <h3 className="text-2xl font-bold mb-6 text-text-primary text-center">
                             {editingTransferencia.id ? 'Editar Transferência' : 'Adicionar Transferência'}
                         </h3>
                         <div className="space-y-4">
                              <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-1">Data</label>
-                                <input type="text" name="data_br" value={editingTransferencia.data_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" maxLength={10} className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.data ? 'border-danger' : 'border-border'}`} />
-                                {errors.data && <p className="text-danger text-xs mt-1">{errors.data}</p>}
+                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Data</label>
+                                <input type="text" name="data_br" value={editingTransferencia.data_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" maxLength={10} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.data ? 'border-danger' : ''}`} />
+                                {errors.data && <p className="text-danger text-xs mt-1 ml-1">{errors.data}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-1">Empresa de Origem</label>
-                                <input type="text" name="empresaOrigem" placeholder="Digite a empresa de origem" value={editingTransferencia.empresaOrigem || ''} onChange={handleInputChange} className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.empresaOrigem ? 'border-danger' : 'border-border'}`} />
-                                {errors.empresaOrigem && <p className="text-danger text-xs mt-1">{errors.empresaOrigem}</p>}
+                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Empresa de Origem</label>
+                                <input type="text" name="empresaOrigem" placeholder="Digite a empresa de origem" value={editingTransferencia.empresaOrigem || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.empresaOrigem ? 'border-danger' : ''}`} />
+                                {errors.empresaOrigem && <p className="text-danger text-xs mt-1 ml-1">{errors.empresaOrigem}</p>}
                             </div>
                              <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-1">Banco Origem</label>
-                                <input type="text" name="bancoOrigem" placeholder="Ex: Itaú" value={editingTransferencia.bancoOrigem || ''} onChange={handleInputChange} className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.bancoOrigem ? 'border-danger' : 'border-border'}`} />
-                                {errors.bancoOrigem && <p className="text-danger text-xs mt-1">{errors.bancoOrigem}</p>}
+                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Banco Origem</label>
+                                <input type="text" name="bancoOrigem" placeholder="Ex: Itaú" value={editingTransferencia.bancoOrigem || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.bancoOrigem ? 'border-danger' : ''}`} />
+                                {errors.bancoOrigem && <p className="text-danger text-xs mt-1 ml-1">{errors.bancoOrigem}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-1">Empresa Destino</label>
-                                <input type="text" name="empresaDestino" placeholder="Digite a empresa de destino" value={editingTransferencia.empresaDestino || ''} onChange={handleInputChange} className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.empresaDestino ? 'border-danger' : 'border-border'}`} />
-                                {errors.empresaDestino && <p className="text-danger text-xs mt-1">{errors.empresaDestino}</p>}
+                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Empresa Destino</label>
+                                <input type="text" name="empresaDestino" placeholder="Digite a empresa de destino" value={editingTransferencia.empresaDestino || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.empresaDestino ? 'border-danger' : ''}`} />
+                                {errors.empresaDestino && <p className="text-danger text-xs mt-1 ml-1">{errors.empresaDestino}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-1">Banco Destino</label>
-                                <input type="text" name="bancoDestino" placeholder="Ex: Inter" value={editingTransferencia.bancoDestino || ''} onChange={handleInputChange} className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.bancoDestino ? 'border-danger' : 'border-border'}`} />
-                                {errors.bancoDestino && <p className="text-danger text-xs mt-1">{errors.bancoDestino}</p>}
+                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Banco Destino</label>
+                                <input type="text" name="bancoDestino" placeholder="Ex: Inter" value={editingTransferencia.bancoDestino || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.bancoDestino ? 'border-danger' : ''}`} />
+                                {errors.bancoDestino && <p className="text-danger text-xs mt-1 ml-1">{errors.bancoDestino}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-1">Valor</label>
-                                <input type="text" name="valor" value={formatCurrency(editingTransferencia.valor || 0)} onChange={handleInputChange} className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.valor ? 'border-danger' : 'border-border'}`} />
-                                {errors.valor && <p className="text-danger text-xs mt-1">{errors.valor}</p>}
+                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Valor</label>
+                                <input type="text" name="valor" value={formatCurrency(editingTransferencia.valor || 0)} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.valor ? 'border-danger' : ''}`} />
+                                {errors.valor && <p className="text-danger text-xs mt-1 ml-1">{errors.valor}</p>}
                             </div>
                         </div>
-                        <div className="mt-8 flex justify-end gap-4">
-                            <button onClick={handleCloseModal} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                            <button onClick={handleSaveChanges} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Salvar</button>
+                        <div className="mt-8 flex justify-center gap-3">
+                            <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
+                            <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
                         </div>
                     </div>
                 </div>
             )}
             
             {isConfirmOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-sm">
-                        <h3 className="text-lg font-bold mb-4 text-text-primary">Confirmar Ação</h3>
-                        <p className="text-text-secondary mb-6">{confirmAction.message}</p>
-                        <div className="flex justify-end gap-4">
-                            <button onClick={handleCancelConfirm} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                            <button onClick={handleConfirm} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Confirmar</button>
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
+                        <h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar Ação</h3>
+                        <p className="text-text-secondary mb-8">{confirmAction.message}</p>
+                        <div className="flex justify-center gap-4">
+                            <button onClick={handleCancelConfirm} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
+                            <button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button>
                         </div>
                     </div>
                 </div>

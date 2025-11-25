@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ArrowLeftIcon, PlusIcon, SearchIcon } from './icons';
 
@@ -179,7 +180,7 @@ const CaixaLiquidacao: React.FC<CaixaLiquidacaoProps> = ({ storageKey, title, on
     return (
         <div className="animate-fade-in p-4 sm:p-6 lg:p-8 w-full">
             <div className="flex items-center gap-4 mb-6">
-                <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors h-10">
+                <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">
                     <ArrowLeftIcon className="h-5 w-5" />
                     Voltar
                 </button>
@@ -195,11 +196,11 @@ const CaixaLiquidacao: React.FC<CaixaLiquidacaoProps> = ({ storageKey, title, on
                             onChange={handleMesReferenciaChange}
                             placeholder="Filtrar ou Gerar por MM/AAAA"
                             maxLength={7}
-                            className={`bg-background border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 h-10 w-full ${mesReferenciaError ? 'border-danger focus:ring-danger' : 'border-border focus:ring-primary'}`}
+                            className={`bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 h-10 w-full ${mesReferenciaError ? 'border-danger focus:ring-danger' : 'border-border focus:ring-primary'}`}
                         />
                         <button
                             onClick={handleGenerateMonth}
-                            className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-hover transition-colors duration-300 h-10 whitespace-nowrap"
+                            className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-full hover:bg-primary-hover transition-colors duration-300 h-10 whitespace-nowrap"
                         >
                             <PlusIcon className="h-5 w-5" />
                             Gerar Lançamentos
@@ -209,7 +210,7 @@ const CaixaLiquidacao: React.FC<CaixaLiquidacaoProps> = ({ storageKey, title, on
                 </div>
             </div>
 
-            <div className="bg-card shadow-md rounded-lg overflow-x-auto">
+            <div className="bg-card shadow-md rounded-2xl overflow-x-auto">
                 <table className="w-full text-base text-left text-text-secondary">
                     <thead className="text-sm text-text-primary uppercase bg-secondary">
                         <tr>
@@ -274,12 +275,12 @@ const CaixaLiquidacao: React.FC<CaixaLiquidacaoProps> = ({ storageKey, title, on
             
             {isConfirmOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-card rounded-lg shadow-xl p-8 w-full max-w-sm">
+                    <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-sm">
                         <h3 className="text-lg font-bold mb-4 text-text-primary">Confirmar Ação</h3>
                         <p className="text-text-secondary mb-6">{confirmAction.message}</p>
                         <div className="flex justify-end gap-4">
-                            <button onClick={handleCancelConfirm} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                            <button onClick={handleConfirm} className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Confirmar</button>
+                            <button onClick={handleCancelConfirm} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
+                            <button onClick={handleConfirm} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Confirmar</button>
                         </div>
                     </div>
                 </div>

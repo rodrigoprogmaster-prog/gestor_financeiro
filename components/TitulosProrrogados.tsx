@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, ArrowLeftIcon, SpinnerIcon } from './icons';
 
@@ -134,7 +135,6 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   // Filter states
   const [statusFilter, setStatusFilter] = useState<string>('Todos');
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
   // Infinite scroll states
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -143,7 +143,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
   useEffect(() => {
     setSelectedTitles(new Set());
-  }, [statusFilter, searchTerm, dateRange]);
+  }, [statusFilter, searchTerm]);
 
   const filteredTitles = useMemo(() => {
     setDisplayCount(ITEMS_PER_LOAD); // Reset display count on filter change
@@ -155,12 +155,9 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         title.devedor.toLowerCase().includes(lowercasedSearchTerm) ||
         title.numeroTitulo.toLowerCase().includes(lowercasedSearchTerm);
       
-      const startDateMatch = !dateRange.start || title.vencimentoOriginal >= dateRange.start;
-      const endDateMatch = !dateRange.end || title.vencimentoOriginal <= dateRange.end;
-
-      return statusMatch && searchMatch && startDateMatch && endDateMatch;
+      return statusMatch && searchMatch;
     });
-  }, [titles, statusFilter, searchTerm, dateRange]);
+  }, [titles, statusFilter, searchTerm]);
 
   const totalValor = useMemo(() => {
     return filteredTitles.reduce((acc, title) => acc + title.valor, 0);
@@ -169,7 +166,6 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const handleClearFilters = () => {
     setStatusFilter('Todos');
     setSearchTerm('');
-    setDateRange({ start: '', end: '' });
   };
 
   const handleExportXLSX = () => {
@@ -455,159 +451,115 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
              onClick={handleOpenAddModal}
              className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-full hover:bg-primary-hover transition-colors duration-300 h-9 shadow-sm"
            >
-             <PlusIcon className="h-4 w-4"/>
+             <PlusIcon className="h-4 w-4" />
              Adicionar Título
            </button>
-           <button
-            onClick={handleExportXLSX}
-            className="flex items-center gap-2 bg-white border border-border text-text-primary font-semibold py-2 px-4 rounded-full hover:bg-secondary transition-colors duration-300 h-9"
-            aria-label="Exportar para XLSX"
-          >
-            <DownloadIcon className="h-4 w-4" />
-            Exportar XLSX
-          </button>
         </div>
-        <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-2">
-            <div className="relative w-full xl:w-auto flex-grow">
-              <input 
-                type="text" 
-                placeholder="Buscar por Fornecedor, Devedor, Nº Título..."
-                value={searchTerm} 
-                onChange={(e) => setSearchTerm(e.target.value)} 
-                className="bg-white border border-border rounded-xl px-3 py-2 pl-10 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 w-full"
-              />
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <SearchIcon className="h-4 w-4 text-text-secondary" />
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2 bg-white border border-border rounded-xl px-3 h-9">
-                <span className="text-xs font-medium text-text-secondary whitespace-nowrap">Venc. Original:</span>
-                <input 
-                    type="date" 
-                    value={dateRange.start} 
-                    onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))} 
-                    className="bg-transparent border-none text-sm text-text-primary focus:ring-0 p-0 w-28"
-                />
-                <span className="text-xs text-text-secondary">-</span>
-                <input 
-                    type="date" 
-                    value={dateRange.end} 
-                    onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))} 
-                    className="bg-transparent border-none text-sm text-text-primary focus:ring-0 p-0 w-28"
-                />
-            </div>
+        <div className="flex items-center gap-2 flex-wrap">
+            <button onClick={handleExportXLSX} className="flex items-center gap-2 bg-white border border-border text-text-primary font-semibold py-2 px-4 rounded-full hover:bg-secondary transition-colors duration-300 h-9">
+                <DownloadIcon className="h-4 w-4" /> Exportar XLSX
+            </button>
+        </div>
+      </div>
 
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-white border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 w-full xl:w-auto">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 bg-white p-3 rounded-2xl border border-border">
+        <div className="relative w-full sm:w-auto flex-grow sm:flex-grow-0">
+            <input
+            type="text"
+            placeholder="Buscar..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full sm:w-80 pl-10 pr-3 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors h-9"
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <SearchIcon className="h-4 w-4 text-text-secondary" />
+            </div>
+        </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+             <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="bg-white border border-border rounded-xl px-3 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"
+            >
                 <option value="Todos">Todos Status</option>
                 <option value={StatusTitulo.PRORROGADO}>Prorrogados</option>
                 <option value={StatusTitulo.A_PRORROGAR}>A Prorrogar</option>
             </select>
-            <button onClick={handleClearFilters} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-9 whitespace-nowrap">Limpar</button>
+            <button onClick={handleClearFilters} className="px-3 py-1.5 rounded-full bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-9 transition-colors">Limpar</button>
         </div>
       </div>
-       <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-card p-4 rounded-2xl shadow-sm border border-border text-center">
-          <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Valor Total</p>
-          <p className="text-xl font-bold text-primary">{totalValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-        </div>
-        <div className="bg-card p-4 rounded-2xl shadow-sm border border-border text-center">
-          <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Títulos</p>
-          <p className="text-xl font-bold text-primary">{filteredTitles.length}</p>
-        </div>
-      </div>
-      <div className="bg-card shadow-sm rounded-2xl overflow-hidden flex-grow border border-border">
+
+      <div className="bg-card shadow-sm rounded-2xl overflow-hidden flex flex-col flex-grow border border-border">
         <div ref={scrollRef} onScroll={handleScroll} className="overflow-x-auto overflow-y-auto h-full">
-            <table className="min-w-full divide-y divide-border text-sm text-left text-text-secondary">
-            <thead className="bg-secondary text-xs text-text-secondary uppercase font-medium tracking-wider sticky top-0">
+            <table className="min-w-full divide-y divide-border text-sm text-left">
+            <thead className="bg-secondary text-xs uppercase font-medium text-text-secondary sticky top-0 z-10">
                 <tr>
-                <th scope="col" className="px-6 py-3">
-                    <input
-                        type="checkbox"
-                        className="h-4 w-4 text-primary bg-white border-border rounded-xl focus:ring-primary"
+                <th className="px-6 py-3">
+                    <input 
+                        type="checkbox" 
+                        className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
                         checked={filteredTitles.length > 0 && selectedTitles.size === filteredTitles.length}
                         onChange={handleSelectAll}
-                        aria-label="Selecionar todos os títulos"
                     />
                 </th>
-                <th scope="col" className="px-6 py-3">Fornecedor</th>
-                <th scope="col" className="px-6 py-3">Nº do Título</th>
-                <th scope="col" className="px-6 py-3">Venc. Original</th>
-                <th scope="col" className="px-6 py-3">Devedor</th>
-                <th scope="col" className="px-6 py-3">Novo Vencimento</th>
-                <th scope="col" className="px-6 py-3 text-right">Valor</th>
-                <th scope="col" className="px-6 py-3 text-center">Status</th>
-                <th scope="col" className="px-6 py-3 text-center">Ações</th>
+                <th className="px-6 py-3">Status</th>
+                <th className="px-6 py-3">Fornecedor</th>
+                <th className="px-6 py-3">Nº Título</th>
+                <th className="px-6 py-3">Venc. Original</th>
+                <th className="px-6 py-3">Devedor</th>
+                <th className="px-6 py-3">Novo Vencimento</th>
+                <th className="px-6 py-3 text-right">Valor</th>
                 </tr>
             </thead>
             <tbody className="divide-y divide-border bg-white">
                 {filteredTitles.length > 0 ? (
                 filteredTitles.slice(0, displayCount).map((title) => (
-                    <tr
-                    key={title.id}
-                    className={`bg-card border-b border-border hover:bg-secondary transition-colors duration-200 ${selectedTitles.has(title.id) ? 'bg-primary/10' : ''}`}
+                    <tr 
+                        key={title.id} 
+                        className={`hover:bg-secondary transition-colors cursor-pointer ${selectedTitles.has(title.id) ? 'bg-primary/5' : ''}`}
+                        onClick={() => handleRowClick(title)}
                     >
                     <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                        <input
-                            type="checkbox"
-                            className="h-4 w-4 text-primary bg-white border-border rounded-xl focus:ring-primary"
+                        <input 
+                            type="checkbox" 
+                            className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
                             checked={selectedTitles.has(title.id)}
                             onChange={() => handleSelectTitle(title.id)}
-                            aria-label={`Selecionar título de ${title.fornecedor}`}
                         />
                     </td>
-                    <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{title.fornecedor}</td>
-                    <td className="px-6 py-4 text-text-secondary">{title.numeroTitulo}</td>
-                    <td className="px-6 py-4 text-text-secondary">{formatDateToBR(title.vencimentoOriginal)}</td>
-                    <td className="px-6 py-4 text-text-secondary">{title.devedor}</td>
-                    <td className="px-6 py-4 font-semibold text-warning whitespace-nowrap">{formatDateToBR(title.novoVencimento)}</td>
-                    <td className="px-6 py-4 text-right font-semibold text-text-primary whitespace-nowrap">{title.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-6 py-4">
                         <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded-full border ${
-                        title.status === StatusTitulo.PRORROGADO 
-                        ? 'bg-success/20 text-success border-success/30' 
-                        : 'bg-warning/20 text-warning border-warning/30'
+                        title.status === StatusTitulo.A_PRORROGAR 
+                            ? 'bg-warning/20 text-warning border-warning/30' 
+                            : 'bg-primary/20 text-primary border-primary/30'
                         }`}>
                         {title.status}
                         </span>
                     </td>
-                    <td className="px-6 py-4 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                            <button 
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRowClick(title);
-                                }} 
-                                className="text-primary hover:text-primary/80 p-1.5 rounded-full hover:bg-primary/10 transition-colors"
-                                aria-label="Editar título"
-                            >
-                                <EditIcon className="h-4 w-4"/>
-                            </button>
-                            <button 
-                                onClick={(e) => handleDeleteClick(e, title.id)} 
-                                className="text-danger hover:text-danger/80 p-1.5 rounded-full hover:bg-danger/10 transition-colors"
-                                aria-label="Excluir título"
-                            >
-                                <TrashIcon className="h-4 w-4"/>
-                            </button>
-                        </div>
+                    <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{title.fornecedor}</td>
+                    <td className="px-6 py-4 text-text-secondary whitespace-nowrap">{title.numeroTitulo}</td>
+                    <td className="px-6 py-4 text-text-secondary whitespace-nowrap">{formatDateToBR(title.vencimentoOriginal)}</td>
+                    <td className="px-6 py-4 text-text-secondary whitespace-nowrap">{title.devedor}</td>
+                    <td className="px-6 py-4 text-text-secondary whitespace-nowrap">{formatDateToBR(title.novoVencimento)}</td>
+                    <td className="px-6 py-4 text-right font-semibold text-text-primary whitespace-nowrap">
+                        {title.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                     </td>
                     </tr>
                 ))
                 ) : (
                 <tr>
-                    <td colSpan={9} className="text-center py-16">
-                    <div className="flex flex-col items-center justify-center text-text-secondary">
-                        <SearchIcon className="w-10 h-10 mb-4 text-gray-300" />
-                        <h3 className="text-lg font-medium text-text-primary">Nenhum Título Encontrado</h3>
-                        <p className="text-sm mt-1">Tente ajustar seus filtros de busca ou adicione um novo título.</p>
-                    </div>
+                    <td colSpan={8} className="text-center py-16">
+                        <div className="flex flex-col items-center justify-center text-text-secondary">
+                            <SearchIcon className="w-10 h-10 mb-4 text-gray-300" />
+                            <h3 className="text-lg font-medium text-text-primary">Nenhum Título Encontrado</h3>
+                            <p className="mt-1">Tente ajustar os filtros ou adicione um novo título.</p>
+                        </div>
                     </td>
                 </tr>
                 )}
-                {isLoadingMore && (
+                 {isLoadingMore && (
                     <tr>
-                        <td colSpan={9} className="text-center py-4 text-primary">
+                        <td colSpan={8} className="text-center py-4 text-primary">
                             <SpinnerIcon className="h-5 w-5 animate-spin mx-auto" />
                             Carregando mais...
                         </td>
@@ -619,76 +571,89 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       </div>
 
       {isModalOpen && editingTitle && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
-          <div className="bg-card rounded-2xl shadow-lg border border-border w-full max-w-lg overflow-hidden">
-            <div className="px-6 py-4 border-b border-border bg-secondary/30">
-                <h3 className="text-lg font-bold text-text-primary">{editingTitle.id ? 'Editar Título' : 'Adicionar Novo Título'}</h3>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 overflow-visible">
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-text-primary">{editingTitle.id ? 'Editar Título' : 'Novo Título'}</h3>
+                {editingTitle.id && (
+                    <button 
+                        onClick={(e) => handleDeleteClick(e, editingTitle.id!)} 
+                        className="text-danger hover:bg-danger/10 p-2 rounded-full transition-colors"
+                        title="Excluir Título"
+                    >
+                        <TrashIcon className="h-5 w-5" />
+                    </button>
+                )}
             </div>
-            <div className="p-6 space-y-4">
+            
+            <div className="space-y-4">
                 <div>
-                  <label htmlFor="fornecedor" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Fornecedor <span className="text-danger">*</span></label>
-                  <input id="fornecedor" type="text" name="fornecedor" value={editingTitle.fornecedor || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.fornecedor ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
-                  {errors.fornecedor && <p className="text-danger text-xs mt-1">{errors.fornecedor}</p>}
+                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Fornecedor</label>
+                    <input name="fornecedor" value={editingTitle.fornecedor || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.fornecedor ? 'border-danger' : ''}`} />
+                    {errors.fornecedor && <p className="text-danger text-xs mt-1 ml-1">{errors.fornecedor}</p>}
                 </div>
-                <div>
-                  <label htmlFor="numeroTitulo" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Número do Título <span className="text-danger">*</span></label>
-                  <input id="numeroTitulo" type="text" name="numeroTitulo" value={editingTitle.numeroTitulo || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.numeroTitulo ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
-                  {errors.numeroTitulo && <p className="text-danger text-xs mt-1">{errors.numeroTitulo}</p>}
-                </div>
-                 <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label htmlFor="vencimentoOriginal" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Venc. Original <span className="text-danger">*</span></label>
-                        <input id="vencimentoOriginal" type="text" name="vencimentoOriginal" value={editingTitle.vencimentoOriginal || ''} onChange={handleInputChange} onBlur={handleBlur} placeholder="DD/MM/AAAA" maxLength={10} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.vencimentoOriginal ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
-                        {errors.vencimentoOriginal && <p className="text-danger text-xs mt-1">{errors.vencimentoOriginal}</p>}
-                    </div>
-                    <div>
-                        <label htmlFor="novoVencimento" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Novo Vencimento <span className="text-danger">*</span></label>
-                        <input id="novoVencimento" type="text" name="novoVencimento" value={editingTitle.novoVencimento || ''} onChange={handleInputChange} onBlur={handleBlur} placeholder="DD/MM/AAAA" maxLength={10} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.novoVencimento ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
-                        {errors.novoVencimento && <p className="text-danger text-xs mt-1">{errors.novoVencimento}</p>}
-                    </div>
-                </div>
-                 <div>
-                  <label htmlFor="devedor" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Devedor <span className="text-danger">*</span></label>
-                  <input id="devedor" type="text" name="devedor" value={editingTitle.devedor || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.devedor ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
-                  {errors.devedor && <p className="text-danger text-xs mt-1">{errors.devedor}</p>}
-                </div>
+                
                 <div className="grid grid-cols-2 gap-4">
-                     <div>
-                        <label htmlFor="valor" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Valor (R$) <span className="text-danger">*</span></label>
-                        <input id="valor" type="text" name="valor" value={editingTitle.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 h-9 ${errors.valor ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`}/>
-                        {errors.valor && <p className="text-danger text-xs mt-1">{errors.valor}</p>}
+                    <div>
+                        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Nº Título</label>
+                        <input name="numeroTitulo" value={editingTitle.numeroTitulo || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.numeroTitulo ? 'border-danger' : ''}`} />
+                        {errors.numeroTitulo && <p className="text-danger text-xs mt-1 ml-1">{errors.numeroTitulo}</p>}
                     </div>
                     <div>
-                        <label htmlFor="status" className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Status</label>
-                        <select id="status" name="status" value={editingTitle.status} onChange={handleInputChange} className="w-full bg-white border border-border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9">
-                            <option value={StatusTitulo.A_PRORROGAR}>A Prorrogar</option>
-                            <option value={StatusTitulo.PRORROGADO}>Prorrogados</option>
-                        </select>
+                        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Valor</label>
+                        <input name="valor" value={(editingTitle.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.valor ? 'border-danger' : ''}`} />
+                        {errors.valor && <p className="text-danger text-xs mt-1 ml-1">{errors.valor}</p>}
                     </div>
                 </div>
+
+                <div>
+                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Devedor</label>
+                    <input name="devedor" value={editingTitle.devedor || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.devedor ? 'border-danger' : ''}`} />
+                    {errors.devedor && <p className="text-danger text-xs mt-1 ml-1">{errors.devedor}</p>}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Venc. Original</label>
+                        <input name="vencimentoOriginal" value={editingTitle.vencimentoOriginal || ''} onChange={handleInputChange} onBlur={handleBlur} placeholder="DD/MM/AAAA" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.vencimentoOriginal ? 'border-danger' : ''}`} />
+                        {errors.vencimentoOriginal && <p className="text-danger text-xs mt-1 ml-1">{errors.vencimentoOriginal}</p>}
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Novo Vencimento</label>
+                        <input name="novoVencimento" value={editingTitle.novoVencimento || ''} onChange={handleInputChange} onBlur={handleBlur} placeholder="DD/MM/AAAA" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.novoVencimento ? 'border-danger' : ''}`} />
+                        {errors.novoVencimento && <p className="text-danger text-xs mt-1 ml-1">{errors.novoVencimento}</p>}
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Status</label>
+                    <select name="status" value={editingTitle.status || StatusTitulo.A_PRORROGAR} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 appearance-none">
+                        <option value={StatusTitulo.A_PRORROGAR}>{StatusTitulo.A_PRORROGAR}</option>
+                        <option value={StatusTitulo.PRORROGADO}>{StatusTitulo.PRORROGADO}</option>
+                    </select>
+                </div>
             </div>
-            <div className="px-6 py-4 border-t border-border bg-secondary/30 flex justify-end gap-3">
-                <button onClick={handleCloseModal} className="py-2 px-4 rounded-full bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
-                <button onClick={handleSaveChanges} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold text-sm shadow-sm">
-                    {editingTitle.id ? 'Salvar Alterações' : 'Adicionar Título'}
-                </button>
+
+            <div className="flex justify-center gap-3 mt-8">
+              <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
+              <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
             </div>
           </div>
         </div>
       )}
-      
+
       {isConfirmOpen && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
-                <div className="bg-card rounded-2xl shadow-lg border border-border w-full max-w-sm p-6">
-                    <h3 className="text-lg font-bold mb-2 text-text-primary">Confirmar Ação</h3>
-                    <p className="text-sm text-text-secondary mb-6">{confirmAction.message}</p>
-                    <div className="flex justify-end gap-3">
-                        <button onClick={handleCancelConfirm} className="px-4 py-2 rounded-full bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
-                        <button onClick={handleConfirm} className="px-4 py-2 rounded-full bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Confirmar</button>
-                    </div>
-                </div>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center">
+            <h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar</h3>
+            <p className="text-text-secondary mb-8">{confirmAction.message}</p>
+            <div className="flex justify-center gap-4">
+              <button onClick={handleCancelConfirm} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
+              <button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button>
             </div>
-        )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

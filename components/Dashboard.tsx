@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { AppView } from '../types';
-import { CheckIcon, CalendarClockIcon, SparklesIcon, SearchIcon } from './icons';
+import { CheckIcon, CalendarClockIcon, SparklesIcon, SearchIcon, RefreshIcon } from './icons';
 
 interface DashboardProps {
   setView: (view: AppView) => void;
@@ -10,12 +11,14 @@ interface DashboardProps {
 interface Boleto { id: string; vencimento: string; recebido?: boolean; pago?: boolean; valor: number; cliente?: string; credor?: string; fornecedor?: string; pagador?: string; }
 interface Cheque { id: string; dataVencimento: string; status: string; valor: number; emitente: string; numero: string; }
 interface Tarefa { id: string; dataVencimento: string; status: string; titulo: string; prioridade: string; }
+interface DespesaRecorrente { id: string; empresa: string; descricao: string; diaVencimento: number; status: string; }
 
 type Item = 
     | (Boleto & { type: 'boletoReceber' })
     | (Cheque & { type: 'cheque' })
     | (Tarefa & { type: 'tarefa' })
-    | (Boleto & { type: 'boletoPagar' });
+    | (Boleto & { type: 'boletoPagar' })
+    | (DespesaRecorrente & { type: 'lembreteRecorrente' });
 
 const getTodayISO = () => {
     const today = new Date();
@@ -40,6 +43,11 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
 
     useEffect(() => {
         const today = getTodayISO();
+        const todayDate = new Date();
+        const tomorrowDate = new Date();
+        tomorrowDate.setDate(todayDate.getDate() + 1);
+        const tomorrowDay = tomorrowDate.getDate();
+
         const loadedItems: Item[] = [];
 
         // Boletos a Receber
@@ -78,6 +86,16 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
             } catch (e) { console.error("Error parsing boletos_a_pagar_data", e); }
         }
 
+        // Despesas Recorrentes Reminders
+        const recorrentesData = localStorage.getItem('despesas_recorrentes_data');
+        if (recorrentesData) {
+            try {
+                const recorrentes: DespesaRecorrente[] = JSON.parse(recorrentesData);
+                // Show reminder if due date is tomorrow AND status is pending
+                recorrentes.filter(r => r.diaVencimento === tomorrowDay && r.status !== 'Lançado').forEach(r => loadedItems.push({ ...r, type: 'lembreteRecorrente' }));
+            } catch (e) { console.error("Error parsing despesas_recorrentes_data", e); }
+        }
+
         setItems(loadedItems);
         setIsLoading(false);
     }, []);
@@ -105,6 +123,9 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
             case 'boletoPagar':
                 updateLocalStorage('boletos_a_pagar_data', item.id, { pago: true });
                 break;
+            case 'lembreteRecorrente':
+                updateLocalStorage('despesas_recorrentes_data', item.id, { status: 'Lançado' });
+                break;
         }
         setItems(prev => prev.filter(i => i.id !== item.id));
     };
@@ -120,6 +141,10 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
             case 'tarefa':
                  updateLocalStorage(item.type === 'cheque' ? 'gerenciador_cheques_data' : 'gerenciador_tarefas_data', item.id, { dataVencimento: tomorrow });
                 break;
+            case 'lembreteRecorrente':
+                // Recorrentes aren't really "delayed" in the same way, they are fixed dates. 
+                // We just dismiss it from today's view.
+                break;
         }
         setItems(prev => prev.filter(i => i.id !== item.id));
     };
@@ -127,6 +152,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
     const renderItem = (item: Item) => {
         let title = '';
         let details = '';
+        let icon = null;
         const valor = 'valor' in item ? (item.valor || 0) : 0;
         const valorFormatted = valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -147,23 +173,34 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
                 title = `Boleto a Pagar: ${item.fornecedor || item.pagador}`;
                 details = `Valor: ${valorFormatted}`;
                 break;
+            case 'lembreteRecorrente':
+                title = `Lançar Despesa: ${item.descricao}`;
+                details = `${item.empresa} - Vence dia ${item.diaVencimento}`;
+                icon = <RefreshIcon className="h-5 w-5 text-primary" />;
+                break;
         }
         
         return (
              <div key={item.id} className="bg-background p-4 rounded-2xl flex items-center justify-between gap-4 border border-border hover:shadow-sm transition-shadow">
-                <div>
-                    <p className="font-semibold text-text-primary">{title}</p>
-                    <p className="text-sm text-text-secondary">{details}</p>
+                <div className="flex items-center gap-3">
+                    {icon && <div className="p-2 bg-primary/10 rounded-full">{icon}</div>}
+                    <div>
+                        <p className="font-semibold text-text-primary">{title}</p>
+                        <p className="text-sm text-text-secondary">{details}</p>
+                    </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                     <button onClick={() => handleConcluir(item)} title="Concluir" className="p-2 rounded-full text-success hover:bg-success/10 transition-colors border border-success/20"><CheckIcon className="h-5 w-5"/></button>
-                    <button onClick={() => handleAdiar(item)} title="Adiar para amanhã" className="p-2 rounded-full text-warning hover:bg-warning/10 transition-colors border border-warning/20"><CalendarClockIcon className="h-5 w-5"/></button>
+                    {item.type !== 'lembreteRecorrente' && (
+                        <button onClick={() => handleAdiar(item)} title="Adiar para amanhã" className="p-2 rounded-full text-warning hover:bg-warning/10 transition-colors border border-warning/20"><CalendarClockIcon className="h-5 w-5"/></button>
+                    )}
                 </div>
             </div>
         );
     };
 
     const sections: { title: string, type: Item['type'] }[] = [
+        { title: 'Lembretes de Despesas (Amanhã)', type: 'lembreteRecorrente' },
         { title: 'Boletos a Receber', type: 'boletoReceber' },
         { title: 'Cheques a Compensar', type: 'cheque' },
         { title: 'Tarefas do Dia', type: 'tarefa' },

@@ -5,11 +5,11 @@ import { UserIcon, KeyIcon, ArrowLeftIcon, EditIcon, CheckIcon } from './icons';
 // Modal for managing users (placeholder)
 const ManageUsersModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
-        <div className="bg-card rounded-lg shadow-lg border border-border p-8 w-full max-w-sm">
+        <div className="bg-card rounded-2xl shadow-lg border border-border p-8 w-full max-w-sm">
             <h3 className="text-lg font-bold mb-4 text-text-primary">Gerenciar Usuários</h3>
             <p className="text-text-secondary mb-6">Esta funcionalidade está em desenvolvimento e estará disponível em breve.</p>
             <div className="flex justify-end">
-                <button onClick={onClose} className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Fechar</button>
+                <button onClick={onClose} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Fechar</button>
             </div>
         </div>
     </div>
@@ -57,19 +57,19 @@ const ChangePasswordModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
-            <div className="bg-card rounded-lg shadow-lg border border-border p-8 w-full max-w-md">
+            <div className="bg-card rounded-2xl shadow-lg border border-border p-8 w-full max-w-md">
                 <h3 className="text-xl font-bold mb-6 text-text-primary">Alterar Senha de Acesso</h3>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <input type="password" placeholder="Senha Atual" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required className="w-full bg-white border border-border rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" autoFocus />
-                    <input type="password" placeholder="Nova Senha" value={newPassword} onChange={e => setNewPassword(e.target.value)} required className="w-full bg-white border border-border rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
-                    <input type="password" placeholder="Confirmar Nova Senha" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="w-full bg-white border border-border rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input type="password" placeholder="Senha Atual" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required className="w-full bg-white border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" autoFocus />
+                    <input type="password" placeholder="Nova Senha" value={newPassword} onChange={e => setNewPassword(e.target.value)} required className="w-full bg-white border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input type="password" placeholder="Confirmar Nova Senha" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="w-full bg-white border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
                     
                     {error && <p className="text-danger text-sm">{error}</p>}
                     {success && <p className="text-success text-sm">{success}</p>}
 
                     <div className="pt-4 flex justify-end gap-4">
-                        <button type="button" onClick={onClose} className="py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                        <button type="submit" className="py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Salvar Nova Senha</button>
+                        <button type="button" onClick={onClose} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
+                        <button type="submit" className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Salvar Nova Senha</button>
                     </div>
                 </form>
             </div>
@@ -229,16 +229,17 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
         <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in">
             <div className="flex items-center gap-4 mb-8">
                 {onBack && (
-                    <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors h-10">
+                    <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">
                         <ArrowLeftIcon className="h-5 w-5" />
                         Voltar
                     </button>
                 )}
                 <h2 className="text-2xl md:text-3xl font-bold text-text-primary font-heading">Configuração e Segurança</h2>
             </div>
-            <div className="space-y-8">
+            
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 
-                 <div className="bg-card p-6 rounded-lg border border-border shadow-sm">
+                 <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
                     <h3 className="text-lg font-bold text-text-primary mb-4 font-heading flex items-center gap-3">
                         <UserIcon className="h-6 w-6 text-primary" />
                         Perfil de Usuário
@@ -277,22 +278,22 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
                 </div>
 
 
-                <div className="bg-card p-6 rounded-lg border border-border shadow-sm">
+                <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
                     <h3 className="text-lg font-bold text-text-primary mb-4 font-heading flex items-center gap-3">
                         <KeyIcon className="h-6 w-6 text-primary" />
                         Segurança e Acesso
                     </h3>
                     <div className="space-y-4 md:space-y-0 md:flex md:items-center md:gap-4">
-                        <button onClick={() => setIsChangePasswordModalOpen(true)} className="w-full md:w-auto py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">
+                        <button onClick={() => setIsChangePasswordModalOpen(true)} className="w-full md:w-auto py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">
                             Alterar Senha de Acesso
                         </button>
-                        <button onClick={() => setIsManageUsersModalOpen(true)} className="w-full md:w-auto py-2 px-4 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">
+                        <button onClick={() => setIsManageUsersModalOpen(true)} className="w-full md:w-auto py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">
                             Gerenciar Usuários
                         </button>
                     </div>
                 </div>
 
-                <div className="bg-card p-6 rounded-lg border border-border shadow-sm">
+                <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
                     <h3 className="text-lg font-bold text-text-primary mb-4 font-heading">Aparência</h3>
                     <div className="space-y-6">
                         <div className="flex items-center justify-between"><span className="font-semibold text-text-primary">Tema Escuro</span><label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" checked={isDarkMode} onChange={() => setIsDarkMode(!isDarkMode)} className="sr-only peer" /><div className="w-11 h-6 bg-secondary rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div></label></div>
@@ -300,19 +301,19 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
                            <label className="block text-sm font-medium text-text-secondary mb-2">Alterar Fontes</label>
                            <div className="space-y-4">
                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                   <select value={currentFont} onChange={(e) => { const f = e.target.value; fontTarget === 'all' ? setBodyFont(f) : setHeadingFont(f); }} className="sm:col-span-1 bg-white border border-border rounded-lg px-3 py-2 text-text-primary h-10"><option key="Inter" value="Inter">Padrão (Inter)</option>{googleFonts.filter(f => f !== 'Inter').map(f => (<option key={f} value={f}>{f}</option>))}</select>
-                                   <select value={fontTarget} onChange={(e) => setFontTarget(e.target.value as any)} className="sm:col-span-1 bg-white border border-border rounded-lg px-3 py-2 text-text-primary h-10"><option value="all">Todo o Sistema</option><option value="headings">Apenas Cabeçalhos</option></select>
-                                   <button onClick={() => requestPassword(handleApplyFont)} className="sm:col-span-1 py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold h-10">Aplicar</button>
+                                   <select value={currentFont} onChange={(e) => { const f = e.target.value; fontTarget === 'all' ? setBodyFont(f) : setHeadingFont(f); }} className="sm:col-span-1 bg-white border border-border rounded-xl px-3 py-2 text-text-primary h-10"><option key="Inter" value="Inter">Padrão (Inter)</option>{googleFonts.filter(f => f !== 'Inter').map(f => (<option key={f} value={f}>{f}</option>))}</select>
+                                   <select value={fontTarget} onChange={(e) => setFontTarget(e.target.value as any)} className="sm:col-span-1 bg-white border border-border rounded-xl px-3 py-2 text-text-primary h-10"><option value="all">Todo o Sistema</option><option value="headings">Apenas Cabeçalhos</option></select>
+                                   <button onClick={() => requestPassword(handleApplyFont)} className="sm:col-span-1 py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold h-10">Aplicar</button>
                                </div>
-                               <div><textarea value={previewText} onChange={(e) => setPreviewText(e.target.value)} style={{ fontFamily: `'${currentFont}', sans-serif` }} className="w-full h-24 p-4 bg-white border border-border rounded-lg text-text-primary text-lg" placeholder="Digite para pré-visualizar..."/></div>
+                               <div><textarea value={previewText} onChange={(e) => setPreviewText(e.target.value)} style={{ fontFamily: `'${currentFont}', sans-serif` }} className="w-full h-24 p-4 bg-white border border-border rounded-xl text-text-primary text-lg" placeholder="Digite para pré-visualizar..."/></div>
                            </div>
                         </div>
                     </div>
                 </div>
-                <div className="bg-card p-6 rounded-lg border border-border shadow-sm">
+                <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
                     <h3 className="text-lg font-bold text-text-primary mb-4 font-heading">Gerenciamento de Dados</h3>
 
-                     <div className="mb-6 p-4 bg-blue-50 text-blue-800 border border-blue-100 rounded-lg">
+                     <div className="mb-6 p-4 bg-blue-50 text-blue-800 border border-blue-100 rounded-xl">
                         <p className="text-sm">
                             <strong>Salvamento Automático:</strong> Todas as suas informações são salvas automaticamente no seu navegador.
                         </p>
@@ -321,8 +322,8 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
                     <div className="space-y-4">
                         <div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <button onClick={handleBackup} className="py-3 px-4 rounded-lg bg-secondary hover:bg-border font-semibold border border-border transition-colors">Backup Geral</button>
-                                <button onClick={() => fileInputRef.current?.click()} className="py-3 px-4 rounded-lg bg-secondary hover:bg-border font-semibold border border-border transition-colors">Restaurar Backup</button>
+                                <button onClick={handleBackup} className="py-3 px-4 rounded-full bg-secondary hover:bg-border font-semibold border border-border transition-colors">Backup Geral</button>
+                                <button onClick={() => fileInputRef.current?.click()} className="py-3 px-4 rounded-full bg-secondary hover:bg-border font-semibold border border-border transition-colors">Restaurar Backup</button>
                             </div>
                             <p className="text-xs text-text-secondary mt-2">
                                 <strong>Backup:</strong> Salva um arquivo com TODOS os dados do sistema. Guarde em local seguro.
@@ -343,7 +344,7 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
             
             {isRestoreSuccessModalOpen && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-card rounded-lg shadow-lg border border-border p-8 w-full max-w-sm text-center">
+                    <div className="bg-card rounded-2xl shadow-lg border border-border p-8 w-full max-w-sm text-center">
                         <div className="mb-4 flex justify-center">
                             <div className="bg-success/20 p-4 rounded-full">
                                 <CheckIcon className="h-12 w-12 text-success" />
@@ -352,14 +353,14 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
                         <h3 className="text-lg font-bold mb-2 text-text-primary">BACKUP EFETUADO COM SUCESSO</h3>
                         <p className="text-text-secondary mb-6">Os dados foram restaurados. O sistema será reiniciado para aplicar as alterações.</p>
                         <div className="flex justify-center">
-                            <button onClick={handleRestoreSuccess} className="w-full py-3 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">OK</button>
+                            <button onClick={handleRestoreSuccess} className="w-full py-3 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">OK</button>
                         </div>
                     </div>
                 </div>
             )}
 
             {notification && (
-                <div className={`fixed bottom-8 right-8 text-white py-3 px-6 rounded-lg shadow-lg animate-fade-in z-50 ${notification.type === 'success' ? 'bg-success' : 'bg-danger'}`}>
+                <div className={`fixed bottom-8 right-8 text-white py-3 px-6 rounded-xl shadow-lg animate-fade-in z-50 ${notification.type === 'success' ? 'bg-success' : 'bg-danger'}`}>
                     {notification.message}
                 </div>
             )}

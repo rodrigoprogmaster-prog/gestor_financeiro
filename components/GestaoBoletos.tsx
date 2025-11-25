@@ -769,60 +769,54 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         </div>
 
         {isModalOpen && editingCheque && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
-                <div className="bg-card rounded-2xl shadow-lg border border-border w-full max-w-lg overflow-hidden">
-                    <div className="px-6 py-4 border-b border-border bg-secondary/30">
-                        <h3 className="text-lg font-bold text-text-primary">{editingCheque.id ? 'Editar Cheque' : 'Lançar Novo Cheque'}</h3>
-                    </div>
-                    <div className="p-6 space-y-4">
-                        <div><label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Emitente</label><input name="emitente" value={editingCheque.emitente || ''} onChange={handleInputChange} placeholder="Emitente" className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 ${errors.emitente ? 'border-danger focus:ring-danger' : 'border-border focus:ring-primary'}`} />{errors.emitente && <p className="text-danger text-xs">{errors.emitente}</p>}</div>
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8">
+                    <h3 className="text-2xl font-bold text-text-primary mb-6 text-center">{editingCheque.id ? 'Editar Cheque' : 'Lançar Novo Cheque'}</h3>
+                    <div className="space-y-4">
+                        <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Emitente</label><input name="emitente" value={editingCheque.emitente || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.emitente ? 'border-danger' : ''}`} />{errors.emitente && <p className="text-danger text-xs mt-1 ml-1">{errors.emitente}</p>}</div>
                         <div className="grid grid-cols-2 gap-4">
-                            <div><label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Número do Cheque</label><input name="numero" value={editingCheque.numero || ''} onChange={handleInputChange} placeholder="Número do Cheque" className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 ${errors.numero ? 'border-danger focus:ring-danger' : 'border-border focus:ring-primary'}`} />{errors.numero && <p className="text-danger text-xs">{errors.numero}</p>}</div>
-                            <div><label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Loja</label><input name="loja" value={editingCheque.loja || ''} onChange={handleInputChange} placeholder="Loja" className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 ${errors.loja ? 'border-danger focus:ring-danger' : 'border-border focus:ring-primary'}`} />{errors.loja && <p className="text-danger text-xs">{errors.loja}</p>}</div>
+                            <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Número do Cheque</label><input name="numero" value={editingCheque.numero || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.numero ? 'border-danger' : ''}`} />{errors.numero && <p className="text-danger text-xs mt-1 ml-1">{errors.numero}</p>}</div>
+                            <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Loja</label><input name="loja" value={editingCheque.loja || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.loja ? 'border-danger' : ''}`} />{errors.loja && <p className="text-danger text-xs mt-1 ml-1">{errors.loja}</p>}</div>
                         </div>
-                        <div><label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Conta Depósito</label><input name="contaDeposito" value={editingCheque.contaDeposito || ''} onChange={handleInputChange} placeholder="Conta Depósito" className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 ${errors.contaDeposito ? 'border-danger focus:ring-danger' : 'border-border focus:ring-primary'}`} />{errors.contaDeposito && <p className="text-danger text-xs">{errors.contaDeposito}</p>}</div>
-                        <div><label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Valor</label><input name="valor" value={formatCurrency(editingCheque.valor || 0)} onChange={handleInputChange} placeholder="Valor" className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 ${errors.valor ? 'border-danger focus:ring-danger' : 'border-border focus:ring-primary'}`} />{errors.valor && <p className="text-danger text-xs">{errors.valor}</p>}</div>
+                        <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Conta Depósito</label><input name="contaDeposito" value={editingCheque.contaDeposito || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.contaDeposito ? 'border-danger' : ''}`} />{errors.contaDeposito && <p className="text-danger text-xs mt-1 ml-1">{errors.contaDeposito}</p>}</div>
+                        <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Valor</label><input name="valor" value={formatCurrency(editingCheque.valor || 0)} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.valor ? 'border-danger' : ''}`} />{errors.valor && <p className="text-danger text-xs mt-1 ml-1">{errors.valor}</p>}</div>
                         <div className="grid grid-cols-2 gap-4">
-                             <div><label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Vencimento</label><input name="dataVencimento_br" value={editingCheque.dataVencimento_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 ${errors.dataVencimento ? 'border-danger focus:ring-danger' : 'border-border focus:ring-primary'}`} />{errors.dataVencimento && <p className="text-danger text-xs">{errors.dataVencimento}</p>}</div>
-                             <div><label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Data Depósito</label><input name="dataDeposito_br" value={editingCheque.dataDeposito_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 ${errors.dataDeposito ? 'border-danger focus:ring-danger' : 'border-border focus:ring-primary'}`} />{errors.dataDeposito && <p className="text-danger text-xs">{errors.dataDeposito}</p>}</div>
+                             <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Vencimento</label><input name="dataVencimento_br" value={editingCheque.dataVencimento_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.dataVencimento ? 'border-danger' : ''}`} />{errors.dataVencimento && <p className="text-danger text-xs mt-1 ml-1">{errors.dataVencimento}</p>}</div>
+                             <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Data Depósito</label><input name="dataDeposito_br" value={editingCheque.dataDeposito_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.dataDeposito ? 'border-danger' : ''}`} />{errors.dataDeposito && <p className="text-danger text-xs mt-1 ml-1">{errors.dataDeposito}</p>}</div>
                         </div>
-                        <div><label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wide">Status</label><select name="status" value={editingCheque.status || StatusCheque.A_DEPOSITAR} onChange={handleInputChange} className="w-full bg-white border border-border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"><option value={StatusCheque.A_DEPOSITAR}>A Depositar</option><option value={StatusCheque.COMPENSADO}>Compensado</option><option value={StatusCheque.DEVOLVIDO}>Devolvido</option></select></div>
+                        <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Status</label><select name="status" value={editingCheque.status || StatusCheque.A_DEPOSITAR} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"><option value={StatusCheque.A_DEPOSITAR}>A Depositar</option><option value={StatusCheque.COMPENSADO}>Compensado</option><option value={StatusCheque.DEVOLVIDO}>Devolvido</option></select></div>
                     </div>
-                    <div className="px-6 py-4 border-t border-border bg-secondary/30 flex justify-end gap-3">
-                        <button onClick={handleCloseModal} className="px-4 py-2 rounded-full bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
-                        <button onClick={handleSaveChanges} className="px-4 py-2 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold text-sm shadow-sm">Salvar</button>
+                    <div className="flex justify-center gap-3 mt-8">
+                        <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
+                        <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
                     </div>
                 </div>
             </div>
         )}
         
         {chequeParaAcao && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
-                <div className="bg-card rounded-2xl shadow-lg border border-border w-full max-w-md overflow-hidden">
-                    <div className="px-6 py-4 border-b border-border bg-secondary/30">
-                        <h3 className="text-lg font-bold text-text-primary">Ação para o Cheque Nº {chequeParaAcao.numero}</h3>
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden p-8">
+                    <h3 className="text-xl font-bold text-text-primary mb-6 text-center">Ação para o Cheque Nº {chequeParaAcao.numero}</h3>
+                    <p className="text-text-secondary text-center mb-8">Selecione a ação que deseja realizar para este cheque.</p>
+                    <div className="flex flex-col space-y-4">
+                         <button
+                            onClick={() => handleUpdateStatus(StatusCheque.COMPENSADO)}
+                            className="w-full py-3 px-4 rounded-xl bg-success text-white font-bold shadow-lg shadow-success/20 hover:bg-success/90 transition-colors"
+                        >
+                            Marcar como Compensado
+                        </button>
+                        <button
+                            onClick={() => handleUpdateStatus(StatusCheque.DEVOLVIDO)}
+                            className="w-full py-3 px-4 rounded-xl bg-warning text-white font-bold shadow-lg shadow-warning/20 hover:bg-warning/90 transition-colors"
+                        >
+                            Marcar como Devolvido
+                        </button>
                     </div>
-                    <div className="p-6">
-                        <p className="text-sm text-text-secondary mb-6">Selecione a ação que deseja realizar para este cheque.</p>
-                        <div className="flex flex-col space-y-4">
-                             <button
-                                onClick={() => handleUpdateStatus(StatusCheque.COMPENSADO)}
-                                className="w-full py-3 px-4 rounded-full bg-success text-white font-semibold hover:bg-success/90 transition-colors text-sm shadow-sm"
-                            >
-                                Marcar como Compensado
-                            </button>
-                            <button
-                                onClick={() => handleUpdateStatus(StatusCheque.DEVOLVIDO)}
-                                className="w-full py-3 px-4 rounded-full bg-warning text-white font-semibold hover:bg-warning/90 transition-colors text-sm shadow-sm"
-                            >
-                                Marcar como Devolvido
-                            </button>
-                        </div>
-                    </div>
-                    <div className="px-6 py-4 border-t border-border bg-secondary/30 flex justify-end">
+                    <div className="flex justify-center mt-6">
                         <button
                             onClick={() => setChequeParaAcao(null)}
-                            className="py-2 px-4 rounded-full bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors"
+                            className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors"
                         >
                             Cancelar
                         </button>
@@ -832,40 +826,38 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         )}
 
         {isConfirmOpen && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                <div className="bg-card rounded-2xl shadow-lg border border-border w-full max-w-sm p-6">
-                    <h3 className="text-lg font-bold mb-2 text-text-primary">Confirmar Ação</h3>
-                    <p className="text-sm text-text-secondary mb-6">{confirmAction.message}</p>
-                    <div className="flex justify-end gap-3">
-                        <button onClick={() => setIsConfirmOpen(false)} className="px-4 py-2 rounded-full bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Cancelar</button>
-                        <button onClick={handleConfirm} className="px-4 py-2 rounded-full bg-primary text-white text-sm font-medium hover:bg-primary-hover shadow-sm transition-colors">Confirmar</button>
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center">
+                    <h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar Ação</h3>
+                    <p className="text-text-secondary mb-8">{confirmAction.message}</p>
+                    <div className="flex justify-center gap-4">
+                        <button onClick={() => setIsConfirmOpen(false)} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
+                        <button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button>
                     </div>
                 </div>
             </div>
         )}
 
         {isLembreteModalOpen && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
-                <div className="bg-card rounded-2xl shadow-lg border border-border w-full max-w-lg overflow-hidden">
-                    <div className="px-6 py-4 border-b border-border bg-secondary/30 flex items-center gap-2">
-                        <CalendarClockIcon className="h-5 w-5 text-primary" />
-                        <h3 className="text-lg font-bold text-text-primary">Lembrete de Compensação</h3>
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden p-8">
+                    <div className="flex items-center justify-center gap-2 mb-6">
+                        <CalendarClockIcon className="h-6 w-6 text-primary" />
+                        <h3 className="text-xl font-bold text-text-primary">Lembrete de Compensação</h3>
                     </div>
-                    <div className="p-6">
-                        <p className="text-sm text-text-secondary mb-6">Os seguintes cheques vencem hoje e estão aguardando compensação:</p>
-                        <div className="max-h-60 overflow-y-auto bg-white rounded-xl p-4 border border-border">
-                            <ul className="space-y-3">
-                                {lembreteCheques.map(cheque => (
-                                    <li key={cheque.id} className="flex justify-between items-center text-sm">
-                                        <span className="font-semibold text-text-primary">{cheque.emitente} (Nº {cheque.numero})</span>
-                                        <span className="font-bold text-success">{formatCurrency(cheque.valor)}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                    <p className="text-text-secondary mb-6 text-center">Os seguintes cheques vencem hoje e estão aguardando compensação:</p>
+                    <div className="max-h-60 overflow-y-auto bg-secondary rounded-xl p-4 border border-transparent mb-6 custom-scrollbar">
+                        <ul className="space-y-3">
+                            {lembreteCheques.map(cheque => (
+                                <li key={cheque.id} className="flex justify-between items-center text-sm p-2 bg-white rounded-lg shadow-sm">
+                                    <span className="font-semibold text-text-primary">{cheque.emitente} (Nº {cheque.numero})</span>
+                                    <span className="font-bold text-success">{formatCurrency(cheque.valor)}</span>
+                                </li>
+                            ))}
+                        </ul>
                     </div>
-                    <div className="px-6 py-4 border-t border-border bg-secondary/30 flex justify-end">
-                        <button onClick={() => setIsLembreteModalOpen(false)} className="px-4 py-2 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold text-sm shadow-sm">Fechar</button>
+                    <div className="flex justify-center">
+                        <button onClick={() => setIsLembreteModalOpen(false)} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Fechar</button>
                     </div>
                 </div>
             </div>

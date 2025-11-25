@@ -274,27 +274,15 @@ const CartaoMMA: React.FC<CartaoMmaProps> = ({ onBack }) => {
 
     return (
         <div className="animate-fade-in">
-            <div className="flex items-center gap-4 mb-6">
-                <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">
-                    <ArrowLeftIcon className="h-5 w-5" />
-                    Voltar
-                </button>
-                <h3 className="text-xl md:text-2xl font-bold text-text-primary">Cartão MMA</h3>
-            </div>
-            <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept=".csv" />
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                <div className="flex items-center gap-4 bg-secondary p-3 rounded-2xl">
-                    <div className="text-center">
-                        <p className="text-sm text-text-secondary font-semibold">VALOR TOTAL</p>
-                        <p className="text-xl font-bold text-primary">{totals.totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                    </div>
-                    <div className="border-l border-border h-10"></div>
-                    <div className="text-center">
-                        <p className="text-sm text-text-secondary font-semibold">LANÇAMENTOS</p>
-                        <p className="text-xl font-bold text-primary">{totals.transactionCount}</p>
-                    </div>
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
+                <div className="flex items-center gap-4">
+                    <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">
+                        <ArrowLeftIcon className="h-5 w-5" />
+                        Voltar
+                    </button>
+                    <h3 className="text-xl md:text-2xl font-bold text-text-primary">Cartão MMA</h3>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                     <select
                         value={monthFilter}
                         onChange={(e) => setMonthFilter(e.target.value)}
@@ -326,6 +314,19 @@ const CartaoMMA: React.FC<CartaoMmaProps> = ({ onBack }) => {
                     </button>
                 </div>
             </div>
+            <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept=".csv" />
+            
+            <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-sm text-center">
+                    <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Valor Total</p>
+                    <p className="text-xl font-bold text-primary">{totals.totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                </div>
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-sm text-center">
+                    <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Lançamentos</p>
+                    <p className="text-xl font-bold text-primary">{totals.transactionCount}</p>
+                </div>
+            </div>
+
             <div className="bg-card shadow-md rounded-2xl overflow-x-auto">
                 <table className="w-full text-base text-left text-text-secondary">
                     <thead className="text-sm text-text-primary uppercase bg-secondary">

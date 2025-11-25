@@ -432,13 +432,13 @@ const CadastroContasBancarias: React.FC<{ onBack?: () => void }> = ({ onBack }) 
             </div>
 
             {isModalOpen && editingConta && (
-                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-lg">
-                        <h3 className="text-xl font-bold mb-6 text-text-primary">{editingConta.id ? 'Editar Conta' : 'Adicionar Nova Conta'}</h3>
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg">
+                        <h3 className="text-2xl font-bold mb-6 text-text-primary text-center">{editingConta.id ? 'Editar Conta' : 'Adicionar Nova Conta'}</h3>
                         <div className="space-y-4">
                             {Object.entries({ titular: 'TITULAR', cnpj: 'CNPJ', pix: 'PIX', banco: 'BANCO', agencia: 'AGENCIA', contaCorrente: 'C/C' }).map(([key, label]) => (
                                 <div key={key}>
-                                    <label htmlFor={key} className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
+                                    <label htmlFor={key} className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">{label}</label>
                                     <input 
                                        id={key} 
                                        type="text" 
@@ -446,14 +446,14 @@ const CadastroContasBancarias: React.FC<{ onBack?: () => void }> = ({ onBack }) 
                                        value={editingConta[key as keyof typeof editingConta] || ''} 
                                        onChange={handleInputChange} 
                                        {...(key === 'cnpj' && { maxLength: 18 })}
-                                       className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors[key as keyof ContaErrors] ? 'border-danger' : 'border-border'}`} />
-                                    {errors[key as keyof ContaErrors] && <p className="text-danger text-xs mt-1">{errors[key as keyof ContaErrors]}</p>}
+                                       className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder-gray-400 ${errors[key as keyof ContaErrors] ? 'border-danger focus:border-danger focus:ring-danger/10' : ''}`} />
+                                    {errors[key as keyof ContaErrors] && <p className="text-danger text-xs mt-1 ml-1">{errors[key as keyof ContaErrors]}</p>}
                                 </div>
                             ))}
                         </div>
-                        <div className="mt-8 flex justify-end gap-4">
-                            <button onClick={handleCloseModal} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                            <button onClick={handleSaveChanges} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">
+                        <div className="mt-8 flex justify-center gap-3">
+                            <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
+                            <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">
                                 {editingConta.id ? 'Salvar Alterações' : 'Adicionar Conta'}
                             </button>
                         </div>
@@ -462,14 +462,14 @@ const CadastroContasBancarias: React.FC<{ onBack?: () => void }> = ({ onBack }) 
             )}
 
             {isConfirmOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-sm">
-                        <h3 className="text-lg font-bold mb-4 text-text-primary">Confirmar Ação</h3>
-                        <p className="text-text-secondary mb-6">{confirmAction.message}</p>
-                        <div className="flex justify-end gap-4">
-                            <button onClick={handleCancelConfirm} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
+                        <h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar Ação</h3>
+                        <p className="text-text-secondary mb-8">{confirmAction.message}</p>
+                        <div className="flex justify-center gap-4">
+                            <button onClick={handleCancelConfirm} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
                             {confirmAction.action && (
-                                <button onClick={handleConfirm} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Confirmar</button>
+                                <button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button>
                             )}
                         </div>
                     </div>
@@ -477,7 +477,7 @@ const CadastroContasBancarias: React.FC<{ onBack?: () => void }> = ({ onBack }) 
             )}
             
             {notification && (
-                <div className="fixed bottom-8 right-8 bg-success text-white py-3 px-6 rounded-lg shadow-lg animate-fade-in z-50">
+                <div className="fixed bottom-8 right-8 bg-success text-white py-3 px-6 rounded-xl shadow-lg animate-fade-in z-50 font-medium">
                     {notification}
                 </div>
             )}
