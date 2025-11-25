@@ -70,7 +70,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [errors, setErrors] = useState<TarefaErrors>({});
     
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState<StatusTarefa | 'Atrasada' | 'Todas'>('Todas');
+    const [statusFilter, setStatusFilter] = useState<StatusTarefa | 'Atrasada' | 'Todas'>(StatusTarefa.PENDENTE);
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
     const [lembretes, setLembretes] = useState<Tarefa[]>([]);
