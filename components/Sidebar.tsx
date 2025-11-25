@@ -150,7 +150,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
                         {module.children.map(child => (
                           <li key={child.view}>
                             <button
-                              onClick={() => handleNavigation(child.view)}
+                              onClick={() => {
+                                handleNavigation(child.view);
+                                setOpenSubMenus(prev => ({ ...prev, [module.name]: false }));
+                              }}
                               className={`w-full flex items-center gap-3 px-4 py-2 rounded-full text-sm transition-colors
                                 ${currentView === child.view 
                                   ? 'text-white font-semibold bg-blue-600 shadow-md' 
