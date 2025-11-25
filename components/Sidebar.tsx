@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { AppView } from '../types';
 import {
@@ -42,8 +43,8 @@ type NavItem = NavLink | NavParent;
 
 const modules: NavItem[] = [
     { view: AppView.DASHBOARD, name: 'Início', icon: <HomeIcon className="h-5 w-5" /> },
-    { view: AppView.CONTROLE_CHEQUES, name: 'Boletos a Receber', icon: <ArrowUpCircleIcon className="h-5 w-5" /> },
-    { view: AppView.GESTAO_BOLETOS, name: 'Gerenciador de Cheques', icon: <CheckIcon className="h-5 w-5" /> },
+    { view: AppView.GESTAO_BOLETOS, name: 'Boletos a Receber', icon: <ArrowUpCircleIcon className="h-5 w-5" /> },
+    { view: AppView.CONTROLE_CHEQUES, name: 'Gerenciador de Cheques', icon: <CheckIcon className="h-5 w-5" /> },
     { view: AppView.CONTROLE_BOLETOS, name: 'Boletos a Pagar', icon: <ArrowDownCircleIcon className="h-5 w-5" /> },
     { view: AppView.GERENCIADOR_TAREFAS, name: 'Tarefas', icon: <ClipboardListIcon className="h-5 w-5" /> },
     { view: AppView.TITULOS_PRORROGADOS, name: 'Títulos Prorrogados', icon: <CalendarClockIcon className="h-5 w-5" /> },
