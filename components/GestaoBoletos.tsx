@@ -291,64 +291,93 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 const worksheet = workbook.Sheets[sheetName];
                 const json: any[] = (window as any).XLSX.utils.sheet_to_json(worksheet, { raw: true });
 
-                const newBoletos: BoletoReceber[] = [];
                 let importedCount = 0;
+                let updatedCount = 0;
 
-                json.forEach((row, index) => {
-                    // Strict mapping based on user request: Credor, Cliente, Vencimento, Valor
+                setBoletos(prevBoletos => {
+                    // Create a map of existing boletos for quick lookup using a composite key
+                    // Key: Credor|Cliente|Vencimento|Valor
+                    const boletoMap = new Map<string, BoletoReceber>();
                     
-                    // 1. Credor (Mandatory)
-                    const credor = row['Credor'] || row['credor'] || row['CREDOR'] || 
-                                   row['Cedente'] || row['cedente'] || row['CEDENTE'] ||
-                                   row['Empresa'] || row['EMPRESA'];
+                    prevBoletos.forEach(b => {
+                        const key = `${b.credor.trim().toLowerCase()}|${b.cliente.trim().toLowerCase()}|${b.vencimento}|${b.valor.toFixed(2)}`;
+                        boletoMap.set(key, b);
+                    });
 
-                    // 2. Cliente (Mandatory)
-                    const cliente = row['Cliente'] || row['cliente'] || row['CLIENTE'] || 
-                                    row['Sacado'] || row['sacado'] || row['SACADO'] ||
-                                    row['Pagador'] || row['Nome'] || row['Nome Fantasia'];
+                    json.forEach((row, index) => {
+                        // 1. Credor (Mandatory)
+                        const credor = row['Credor'] || row['credor'] || row['CREDOR'] || 
+                                       row['Cedente'] || row['cedente'] || row['CEDENTE'] ||
+                                       row['Empresa'] || row['EMPRESA'];
 
-                    // 3. Vencimento (Mandatory)
-                    const vencimentoRaw = row['Vencimento'] || row['vencimento'] || row['VENCIMENTO'] || 
-                                          row['Data Vencimento'] || row['Dt Venc'] || row['Data'];
+                        // 2. Cliente (Mandatory)
+                        const cliente = row['Cliente'] || row['cliente'] || row['CLIENTE'] || 
+                                        row['Sacado'] || row['sacado'] || row['SACADO'] ||
+                                        row['Pagador'] || row['Nome'] || row['Nome Fantasia'];
 
-                    // 4. Valor (Mandatory)
-                    const valorRaw = row['Valor'] || row['valor'] || row['VALOR'] || 
-                                     row['Valor Título'] || row['Valor Original'] || row['Valor Liquido'];
+                        // 3. Vencimento (Mandatory)
+                        const vencimentoRaw = row['Vencimento'] || row['vencimento'] || row['VENCIMENTO'] || 
+                                              row['Data Vencimento'] || row['Dt Venc'] || row['Data'];
 
-                    const status = row['Status'] || row['status'];
+                        // 4. Valor (Mandatory)
+                        const valorRaw = row['Valor'] || row['valor'] || row['VALOR'] || 
+                                         row['Valor Título'] || row['Valor Original'] || row['Valor Liquido'];
 
-                    // Only proceed if we have the essential fields
-                    if (cliente && vencimentoRaw && valorRaw !== undefined) {
-                         const vencimentoISO = parseImportedDate(vencimentoRaw);
-                         let valorNum = 0;
-                         
-                         if (typeof valorRaw === 'number') {
-                             valorNum = valorRaw;
-                         } else {
-                             // Clean currency string: remove 'R$', dots, replace comma with dot
-                             const cleanedValor = String(valorRaw).replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.').trim();
-                             valorNum = parseFloat(cleanedValor);
-                         }
+                        const status = row['Status'] || row['status'];
 
-                         if (vencimentoISO && !isNaN(valorNum)) {
-                             newBoletos.push({
-                                 id: `boleto-import-${Date.now()}-${index}`,
-                                 credor: String(credor || 'Desconhecido').trim(),
-                                 cliente: String(cliente).trim(),
-                                 vencimento: vencimentoISO,
-                                 valor: valorNum,
-                                 recebido: String(status).toLowerCase() === 'recebido' || String(status).toLowerCase() === 'pago' || String(status).toLowerCase() === 'liquidado'
-                             });
-                             importedCount++;
-                         }
-                    }
+                        if (cliente && vencimentoRaw && valorRaw !== undefined) {
+                             const vencimentoISO = parseImportedDate(vencimentoRaw);
+                             let valorNum = 0;
+                             
+                             if (typeof valorRaw === 'number') {
+                                 valorNum = valorRaw;
+                             } else {
+                                 const cleanedValor = String(valorRaw).replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.').trim();
+                                 valorNum = parseFloat(cleanedValor);
+                             }
+
+                             if (vencimentoISO && !isNaN(valorNum)) {
+                                 const credorStr = String(credor || 'Desconhecido').trim();
+                                 const clienteStr = String(cliente).trim();
+                                 const isRecebido = String(status).toLowerCase() === 'recebido' || String(status).toLowerCase() === 'pago' || String(status).toLowerCase() === 'liquidado';
+
+                                 // Generate composite key to check for duplicates
+                                 const importKey = `${credorStr.toLowerCase()}|${clienteStr.toLowerCase()}|${vencimentoISO}|${valorNum.toFixed(2)}`;
+
+                                 if (boletoMap.has(importKey)) {
+                                     // Update existing record
+                                     const existingBoleto = boletoMap.get(importKey)!;
+                                     // Only update if status is different to avoid unnecessary processing, 
+                                     // or force update to ensure sync with file
+                                     boletoMap.set(importKey, {
+                                         ...existingBoleto,
+                                         recebido: existingBoleto.recebido || isRecebido // Keep received if true, or update to true if file says so
+                                     });
+                                     updatedCount++;
+                                 } else {
+                                     // Insert new record
+                                     const newBoleto: BoletoReceber = {
+                                         id: `boleto-import-${Date.now()}-${index}`,
+                                         credor: credorStr,
+                                         cliente: clienteStr,
+                                         vencimento: vencimentoISO,
+                                         valor: valorNum,
+                                         recebido: isRecebido
+                                     };
+                                     boletoMap.set(importKey, newBoleto);
+                                     importedCount++;
+                                 }
+                             }
+                        }
+                    });
+
+                    return Array.from(boletoMap.values());
                 });
 
-                if (newBoletos.length > 0) {
-                    setBoletos(prev => [...prev, ...newBoletos]);
-                    alert(`${importedCount} boletos importados com sucesso!\n\nColunas Mapeadas:\n- Credor\n- Cliente\n- Vencimento\n- Valor`);
+                if (importedCount > 0 || updatedCount > 0) {
+                    alert(`Processamento concluído!\n\n- Novos boletos importados: ${importedCount}\n- Boletos atualizados: ${updatedCount}`);
                 } else {
-                    alert('Nenhum boleto válido encontrado.\n\nCertifique-se que seu arquivo Excel possui as colunas OBRIGATÓRIAS:\n- "Credor" (ou Cedente)\n- "Cliente" (ou Sacado)\n- "Vencimento"\n- "Valor"');
+                    alert('Nenhum dado novo ou atualizado foi encontrado no arquivo.');
                 }
 
             } catch (error) {
