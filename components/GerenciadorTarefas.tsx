@@ -70,6 +70,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [errors, setErrors] = useState<TarefaErrors>({});
     
     const [searchTerm, setSearchTerm] = useState('');
+    // Ensure default status is PENDENTE
     const [statusFilter, setStatusFilter] = useState<StatusTarefa | 'Atrasada' | 'Todas'>(StatusTarefa.PENDENTE);
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
@@ -97,7 +98,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             setLembretes(lembretesDoDia);
             setIsLembreteOpen(true);
         }
-    }, [tarefas]);
+    }, []); // Run only once on mount
 
     const getDynamicStatus = (tarefa: Tarefa): StatusTarefa | 'Atrasada' => {
         if (tarefa.status === StatusTarefa.CONCLUIDA) return StatusTarefa.CONCLUIDA;

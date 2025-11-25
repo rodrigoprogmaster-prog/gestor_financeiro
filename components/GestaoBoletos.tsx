@@ -12,6 +12,7 @@ enum StatusBoletoReceber {
 // Data structure
 interface BoletoReceber {
     id: string;
+    credor: string; // Added field
     cliente: string;
     vencimento: string; // YYYY-MM-DD
     valor: number;
@@ -59,6 +60,32 @@ const isValidBRDate = (dateString: string): boolean => {
 };
 
 const formatCurrency = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+const parseImportedDate = (dateValue: any): string => {
+    if (dateValue === null || dateValue === undefined || String(dateValue).trim() === '') return '';
+    if (typeof dateValue === 'number' && dateValue > 1) {
+        try {
+            const date = (window as any).XLSX.SSF.parse_date_code(dateValue);
+            if (date && date.y && date.m && date.d) {
+                return `${date.y}-${String(date.m).padStart(2, '0')}-${String(date.d).padStart(2, '0')}`;
+            }
+        } catch(e) { console.error("Could not parse excel date serial number:", dateValue, e); }
+    }
+    if (typeof dateValue === 'string') {
+        const trimmed = dateValue.trim();
+        const parts = trimmed.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})$/);
+        if (parts) {
+            let year = parts[3];
+            if (year.length === 2) year = (parseInt(year, 10) > 50 ? '19' : '20') + year;
+            return `${year}-${parts[2].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
+        }
+        if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return trimmed.split('T')[0];
+    }
+    if (dateValue instanceof Date) {
+        return `${dateValue.getUTCFullYear()}-${String(dateValue.getUTCMonth() + 1).padStart(2, '0')}-${String(dateValue.getUTCDate()).padStart(2, '0')}`;
+    }
+    return '';
+};
 
 const ITEMS_PER_LOAD = 20;
 const SCROLL_THRESHOLD = 100;
@@ -116,7 +143,9 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const filteredBoletos = useMemo(() => {
         const filtered = allBoletosWithStatus.filter(boleto => {
             const statusMatch = statusFilter === 'Todos' || boleto.dynamicStatus === statusFilter;
-            const searchMatch = !searchTerm || boleto.cliente.toLowerCase().includes(searchTerm.toLowerCase());
+            const searchMatch = !searchTerm || 
+                                boleto.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                (boleto.credor && boleto.credor.toLowerCase().includes(searchTerm.toLowerCase()));
             const startDateMatch = !dateRange.start || boleto.vencimento >= dateRange.start;
             const endDateMatch = !dateRange.end || boleto.vencimento <= dateRange.end;
             return statusMatch && searchMatch && startDateMatch && endDateMatch;
@@ -146,9 +175,9 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
     const totals = useMemo(() => {
         return allBoletosWithStatus.reduce((acc, boleto) => {
-            // Only count filtered results if filters are applied?
-            // Usually totals reflect current view or global. Let's make them reflect current view filters EXCEPT status filter.
-            const searchMatch = !searchTerm || boleto.cliente.toLowerCase().includes(searchTerm.toLowerCase());
+            const searchMatch = !searchTerm || 
+                                boleto.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                (boleto.credor && boleto.credor.toLowerCase().includes(searchTerm.toLowerCase()));
             const startDateMatch = !dateRange.start || boleto.vencimento >= dateRange.start;
             const endDateMatch = !dateRange.end || boleto.vencimento <= dateRange.end;
             
@@ -164,7 +193,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
     const handleOpenAddModal = () => {
         setErrors({});
-        setEditingBoleto({ vencimento_br: '', recebido: false });
+        setEditingBoleto({ vencimento_br: '', recebido: false, credor: '' });
         setIsModalOpen(true);
     };
 
@@ -219,6 +248,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const validate = (): boolean => {
         if (!editingBoleto) return false;
         const newErrors: BoletoErrors = {};
+        if (!editingBoleto.credor?.trim()) newErrors.credor = "Credor é obrigatório.";
         if (!editingBoleto.cliente?.trim()) newErrors.cliente = "Cliente é obrigatório.";
         if (!editingBoleto.vencimento_br || !isValidBRDate(editingBoleto.vencimento_br)) newErrors.vencimento = "Vencimento inválido.";
         if (!editingBoleto.valor || editingBoleto.valor <= 0) newErrors.valor = "Valor deve ser maior que zero.";
@@ -249,11 +279,94 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         setIsConfirmOpen(false);
     };
 
+    const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const data = event.target?.result;
+                const workbook = (window as any).XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const json: any[] = (window as any).XLSX.utils.sheet_to_json(worksheet, { raw: true });
+
+                const newBoletos: BoletoReceber[] = [];
+                let importedCount = 0;
+
+                json.forEach((row, index) => {
+                    // Strict mapping based on user request: Credor, Cliente, Vencimento, Valor
+                    
+                    // 1. Credor (Mandatory)
+                    const credor = row['Credor'] || row['credor'] || row['CREDOR'] || 
+                                   row['Cedente'] || row['cedente'] || row['CEDENTE'] ||
+                                   row['Empresa'] || row['EMPRESA'];
+
+                    // 2. Cliente (Mandatory)
+                    const cliente = row['Cliente'] || row['cliente'] || row['CLIENTE'] || 
+                                    row['Sacado'] || row['sacado'] || row['SACADO'] ||
+                                    row['Pagador'] || row['Nome'] || row['Nome Fantasia'];
+
+                    // 3. Vencimento (Mandatory)
+                    const vencimentoRaw = row['Vencimento'] || row['vencimento'] || row['VENCIMENTO'] || 
+                                          row['Data Vencimento'] || row['Dt Venc'] || row['Data'];
+
+                    // 4. Valor (Mandatory)
+                    const valorRaw = row['Valor'] || row['valor'] || row['VALOR'] || 
+                                     row['Valor Título'] || row['Valor Original'] || row['Valor Liquido'];
+
+                    const status = row['Status'] || row['status'];
+
+                    // Only proceed if we have the essential fields
+                    if (cliente && vencimentoRaw && valorRaw !== undefined) {
+                         const vencimentoISO = parseImportedDate(vencimentoRaw);
+                         let valorNum = 0;
+                         
+                         if (typeof valorRaw === 'number') {
+                             valorNum = valorRaw;
+                         } else {
+                             // Clean currency string: remove 'R$', dots, replace comma with dot
+                             const cleanedValor = String(valorRaw).replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.').trim();
+                             valorNum = parseFloat(cleanedValor);
+                         }
+
+                         if (vencimentoISO && !isNaN(valorNum)) {
+                             newBoletos.push({
+                                 id: `boleto-import-${Date.now()}-${index}`,
+                                 credor: String(credor || 'Desconhecido').trim(),
+                                 cliente: String(cliente).trim(),
+                                 vencimento: vencimentoISO,
+                                 valor: valorNum,
+                                 recebido: String(status).toLowerCase() === 'recebido' || String(status).toLowerCase() === 'pago' || String(status).toLowerCase() === 'liquidado'
+                             });
+                             importedCount++;
+                         }
+                    }
+                });
+
+                if (newBoletos.length > 0) {
+                    setBoletos(prev => [...prev, ...newBoletos]);
+                    alert(`${importedCount} boletos importados com sucesso!\n\nColunas Mapeadas:\n- Credor\n- Cliente\n- Vencimento\n- Valor`);
+                } else {
+                    alert('Nenhum boleto válido encontrado.\n\nCertifique-se que seu arquivo Excel possui as colunas OBRIGATÓRIAS:\n- "Credor" (ou Cedente)\n- "Cliente" (ou Sacado)\n- "Vencimento"\n- "Valor"');
+                }
+
+            } catch (error) {
+                console.error("Erro na importação:", error);
+                alert("Erro ao importar arquivo. Verifique se é um arquivo Excel válido (.xlsx, .xls).");
+            } finally {
+                if (e.target) e.target.value = '';
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    };
+
     const handleExportXLSX = () => {
         const XLSX = (window as any).XLSX;
         if (!XLSX) { alert("Biblioteca XLSX não disponível."); return; }
         
         const dataToExport = filteredBoletos.map(b => ({
+            'Credor': b.credor,
             'Cliente': b.cliente,
             'Vencimento': formatDateToBR(b.vencimento),
             'Valor': b.valor,
@@ -296,6 +409,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
     return (
         <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in flex flex-col h-full">
+            <input type="file" ref={fileInputRef} onChange={handleFileImport} className="hidden" accept=".xlsx, .xls" />
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
                 <div className="flex items-center gap-4">
                     <h2 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Boletos a Receber</h2>
@@ -303,6 +417,9 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 <div className="flex items-center flex-wrap gap-2">
                     <button onClick={handleExportXLSX} className="flex items-center gap-2 bg-white border border-border text-text-primary font-medium py-2 px-4 rounded-full hover:bg-secondary text-sm h-9 transition-colors">
                         <DownloadIcon className="h-4 w-4" /> Exportar
+                    </button>
+                    <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 bg-white border border-border text-text-primary font-medium py-2 px-4 rounded-full hover:bg-secondary text-sm h-9 transition-colors">
+                        <UploadIcon className="h-4 w-4" /> Importar
                     </button>
                     <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-primary text-white font-medium py-2 px-4 rounded-full hover:bg-primary-hover text-sm h-9 shadow-sm transition-colors">
                         <PlusIcon className="h-4 w-4" /> Novo Boleto
@@ -333,7 +450,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 <div className="relative w-full sm:w-auto flex-grow sm:flex-grow-0">
                     <input 
                         type="text" 
-                        placeholder="Buscar Cliente..." 
+                        placeholder="Buscar Credor ou Cliente..." 
                         value={searchTerm} 
                         onChange={e => setSearchTerm(e.target.value)} 
                         className="w-full sm:w-80 pl-10 pr-3 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 transition-colors"
@@ -357,8 +474,9 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider sticky top-0 z-10">
                             <tr>
                                 <th className="px-6 py-3 cursor-pointer hover:bg-border/50 transition-colors select-none" onClick={() => requestSort('dynamicStatus')}>Status {renderSortIcon('dynamicStatus')}</th>
-                                <th className="px-6 py-3 cursor-pointer hover:bg-border/50 transition-colors select-none" onClick={() => requestSort('vencimento')}>Vencimento {renderSortIcon('vencimento')}</th>
+                                <th className="px-6 py-3 cursor-pointer hover:bg-border/50 transition-colors select-none" onClick={() => requestSort('credor')}>Credor {renderSortIcon('credor')}</th>
                                 <th className="px-6 py-3 cursor-pointer hover:bg-border/50 transition-colors select-none" onClick={() => requestSort('cliente')}>Cliente {renderSortIcon('cliente')}</th>
+                                <th className="px-6 py-3 cursor-pointer hover:bg-border/50 transition-colors select-none" onClick={() => requestSort('vencimento')}>Vencimento {renderSortIcon('vencimento')}</th>
                                 <th className="px-6 py-3 text-right cursor-pointer hover:bg-border/50 transition-colors select-none" onClick={() => requestSort('valor')}>Valor {renderSortIcon('valor')}</th>
                                 <th className="px-6 py-3 text-center">Ações</th>
                             </tr>
@@ -375,8 +493,9 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                             {boleto.dynamicStatus}
                                         </span>
                                     </td>
+                                    <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{boleto.credor || '-'}</td>
+                                    <td className="px-6 py-4 text-text-secondary whitespace-nowrap">{boleto.cliente}</td>
                                     <td className="px-6 py-4 text-text-secondary whitespace-nowrap">{formatDateToBR(boleto.vencimento)}</td>
-                                    <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{boleto.cliente}</td>
                                     <td className="px-6 py-4 text-right font-semibold text-text-primary whitespace-nowrap">{formatCurrency(boleto.valor)}</td>
                                     <td className="px-6 py-4 text-center">
                                         <div className="flex items-center justify-center gap-2">
@@ -396,7 +515,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                 </tr>
                             )) : (
                                 <tr>
-                                    <td colSpan={5} className="text-center py-16">
+                                    <td colSpan={6} className="text-center py-16">
                                         <div className="flex flex-col items-center text-text-secondary">
                                             <SearchIcon className="w-10 h-10 mb-3 text-gray-300"/>
                                             <h3 className="text-lg font-medium text-text-primary">Nenhum Boleto Encontrado</h3>
@@ -407,7 +526,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             )}
                             {isLoadingMore && (
                                 <tr>
-                                    <td colSpan={5} className="text-center py-4 text-primary">
+                                    <td colSpan={6} className="text-center py-4 text-primary">
                                         <SpinnerIcon className="h-5 w-5 animate-spin mx-auto" />
                                         Carregando mais...
                                     </td>
@@ -424,7 +543,12 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         <h3 className="text-2xl font-bold text-text-primary mb-6 text-center">{editingBoleto.id ? 'Editar Boleto' : 'Novo Boleto a Receber'}</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Cliente</label>
+                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Credor (Cedente)</label>
+                                <input name="credor" value={editingBoleto.credor || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.credor ? 'border-danger' : ''}`} placeholder="Nome do Credor" />
+                                {errors.credor && <p className="text-danger text-xs mt-1 ml-1">{errors.credor}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Cliente (Sacado)</label>
                                 <input name="cliente" value={editingBoleto.cliente || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.cliente ? 'border-danger' : ''}`} placeholder="Nome do Cliente" />
                                 {errors.cliente && <p className="text-danger text-xs mt-1 ml-1">{errors.cliente}</p>}
                             </div>
