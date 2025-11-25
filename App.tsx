@@ -58,6 +58,47 @@ const App: React.FC = () => {
     loadAndApplyFont('body', localStorage.getItem('fontBody'));
     loadAndApplyFont('heading', localStorage.getItem('fontHeading'));
 
+    // --- Force Fullscreen Logic ---
+    const enableFullScreen = async () => {
+        const doc = document.documentElement;
+        if (!document.fullscreenElement) {
+            try {
+                if (doc.requestFullscreen) {
+                    await doc.requestFullscreen();
+                } else if ((doc as any).webkitRequestFullscreen) {
+                    await (doc as any).webkitRequestFullscreen(); // Safari
+                } else if ((doc as any).msRequestFullscreen) {
+                    await (doc as any).msRequestFullscreen(); // IE11
+                }
+            } catch (err) {
+                // Expected error if not user-initiated (Browser Policy)
+                console.debug("Fullscreen request blocked by browser policy (waiting for user interaction).");
+            }
+        }
+    };
+
+    // Attempt immediately on load
+    enableFullScreen();
+
+    // Setup listeners to trigger on first interaction
+    const handleInteraction = () => {
+        enableFullScreen();
+        // Cleanup listeners after attempt to avoid persistent triggering
+        document.removeEventListener('click', handleInteraction);
+        document.removeEventListener('keydown', handleInteraction);
+        document.removeEventListener('touchstart', handleInteraction);
+    };
+
+    document.addEventListener('click', handleInteraction);
+    document.addEventListener('keydown', handleInteraction);
+    document.addEventListener('touchstart', handleInteraction);
+
+    return () => {
+        document.removeEventListener('click', handleInteraction);
+        document.removeEventListener('keydown', handleInteraction);
+        document.removeEventListener('touchstart', handleInteraction);
+    };
+
   }, []);
 
   const handleLoginSuccess = () => {
