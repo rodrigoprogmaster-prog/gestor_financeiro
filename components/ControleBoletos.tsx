@@ -134,7 +134,8 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [recorrentesFilters, setRecorrentesFilters] = useState({
         empresa: '',
         descricao: '',
-        diaMes: '' // Changed to generic string input for DD or DD/MM
+        diaMes: '',
+        status: '' // Novo filtro de status
     });
 
     // Date context for Recorrentes view
@@ -232,6 +233,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         return despesasRecorrentes.filter(item => {
             const empresaMatch = !recorrentesFilters.empresa || item.empresa === recorrentesFilters.empresa;
             const descricaoMatch = !recorrentesFilters.descricao || item.descricao.toLowerCase().includes(recorrentesFilters.descricao.toLowerCase());
+            const statusMatch = !recorrentesFilters.status || item.status === recorrentesFilters.status;
             
             // Day filter logic: extracts day from DD or DD/MM input
             let diaMatch = true;
@@ -245,7 +247,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 }
             }
             
-            return empresaMatch && descricaoMatch && diaMatch;
+            return empresaMatch && descricaoMatch && diaMatch && statusMatch;
         }).sort((a, b) => a.diaVencimento - b.diaVencimento);
     }, [despesasRecorrentes, recorrentesFilters]);
 
@@ -276,7 +278,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     };
     
     const handleClearRecorrentesFilters = () => {
-        setRecorrentesFilters({ empresa: '', descricao: '', diaMes: '' });
+        setRecorrentesFilters({ empresa: '', descricao: '', diaMes: '', status: '' });
     };
 
     const handleOpenAddModal = () => {
@@ -733,6 +735,23 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                     <ChevronDownIcon className="h-4 w-4" />
                                 </div>
                             </div>
+                            
+                            <div className="relative w-32">
+                                <select
+                                    name="status"
+                                    value={recorrentesFilters.status}
+                                    onChange={(e) => setRecorrentesFilters(prev => ({ ...prev, status: e.target.value }))}
+                                    className="w-full pl-3 pr-8 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary appearance-none h-9"
+                                >
+                                    <option value="">Todos</option>
+                                    <option value="Pendente">Pendente</option>
+                                    <option value="Lançado">Lançado</option>
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-text-secondary">
+                                    <ChevronDownIcon className="h-4 w-4" />
+                                </div>
+                            </div>
+
                             <input 
                                 type="text" 
                                 name="descricao" 
@@ -744,14 +763,14 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             <input 
                                 type="text" 
                                 name="diaMes" 
-                                placeholder="Dia e Mês (ex: 15/05)" 
+                                placeholder="Dia (ex: 15)" 
                                 value={recorrentesFilters.diaMes} 
                                 onChange={(e) => {
                                     // Allow user to type DD or DD/MM freely, we will filter in logic
                                     const val = applyDayMonthMask(e.target.value);
                                     setRecorrentesFilters(prev => ({ ...prev, diaMes: val }));
                                 }} 
-                                className="w-32 px-3 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"
+                                className="w-24 px-3 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"
                             />
                         </div>
                         <button onClick={handleClearRecorrentesFilters} className="px-3 py-1.5 rounded-full bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-9 transition-colors whitespace-nowrap">Limpar</button>
