@@ -168,6 +168,12 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const allTarefasWithStatus = useMemo(() => tarefas.map(t => ({ ...t, dynamicStatus: getDynamicStatus(t) })), [tarefas]);
 
     const filteredTarefas = useMemo(() => {
+        // Determine if we are currently looking at the "Real Current Month"
+        const realToday = new Date();
+        const isViewingCurrentRealMonth = 
+            currentViewDate.getMonth() === realToday.getMonth() && 
+            currentViewDate.getFullYear() === realToday.getFullYear();
+
         const startOfMonth = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth(), 1);
         const endOfMonth = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth() + 1, 0);
         
@@ -183,15 +189,18 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             const statusMatch = statusFilter === 'Todas' || tarefa.dynamicStatus === statusFilter;
             if (!statusMatch) return false;
 
-            // 3. Month Logic:
-            // Show task IF:
-            // a) Due date is in the current view month
-            // b) OR (Task is NOT completed AND Due date is BEFORE the current view month) -> Backlog/Overdue
+            // 3. Date Logic:
             const dueDate = tarefa.dataVencimento;
-            const isDueInMonth = dueDate >= startOfMonthISO && dueDate <= endOfMonthISO;
-            const isPendingBacklog = tarefa.status !== StatusTarefa.CONCLUIDA && dueDate < startOfMonthISO;
+            const isDueInSelectedMonth = dueDate >= startOfMonthISO && dueDate <= endOfMonthISO;
+            
+            // "Caso o mês seguinte entre, as tarefas do mês passado estarão em atraso."
+            // Meaning: Pending overdue tasks should be visible when viewing the CURRENT REAL month.
+            // "AO NAVEGAR PELOS MESES, A TELA SOMENTE MOSTRARÁ A TAREFA CRIADA CORRESPONDENTE AO MÊS SELECIONADO"
+            // Meaning: When viewing future or past months specifically, STRICTLY show tasks for that month.
+            
+            const isOverdueAndPending = isViewingCurrentRealMonth && tarefa.status !== StatusTarefa.CONCLUIDA && dueDate < startOfMonthISO;
 
-            return isDueInMonth || isPendingBacklog;
+            return isDueInSelectedMonth || isOverdueAndPending;
         }).sort((a, b) => {
             const aCompleted = a.status === StatusTarefa.CONCLUIDA;
             const bCompleted = b.status === StatusTarefa.CONCLUIDA;
