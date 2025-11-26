@@ -134,8 +134,13 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [recorrentesFilters, setRecorrentesFilters] = useState({
         empresa: '',
         descricao: '',
-        dia: ''
+        diaMes: '' // Changed to generic string input for DD or DD/MM
     });
+
+    // Date context for Recorrentes view
+    const today = new Date();
+    const currentDay = today.getDate();
+    const currentMonthName = today.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(boletos));
@@ -227,7 +232,19 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         return despesasRecorrentes.filter(item => {
             const empresaMatch = !recorrentesFilters.empresa || item.empresa === recorrentesFilters.empresa;
             const descricaoMatch = !recorrentesFilters.descricao || item.descricao.toLowerCase().includes(recorrentesFilters.descricao.toLowerCase());
-            const diaMatch = !recorrentesFilters.dia || item.diaVencimento === parseInt(recorrentesFilters.dia, 10);
+            
+            // Day filter logic: extracts day from DD or DD/MM input
+            let diaMatch = true;
+            if (recorrentesFilters.diaMes) {
+                const cleanInput = recorrentesFilters.diaMes.replace(/\D/g, '');
+                if (cleanInput.length > 0) {
+                    // If user types "05", search matches day 5. If "0505", search matches day 5.
+                    // We assume the user wants to filter by the Due Day primarily.
+                    const searchDay = parseInt(cleanInput.slice(0, 2), 10);
+                    diaMatch = item.diaVencimento === searchDay;
+                }
+            }
+            
             return empresaMatch && descricaoMatch && diaMatch;
         }).sort((a, b) => a.diaVencimento - b.diaVencimento);
     }, [despesasRecorrentes, recorrentesFilters]);
@@ -259,7 +276,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     };
     
     const handleClearRecorrentesFilters = () => {
-        setRecorrentesFilters({ empresa: '', descricao: '', dia: '' });
+        setRecorrentesFilters({ empresa: '', descricao: '', diaMes: '' });
     };
 
     const handleOpenAddModal = () => {
@@ -694,44 +711,51 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         ) : (
             <>
                 {/* Filters for Recorrentes */}
-                <div className="flex flex-col sm:flex-row items-center mb-4 gap-4 bg-white p-3 rounded-2xl border border-border">
-                    <div className="flex gap-4 w-full">
-                        <div className="relative w-full sm:w-64">
-                            <select 
-                                name="empresa" 
-                                value={recorrentesFilters.empresa} 
-                                onChange={(e) => setRecorrentesFilters(prev => ({ ...prev, empresa: e.target.value }))}
-                                className="w-full pl-3 pr-10 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary appearance-none h-9"
-                            >
-                                <option value="">Todas as Empresas</option>
-                                {uniqueEmpresasRecorrentes.map(empresa => (
-                                    <option key={empresa} value={empresa}>{empresa}</option>
-                                ))}
-                            </select>
-                            <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-text-secondary">
-                                <ChevronDownIcon className="h-4 w-4" />
-                            </div>
-                        </div>
-                        <input 
-                            type="text" 
-                            name="descricao" 
-                            placeholder="Buscar despesa..." 
-                            value={recorrentesFilters.descricao} 
-                            onChange={(e) => setRecorrentesFilters(prev => ({ ...prev, descricao: e.target.value }))} 
-                            className="w-full sm:w-64 px-3 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"
-                        />
-                        <input 
-                            type="number" 
-                            name="dia" 
-                            placeholder="Dia" 
-                            min="1" 
-                            max="31" 
-                            value={recorrentesFilters.dia} 
-                            onChange={(e) => setRecorrentesFilters(prev => ({ ...prev, dia: e.target.value }))} 
-                            className="w-20 px-3 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"
-                        />
+                <div className="flex flex-col gap-4 mb-4">
+                    <div className="bg-primary/10 border border-primary/20 rounded-xl p-3 text-center">
+                        <p className="text-sm font-semibold text-primary uppercase tracking-wide">Mês de Referência: {currentMonthName}</p>
                     </div>
-                    <button onClick={handleClearRecorrentesFilters} className="px-3 py-1.5 rounded-full bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-9 transition-colors whitespace-nowrap">Limpar</button>
+                    <div className="flex flex-col sm:flex-row items-center gap-4 bg-white p-3 rounded-2xl border border-border">
+                        <div className="flex gap-4 w-full">
+                            <div className="relative w-full sm:w-64">
+                                <select 
+                                    name="empresa" 
+                                    value={recorrentesFilters.empresa} 
+                                    onChange={(e) => setRecorrentesFilters(prev => ({ ...prev, empresa: e.target.value }))}
+                                    className="w-full pl-3 pr-10 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary appearance-none h-9"
+                                >
+                                    <option value="">Todas as Empresas</option>
+                                    {uniqueEmpresasRecorrentes.map(empresa => (
+                                        <option key={empresa} value={empresa}>{empresa}</option>
+                                    ))}
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-text-secondary">
+                                    <ChevronDownIcon className="h-4 w-4" />
+                                </div>
+                            </div>
+                            <input 
+                                type="text" 
+                                name="descricao" 
+                                placeholder="Buscar despesa..." 
+                                value={recorrentesFilters.descricao} 
+                                onChange={(e) => setRecorrentesFilters(prev => ({ ...prev, descricao: e.target.value }))} 
+                                className="w-full sm:w-64 px-3 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"
+                            />
+                            <input 
+                                type="text" 
+                                name="diaMes" 
+                                placeholder="Dia e Mês (ex: 15/05)" 
+                                value={recorrentesFilters.diaMes} 
+                                onChange={(e) => {
+                                    // Allow user to type DD or DD/MM freely, we will filter in logic
+                                    const val = applyDayMonthMask(e.target.value);
+                                    setRecorrentesFilters(prev => ({ ...prev, diaMes: val }));
+                                }} 
+                                className="w-32 px-3 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"
+                            />
+                        </div>
+                        <button onClick={handleClearRecorrentesFilters} className="px-3 py-1.5 rounded-full bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-9 transition-colors whitespace-nowrap">Limpar</button>
+                    </div>
                 </div>
 
                 <div className="bg-card border border-border rounded-2xl overflow-hidden flex-grow shadow-sm">
@@ -748,17 +772,20 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             </thead>
                             <tbody className="divide-y divide-border bg-white">
                                 {Object.keys(groupedRecorrentes).length > 0 ? (
-                                    Object.keys(groupedRecorrentes).sort((a, b) => Number(a) - Number(b)).map(day => (
+                                    Object.keys(groupedRecorrentes).sort((a, b) => Number(a) - Number(b)).map(day => {
+                                        const isToday = Number(day) === currentDay;
+                                        return (
                                         <React.Fragment key={day}>
                                             {/* Group Header */}
-                                            <tr className="bg-secondary/50">
-                                                <td colSpan={5} className="px-6 py-2 font-bold text-text-primary text-xs uppercase tracking-wider border-y border-border">
+                                            <tr className={`${isToday ? 'bg-blue-100 text-blue-800 border-l-4 border-l-primary' : 'bg-secondary/50'}`}>
+                                                <td colSpan={5} className="px-6 py-2 font-bold text-xs uppercase tracking-wider border-y border-border flex items-center">
                                                     Dia {day.toString().padStart(2, '0')}
+                                                    {isToday && <span className="ml-2 text-[10px] bg-primary text-white px-2 py-0.5 rounded-full shadow-sm">HOJE</span>}
                                                 </td>
                                             </tr>
                                             {/* Group Items */}
                                             {groupedRecorrentes[Number(day)].map(despesa => (
-                                                <tr key={despesa.id} className="hover:bg-secondary transition-colors">
+                                                <tr key={despesa.id} className={`hover:bg-secondary transition-colors ${isToday ? 'bg-blue-50/30' : ''}`}>
                                                     <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{despesa.empresa}</td>
                                                     <td className="px-6 py-4 text-text-secondary">{despesa.descricao}</td>
                                                     <td className="px-6 py-4 text-center text-text-secondary">{despesa.recorrencia}</td>
@@ -783,7 +810,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                                 </tr>
                                             ))}
                                         </React.Fragment>
-                                    ))
+                                    )})
                                 ) : (
                                     <tr>
                                         <td colSpan={5} className="text-center py-16">
