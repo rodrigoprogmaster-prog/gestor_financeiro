@@ -26,6 +26,7 @@ enum RecorrenciaTarefa {
 // Data structure
 interface Tarefa {
   id: string;
+  seriesId?: string; // Linked ID for recurring series
   titulo: string;
   descricao: string;
   categoria: string;
@@ -193,11 +194,6 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             const dueDate = tarefa.dataVencimento;
             const isDueInSelectedMonth = dueDate >= startOfMonthISO && dueDate <= endOfMonthISO;
             
-            // "Caso o mês seguinte entre, as tarefas do mês passado estarão em atraso."
-            // Meaning: Pending overdue tasks should be visible when viewing the CURRENT REAL month.
-            // "AO NAVEGAR PELOS MESES, A TELA SOMENTE MOSTRARÁ A TAREFA CRIADA CORRESPONDENTE AO MÊS SELECIONADO"
-            // Meaning: When viewing future or past months specifically, STRICTLY show tasks for that month.
-            
             const isOverdueAndPending = isViewingCurrentRealMonth && tarefa.status !== StatusTarefa.CONCLUIDA && dueDate < startOfMonthISO;
 
             return isDueInSelectedMonth || isOverdueAndPending;
@@ -270,27 +266,47 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         if (tarefa.status === StatusTarefa.CONCLUIDA) return;
         
         const action = () => {
-            // 1. Mark current as done
-            const updatedTarefas = tarefas.map(t => t.id === tarefa.id ? { ...t, status: StatusTarefa.CONCLUIDA } : t);
-            
-            // 2. If recurrent, create new task
-            if (tarefa.recorrencia && tarefa.recorrencia !== RecorrenciaTarefa.NENHUMA) {
-                const nextDueDate = calculateNextDueDate(tarefa.dataVencimento, tarefa.recorrencia);
-                const newTarefa: Tarefa = {
-                    ...tarefa,
-                    id: `tarefa-${Date.now()}`, // New ID
-                    status: StatusTarefa.PENDENTE, // Reset status
-                    dataVencimento: nextDueDate,
-                    dataCriacao: new Date().toISOString().split('T')[0],
-                };
-                updatedTarefas.push(newTarefa);
-            }
+            setTarefas(currentTarefas => {
+                // 1. Mark current as done
+                let updatedTarefas = currentTarefas.map(t => t.id === tarefa.id ? { ...t, status: StatusTarefa.CONCLUIDA } : t);
+                
+                // 2. Smart Recurrence Logic
+                if (tarefa.recorrencia && tarefa.recorrencia !== RecorrenciaTarefa.NENHUMA) {
+                    const nextDueDate = calculateNextDueDate(tarefa.dataVencimento, tarefa.recorrencia);
+                    
+                    let shouldCreate = true;
 
-            setTarefas(updatedTarefas);
+                    // If this task is part of a series, check if the next one already exists (from batch generation)
+                    if (tarefa.seriesId) {
+                        const nextTaskExists = currentTarefas.some(t => 
+                            t.seriesId === tarefa.seriesId && 
+                            t.dataVencimento === nextDueDate &&
+                            t.id !== tarefa.id
+                        );
+                        if (nextTaskExists) {
+                            shouldCreate = false;
+                        }
+                    }
+
+                    // If end of batch reached (or legacy task without seriesId), continue infinite loop
+                    if (shouldCreate) {
+                        const newTarefa: Tarefa = {
+                            ...tarefa,
+                            id: `tarefa-${Date.now()}`, // New unique ID
+                            status: StatusTarefa.PENDENTE, // Reset status
+                            dataVencimento: nextDueDate,
+                            dataCriacao: new Date().toISOString().split('T')[0],
+                            // seriesId is preserved via spread
+                        };
+                        updatedTarefas = [...updatedTarefas, newTarefa];
+                    }
+                }
+                return updatedTarefas;
+            });
         };
 
         const recurrenceMsg = (tarefa.recorrencia && tarefa.recorrencia !== RecorrenciaTarefa.NENHUMA) 
-            ? ` Como ela é ${tarefa.recorrencia.toLowerCase()}, uma nova tarefa será criada automaticamente para o próximo período.` 
+            ? ` Esta tarefa é ${tarefa.recorrencia.toLowerCase()}.` 
             : '';
 
         setConfirmAction({ action, message: `Marcar esta tarefa como concluída?${recurrenceMsg}` });
@@ -324,14 +340,54 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const handleSaveChanges = () => {
         if (!validate() || !editingTarefa) return;
         const tarefaToSave = { ...editingTarefa, dataVencimento: formatDateToISO(editingTarefa.dataVencimento_br!) };
+        
         const action = () => {
             if (tarefaToSave.id) {
-                setTarefas(tarefas.map(t => t.id === tarefaToSave.id ? (tarefaToSave as Tarefa) : t));
+                // Editing existing task (Single update)
+                setTarefas(prev => prev.map(t => t.id === tarefaToSave.id ? (tarefaToSave as Tarefa) : t));
             } else {
-                setTarefas([...tarefas, { ...tarefaToSave, id: `tarefa-${Date.now()}`, dataCriacao: new Date().toISOString().split('T')[0] } as Tarefa]);
+                // Creating new task (Batch Generation for Recurrence)
+                const newTasks: Tarefa[] = [];
+                const baseIdTimestamp = Date.now();
+                // Generate a Series ID if recurring
+                const seriesId = tarefaToSave.recorrencia !== RecorrenciaTarefa.NENHUMA ? `series-${baseIdTimestamp}` : undefined;
+
+                const firstTask: Tarefa = { 
+                    ...tarefaToSave, 
+                    id: `tarefa-${baseIdTimestamp}-0`, 
+                    dataCriacao: new Date().toISOString().split('T')[0],
+                    seriesId
+                } as Tarefa;
+                
+                newTasks.push(firstTask);
+
+                if (tarefaToSave.recorrencia && tarefaToSave.recorrencia !== RecorrenciaTarefa.NENHUMA) {
+                    let limit = 0;
+                    switch (tarefaToSave.recorrencia) {
+                        case RecorrenciaTarefa.DIARIA: limit = 90; break; // Next 90 days
+                        case RecorrenciaTarefa.SEMANAL: limit = 52; break; // Next 52 weeks (1 year)
+                        case RecorrenciaTarefa.MENSAL: limit = 12; break; // Next 12 months
+                        case RecorrenciaTarefa.ANUAL: limit = 5; break;   // Next 5 years
+                    }
+
+                    let currentDate = firstTask.dataVencimento;
+                    for (let i = 1; i < limit; i++) {
+                        currentDate = calculateNextDueDate(currentDate, tarefaToSave.recorrencia);
+                        newTasks.push({
+                            ...firstTask,
+                            id: `tarefa-${baseIdTimestamp}-${i}`,
+                            dataVencimento: currentDate,
+                            status: StatusTarefa.PENDENTE,
+                            seriesId
+                        });
+                    }
+                }
+                
+                setTarefas(prev => [...prev, ...newTasks]);
             }
             handleCloseModal();
         };
+        
         setConfirmAction({ action, message: `Deseja ${editingTarefa.id ? 'salvar as alterações' : 'adicionar esta tarefa'}?` });
         setIsConfirmOpen(true);
     };
