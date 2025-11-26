@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { PlusIcon, TrashIcon, SearchIcon, EditIcon, CheckIcon, CalendarClockIcon, ArrowLeftIcon, ListIcon, KanbanIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
+import { PlusIcon, TrashIcon, SearchIcon, EditIcon, CheckIcon, CalendarClockIcon, ArrowLeftIcon, ListIcon, KanbanIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, RefreshIcon } from './icons';
 
 // Enums
 enum StatusTarefa {
@@ -15,6 +15,14 @@ enum PrioridadeTarefa {
   BAIXA = 'Baixa',
 }
 
+enum RecorrenciaTarefa {
+  NENHUMA = 'Nenhuma',
+  DIARIA = 'Diária',
+  SEMANAL = 'Semanal',
+  MENSAL = 'Mensal',
+  ANUAL = 'Anual',
+}
+
 // Data structure
 interface Tarefa {
   id: string;
@@ -22,6 +30,7 @@ interface Tarefa {
   descricao: string;
   categoria: string;
   prioridade: PrioridadeTarefa;
+  recorrencia: RecorrenciaTarefa;
   dataVencimento: string; // YYYY-MM-DD
   status: StatusTarefa;
   dataCriacao: string; // YYYY-MM-DD
@@ -52,6 +61,33 @@ const isValidBRDate = (dateString: string): boolean => {
     return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
 };
 
+const calculateNextDueDate = (currentDateStr: string, recurrence: RecorrenciaTarefa): string => {
+    const date = new Date(currentDateStr + 'T00:00:00'); // Ensure UTC midnight to avoid timezone shifts
+    
+    switch (recurrence) {
+        case RecorrenciaTarefa.DIARIA:
+            date.setDate(date.getDate() + 1);
+            break;
+        case RecorrenciaTarefa.SEMANAL:
+            date.setDate(date.getDate() + 7);
+            break;
+        case RecorrenciaTarefa.MENSAL:
+            date.setMonth(date.getMonth() + 1);
+            break;
+        case RecorrenciaTarefa.ANUAL:
+            date.setFullYear(date.getFullYear() + 1);
+            break;
+        default:
+            return currentDateStr;
+    }
+
+    return date.toISOString().split('T')[0];
+};
+
+const getMonthName = (date: Date) => {
+    return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+};
+
 const ITEMS_PER_PAGE = 20;
 
 const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
@@ -72,9 +108,10 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [errors, setErrors] = useState<TarefaErrors>({});
     
     const [searchTerm, setSearchTerm] = useState('');
-    // Ensure default status is PENDENTE
     const [statusFilter, setStatusFilter] = useState<StatusTarefa | 'Atrasada' | 'Todas'>(StatusTarefa.PENDENTE);
-    const [dateRange, setDateRange] = useState({ start: '', end: '' });
+    
+    // Current Month View State
+    const [currentViewDate, setCurrentViewDate] = useState(new Date());
 
     const [lembretes, setLembretes] = useState<Tarefa[]>([]);
     const [isLembreteOpen, setIsLembreteOpen] = useState(false);
@@ -89,7 +126,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     // Reset page on filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm, statusFilter, dateRange]);
+    }, [searchTerm, statusFilter, currentViewDate]);
 
     useEffect(() => {
         const today = new Date();
@@ -106,7 +143,19 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             setLembretes(lembretesDoDia);
             setIsLembreteOpen(true);
         }
-    }, []); // Run only once on mount
+    }, []);
+
+    const handlePrevMonth = () => {
+        setCurrentViewDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+    };
+
+    const handleNextMonth = () => {
+        setCurrentViewDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+    };
+
+    const handleCurrentMonth = () => {
+        setCurrentViewDate(new Date());
+    };
 
     const getDynamicStatus = (tarefa: Tarefa): StatusTarefa | 'Atrasada' => {
         if (tarefa.status === StatusTarefa.CONCLUIDA) return StatusTarefa.CONCLUIDA;
@@ -119,12 +168,30 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const allTarefasWithStatus = useMemo(() => tarefas.map(t => ({ ...t, dynamicStatus: getDynamicStatus(t) })), [tarefas]);
 
     const filteredTarefas = useMemo(() => {
+        const startOfMonth = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth(), 1);
+        const endOfMonth = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth() + 1, 0);
+        
+        const startOfMonthISO = startOfMonth.toISOString().split('T')[0];
+        const endOfMonthISO = endOfMonth.toISOString().split('T')[0];
+
         return allTarefasWithStatus.filter(tarefa => {
-            const statusMatch = statusFilter === 'Todas' || tarefa.dynamicStatus === statusFilter;
+            // 1. Text Search
             const searchMatch = !searchTerm || tarefa.titulo.toLowerCase().includes(searchTerm.toLowerCase()) || tarefa.descricao.toLowerCase().includes(searchTerm.toLowerCase());
-            const startDateMatch = !dateRange.start || tarefa.dataVencimento >= dateRange.start;
-            const endDateMatch = !dateRange.end || tarefa.dataVencimento <= dateRange.end;
-            return statusMatch && searchMatch && startDateMatch && endDateMatch;
+            if (!searchMatch) return false;
+
+            // 2. Status Filter
+            const statusMatch = statusFilter === 'Todas' || tarefa.dynamicStatus === statusFilter;
+            if (!statusMatch) return false;
+
+            // 3. Month Logic:
+            // Show task IF:
+            // a) Due date is in the current view month
+            // b) OR (Task is NOT completed AND Due date is BEFORE the current view month) -> Backlog/Overdue
+            const dueDate = tarefa.dataVencimento;
+            const isDueInMonth = dueDate >= startOfMonthISO && dueDate <= endOfMonthISO;
+            const isPendingBacklog = tarefa.status !== StatusTarefa.CONCLUIDA && dueDate < startOfMonthISO;
+
+            return isDueInMonth || isPendingBacklog;
         }).sort((a, b) => {
             const aCompleted = a.status === StatusTarefa.CONCLUIDA;
             const bCompleted = b.status === StatusTarefa.CONCLUIDA;
@@ -141,7 +208,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
             return new Date(a.dataVencimento).getTime() - new Date(b.dataVencimento).getTime();
         });
-    }, [allTarefasWithStatus, statusFilter, searchTerm, dateRange]);
+    }, [allTarefasWithStatus, statusFilter, searchTerm, currentViewDate]);
 
     // Pagination Logic
     const totalPages = Math.ceil(filteredTarefas.length / ITEMS_PER_PAGE);
@@ -168,6 +235,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             dataVencimento_br: '', 
             status: StatusTarefa.PENDENTE,
             prioridade: PrioridadeTarefa.MEDIA,
+            recorrencia: RecorrenciaTarefa.NENHUMA,
             categoria: '',
         });
         setIsModalOpen(true);
@@ -175,7 +243,11 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
     const handleEditClick = (tarefa: Tarefa) => {
         setErrors({});
-        setEditingTarefa({ ...tarefa, dataVencimento_br: formatDateToBR(tarefa.dataVencimento) });
+        setEditingTarefa({ 
+            ...tarefa, 
+            recorrencia: tarefa.recorrencia || RecorrenciaTarefa.NENHUMA, // Handle legacy data
+            dataVencimento_br: formatDateToBR(tarefa.dataVencimento) 
+        });
         setIsModalOpen(true);
     };
 
@@ -187,8 +259,32 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
     const handleMarkAsDone = (tarefa: Tarefa) => {
         if (tarefa.status === StatusTarefa.CONCLUIDA) return;
-        const action = () => setTarefas(tarefas.map(t => t.id === tarefa.id ? { ...t, status: StatusTarefa.CONCLUIDA } : t));
-        setConfirmAction({ action, message: 'Marcar esta tarefa como concluída?' });
+        
+        const action = () => {
+            // 1. Mark current as done
+            const updatedTarefas = tarefas.map(t => t.id === tarefa.id ? { ...t, status: StatusTarefa.CONCLUIDA } : t);
+            
+            // 2. If recurrent, create new task
+            if (tarefa.recorrencia && tarefa.recorrencia !== RecorrenciaTarefa.NENHUMA) {
+                const nextDueDate = calculateNextDueDate(tarefa.dataVencimento, tarefa.recorrencia);
+                const newTarefa: Tarefa = {
+                    ...tarefa,
+                    id: `tarefa-${Date.now()}`, // New ID
+                    status: StatusTarefa.PENDENTE, // Reset status
+                    dataVencimento: nextDueDate,
+                    dataCriacao: new Date().toISOString().split('T')[0],
+                };
+                updatedTarefas.push(newTarefa);
+            }
+
+            setTarefas(updatedTarefas);
+        };
+
+        const recurrenceMsg = (tarefa.recorrencia && tarefa.recorrencia !== RecorrenciaTarefa.NENHUMA) 
+            ? ` Como ela é ${tarefa.recorrencia.toLowerCase()}, uma nova tarefa será criada automaticamente para o próximo período.` 
+            : '';
+
+        setConfirmAction({ action, message: `Marcar esta tarefa como concluída?${recurrenceMsg}` });
         setIsConfirmOpen(true);
     };
 
@@ -258,6 +354,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         const vencimento = new Date(tarefa.dataVencimento + 'T00:00:00');
         const isOverdue = vencimento < hoje && tarefa.status !== StatusTarefa.CONCLUIDA;
         const priorityStyle = getPriorityStyles(tarefa.prioridade);
+        const isRecurring = tarefa.recorrencia && tarefa.recorrencia !== RecorrenciaTarefa.NENHUMA;
 
         return (
             <div
@@ -267,7 +364,14 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 <div className="p-5 pb-3 flex-grow">
                     <div className="flex justify-between items-start mb-3 gap-2">
                         <div className="flex flex-col gap-1.5">
-                            <span className="px-2 py-0.5 bg-secondary rounded-md text-[10px] font-bold uppercase tracking-wider text-text-secondary w-fit border border-border/50">{tarefa.categoria}</span>
+                            <div className="flex gap-1">
+                                <span className="px-2 py-0.5 bg-secondary rounded-md text-[10px] font-bold uppercase tracking-wider text-text-secondary w-fit border border-border/50">{tarefa.categoria}</span>
+                                {isRecurring && (
+                                    <span className="px-2 py-0.5 bg-blue-50 rounded-md text-[10px] font-bold uppercase tracking-wider text-blue-600 w-fit border border-blue-100 flex items-center gap-1">
+                                        <RefreshIcon className="h-3 w-3" /> {tarefa.recorrencia}
+                                    </span>
+                                )}
+                            </div>
                             <h4 className={`font-bold text-base text-text-primary line-clamp-2 leading-tight ${tarefa.status === StatusTarefa.CONCLUIDA ? 'line-through text-text-secondary decoration-2' : ''}`}>
                                 {tarefa.titulo}
                             </h4>
@@ -359,6 +463,22 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     )}
                 </div>
 
+                {/* Month Navigator */}
+                <div className="flex items-center gap-2 bg-secondary p-1 rounded-full border border-border">
+                    <button onClick={handlePrevMonth} className="p-2 hover:bg-white rounded-full transition-colors text-text-secondary hover:text-primary" title="Mês Anterior">
+                        <ChevronLeftIcon className="h-5 w-5" />
+                    </button>
+                    <span className="text-sm font-bold px-2 text-text-primary w-32 text-center capitalize select-none">
+                        {getMonthName(currentViewDate)}
+                    </span>
+                    <button onClick={handleNextMonth} className="p-2 hover:bg-white rounded-full transition-colors text-text-secondary hover:text-primary" title="Próximo Mês">
+                        <ChevronRightIcon className="h-5 w-5" />
+                    </button>
+                    <button onClick={handleCurrentMonth} className="p-2 hover:bg-white rounded-full transition-colors text-text-secondary hover:text-primary border-l border-border/50 ml-1" title="Mês Atual">
+                        <CalendarClockIcon className="h-4 w-4" />
+                    </button>
+                </div>
+
                 <div className="flex items-center gap-3 w-full xl:w-auto justify-end">
                     <div className="flex bg-secondary p-1 rounded-full border border-border">
                         <button onClick={() => setViewMode('list')} className={`p-2 rounded-full transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-text-secondary hover:text-text-primary'}`} title="Lista"><ListIcon className="h-5 w-5" /></button>
@@ -377,7 +497,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             <div className="col-span-full flex flex-col items-center justify-center text-text-secondary py-20 bg-white/50 rounded-3xl border-2 border-dashed border-border">
                                 <SearchIcon className="w-12 h-12 mb-4 text-gray-300"/>
                                 <h3 className="text-lg font-bold text-text-primary">Nenhuma Tarefa Encontrada</h3>
-                                <p className="text-sm mt-2">Tente ajustar os filtros ou crie uma nova tarefa para começar.</p>
+                                <p className="text-sm mt-2">Para o mês selecionado ou filtros aplicados.</p>
                             </div>
                         )}
                     </div>
@@ -588,6 +708,20 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                         <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
                                     </div>
                                     {errors.status && <p className="text-danger text-xs mt-1 ml-1">{errors.status}</p>}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Recorrência</label>
+                                <div className="relative">
+                                    <select name="recorrencia" value={editingTarefa.recorrencia || RecorrenciaTarefa.NENHUMA} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 appearance-none">
+                                        <option value={RecorrenciaTarefa.NENHUMA}>Nenhuma (Apenas uma vez)</option>
+                                        <option value={RecorrenciaTarefa.DIARIA}>Diária (Todos os dias)</option>
+                                        <option value={RecorrenciaTarefa.SEMANAL}>Semanal (Toda semana)</option>
+                                        <option value={RecorrenciaTarefa.MENSAL}>Mensal (Todo mês)</option>
+                                        <option value={RecorrenciaTarefa.ANUAL}>Anual (Todo ano)</option>
+                                    </select>
+                                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
                                 </div>
                             </div>
                         </div>
