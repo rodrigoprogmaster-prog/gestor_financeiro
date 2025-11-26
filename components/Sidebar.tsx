@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { AppView } from '../types';
 import {
@@ -152,7 +151,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
                             <button
                               onClick={() => {
                                 handleNavigation(child.view);
-                                setOpenSubMenus(prev => ({ ...prev, [module.name]: false }));
+                                // Collapse submenus only if the current view is not part of this submenu anymore
+                                // This is handled by isParentActive at the top, which re-evaluates on currentView change.
+                                // Explicitly closing here can be problematic if switching between child views in the same parent.
+                                // Instead, rely on the useEffect logic in the parent component to derive initialOpen state.
                               }}
                               className={`w-full flex items-center gap-3 px-4 py-2 rounded-full text-sm transition-colors
                                 ${currentView === child.view 
