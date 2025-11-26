@@ -1,6 +1,9 @@
 
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, ArrowLeftIcon, SpinnerIcon, ChevronDownIcon } from './icons';
+import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, 
+    // Add ArrowLeftIcon here
+    ArrowLeftIcon, SpinnerIcon, ChevronDownIcon } from './icons';
 
 // Enum for status
 enum StatusTitulo {
@@ -129,7 +132,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     message: string
   }>({ action: null, message: '' });
   const [errors, setErrors] = useState<TitleErrors>({});
-  const [selectedTitles, setSelectedTitles] = useState<Set<number>>(new Set());
+  const [selectedTitles, setSelectedTitles] = new Set<number>();
 
 
   // Filter states
@@ -444,7 +447,13 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in flex flex-col h-full">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
         <div className="flex items-center gap-2 flex-wrap">
-          
+          {/* Add onBack button here */}
+           {onBack && (
+              <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">
+                  <ArrowLeftIcon className="h-5 w-5" />
+                  Voltar
+              </button>
+            )}
            <h2 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">
             Gerenciar Títulos Prorrogados
            </h2>

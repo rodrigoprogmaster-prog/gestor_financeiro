@@ -1,6 +1,9 @@
 
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, ArrowLeftIcon, SpinnerIcon, ChevronDownIcon, CalendarClockIcon } from './icons';
+import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, 
+    // Add ArrowLeftIcon here
+    ArrowLeftIcon, SpinnerIcon, ChevronDownIcon, CalendarClockIcon } from './icons';
 import { ArrowDownCircleIcon, ArrowUpCircleIcon } from './icons'; // Reusing icons
 
 // Enum for status
@@ -666,7 +669,13 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         <input type="file" ref={fileInputRef} onChange={handleFileImport} className="hidden" accept=".xlsx, .xls" />
         <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
             <div className="flex items-center gap-4">
-                
+                {/* Add onBack button here */}
+                {onBack && (
+                  <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-9">
+                      <ArrowLeftIcon className="h-4 w-4" />
+                      Voltar
+                  </button>
+                )}
                 <h2 className="text-2xl md:text-3xl font-bold text-text-primary">Gerenciador de Cheques</h2>
             </div>
             <div className="flex items-center flex-wrap gap-2">
@@ -785,7 +794,17 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                              <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Vencimento</label><input name="dataVencimento_br" value={editingCheque.dataVencimento_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.dataVencimento ? 'border-danger' : ''}`} />{errors.dataVencimento && <p className="text-danger text-xs mt-1 ml-1">{errors.dataVencimento}</p>}</div>
                              <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Data Depósito</label><input name="dataDeposito_br" value={editingCheque.dataDeposito_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.dataDeposito ? 'border-danger' : ''}`} />{errors.dataDeposito && <p className="text-danger text-xs mt-1 ml-1">{errors.dataDeposito}</p>}</div>
                         </div>
-                        <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Status</label><select name="status" value={editingCheque.status || StatusCheque.A_DEPOSITAR} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"><option value={StatusCheque.A_DEPOSITAR}>A Depositar</option><option value={StatusCheque.COMPENSADO}>Compensado</option><option value={StatusCheque.DEVOLVIDO}>Devolvido</option></select></div>
+                        <div>
+                            <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Status</label>
+                            <div className="relative">
+                                <select name="status" value={editingCheque.status || StatusCheque.A_DEPOSITAR} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 appearance-none">
+                                    <option value={StatusCheque.A_DEPOSITAR}>A Depositar</option>
+                                    <option value={StatusCheque.COMPENSADO}>Compensado</option>
+                                    <option value={StatusCheque.DEVOLVIDO}>Devolvido</option>
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
+                            </div>
+                        </div>
                     </div>
                     <div className="flex justify-center gap-3 mt-8">
                         <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>

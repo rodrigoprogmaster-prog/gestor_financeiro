@@ -1,6 +1,9 @@
 
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { PlusIcon, TrashIcon, SearchIcon, DatabaseIcon, ArrowLeftIcon, TrendingUpIcon, ReportIcon, BoletoIcon, SpinnerIcon, TransferIcon } from './icons';
+import { PlusIcon, TrashIcon, SearchIcon, DatabaseIcon, 
+    // Add ArrowLeftIcon here
+    ArrowLeftIcon, TrendingUpIcon, ReportIcon, BoletoIcon, SpinnerIcon, TransferIcon } from './icons';
 
 // Data structure
 interface Previsao {

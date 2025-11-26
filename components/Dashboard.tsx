@@ -4,6 +4,7 @@ import { AppView } from '../types';
 import { 
     CheckIcon, 
     CalendarClockIcon, 
+    // Add SparklesIcon here
     SparklesIcon, 
     SearchIcon, 
     RefreshIcon,

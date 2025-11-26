@@ -177,7 +177,7 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
         } else {
             apply('heading', headingFont);
         }
-        showNotification('Fonte aplicada com sucesso!');
+        showNotification('Fonte aplicada com sucesso!', 'success');
     };
     
     const handleBackup = () => {

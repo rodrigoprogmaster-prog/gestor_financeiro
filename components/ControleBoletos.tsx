@@ -1,6 +1,9 @@
 
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, ArrowLeftIcon, SpinnerIcon, ChevronDownIcon, RefreshIcon, ClipboardCheckIcon } from './icons';
+import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, 
+    // Add ArrowLeftIcon here
+    ArrowLeftIcon, SpinnerIcon, ChevronDownIcon, RefreshIcon, ClipboardCheckIcon } from './icons';
 
 enum StatusBoleto {
   A_VENCER = 'A Vencer',
@@ -460,6 +463,12 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         
         <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
             <div className="flex items-center gap-4">
+                {onBack && (
+                  <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-9">
+                      <ArrowLeftIcon className="h-4 w-4" />
+                      Voltar
+                  </button>
+                )}
                 <h2 className="text-2xl font-bold text-text-primary tracking-tight">Boletos a Pagar</h2>
                 
                 {/* Segmented Control */}
