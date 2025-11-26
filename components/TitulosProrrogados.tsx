@@ -60,6 +60,7 @@ const isValidBRDate = (dateString: string): boolean => {
     );
 };
 
+const formatCurrency = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 // Mock Data
 const initialTitles: Title[] = [
@@ -128,12 +129,11 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     message: string
   }>({ action: null, message: '' });
   const [errors, setErrors] = useState<TitleErrors>({});
-  // Fix: Initialize selectedTitles state correctly with useState
   const [selectedTitles, setSelectedTitles] = useState<Set<number>>(new Set());
 
 
   // Filter states
-  const [statusFilter, setStatusFilter] = useState<string>('Todos');
+  const [statusFilter, setStatusFilter] = useState<StatusTitulo | 'Todos'>('Todos');
   const [searchTerm, setSearchTerm] = useState<string>('');
 
   // Infinite scroll states
@@ -145,23 +145,41 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     setSelectedTitles(new Set());
   }, [statusFilter, searchTerm]);
 
-  const filteredTitles = useMemo(() => {
-    setDisplayCount(ITEMS_PER_LOAD); // Reset display count on filter change
+  const titlesFilteredBySearch = useMemo(() => {
     const lowercasedSearchTerm = searchTerm.toLowerCase();
     return titles.filter(title => {
-      const statusMatch = statusFilter === 'Todos' || title.status === statusFilter;
-      const searchMatch =
+      return (
         title.fornecedor.toLowerCase().includes(lowercasedSearchTerm) ||
         title.devedor.toLowerCase().includes(lowercasedSearchTerm) ||
-        title.numeroTitulo.toLowerCase().includes(lowercasedSearchTerm);
-      
-      return statusMatch && searchMatch;
+        title.numeroTitulo.toLowerCase().includes(lowercasedSearchTerm)
+      );
     });
-  }, [titles, statusFilter, searchTerm]);
+  }, [titles, searchTerm]);
 
-  const totalValor = useMemo(() => {
-    return filteredTitles.reduce((acc, title) => acc + title.valor, 0);
-  }, [filteredTitles]);
+  const filteredTitles = useMemo(() => {
+    setDisplayCount(ITEMS_PER_LOAD); 
+    return titlesFilteredBySearch.filter(title => {
+      return statusFilter === 'Todos' || title.status === statusFilter;
+    });
+  }, [titlesFilteredBySearch, statusFilter]);
+
+  const totals = useMemo(() => {
+      const result = {
+          [StatusTitulo.A_PRORROGAR]: { count: 0, value: 0 },
+          [StatusTitulo.PRORROGADO]: { count: 0, value: 0 },
+          total: { count: 0, value: 0 }
+      };
+
+      titlesFilteredBySearch.forEach(title => {
+          if (result[title.status]) {
+              result[title.status].count++;
+              result[title.status].value += title.valor;
+          }
+          result.total.count++;
+          result.total.value += title.valor;
+      });
+      return result;
+  }, [titlesFilteredBySearch]);
 
   const handleClearFilters = () => {
     setStatusFilter('Todos');
@@ -187,22 +205,6 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     }));
     
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-
-    // Add a totals row at the bottom
-    XLSX.utils.sheet_add_aoa(worksheet, [
-        ['', '', '', '', 'Total:', totalValor]
-    ], { origin: -1 });
-
-    // Set number format for the 'Valor' column
-    const range = XLSX.utils.decode_range(worksheet['!ref']);
-    for (let R = range.s.r + 1; R <= range.e.r; ++R) { // +1 to skip header
-        const cell_address = { c: 5, r: R }; // Column F (Valor)
-        const cell_ref = XLSX.utils.encode_cell(cell_address);
-        if (worksheet[cell_ref]) {
-            worksheet[cell_ref].t = 'n';
-            worksheet[cell_ref].z = 'R$ #,##0.00';
-        }
-    }
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Títulos');
@@ -462,6 +464,24 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         </div>
       </div>
 
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div onClick={() => setStatusFilter(StatusTitulo.A_PRORROGAR)} className={`p-4 rounded-2xl border cursor-pointer transition-all ${statusFilter === StatusTitulo.A_PRORROGAR ? 'border-warning bg-warning/5 ring-1 ring-warning' : 'border-border bg-card hover:border-gray-300'}`}>
+                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">A Prorrogar</p>
+                <p className="text-xl font-bold text-warning">{formatCurrency(totals[StatusTitulo.A_PRORROGAR]?.value || 0)}</p>
+                <p className="text-xs text-text-secondary mt-1">{totals[StatusTitulo.A_PRORROGAR]?.count || 0} títulos</p>
+            </div>
+            <div onClick={() => setStatusFilter(StatusTitulo.PRORROGADO)} className={`p-4 rounded-2xl border cursor-pointer transition-all ${statusFilter === StatusTitulo.PRORROGADO ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border bg-card hover:border-gray-300'}`}>
+                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Prorrogados</p>
+                <p className="text-xl font-bold text-primary">{formatCurrency(totals[StatusTitulo.PRORROGADO]?.value || 0)}</p>
+                <p className="text-xs text-text-secondary mt-1">{totals[StatusTitulo.PRORROGADO]?.count || 0} títulos</p>
+            </div>
+            <div onClick={() => setStatusFilter('Todos')} className={`p-4 rounded-2xl border cursor-pointer transition-all ${statusFilter === 'Todos' ? 'border-gray-400 bg-gray-50 ring-1 ring-gray-300 dark:bg-slate-800 dark:border-slate-600' : 'border-border bg-card hover:border-gray-300'}`}>
+                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Total Geral</p>
+                <p className="text-xl font-bold text-text-primary">{formatCurrency(totals.total.value)}</p>
+                <p className="text-xs text-text-secondary mt-1">{totals.total.count} títulos</p>
+            </div>
+      </div>
+
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 bg-white p-3 rounded-2xl border border-border">
         <div className="relative w-full sm:w-auto flex-grow sm:flex-grow-0">
             <input
@@ -476,20 +496,6 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             </div>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-             <div className="relative">
-                <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="bg-white border border-border rounded-xl px-3 py-1.5 pr-8 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 appearance-none"
-                >
-                    <option value="Todos">Todos Status</option>
-                    <option value={StatusTitulo.PRORROGADO}>Prorrogados</option>
-                    <option value={StatusTitulo.A_PRORROGAR}>A Prorrogar</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-text-secondary">
-                    <ChevronDownIcon className="h-4 w-4" />
-                </div>
-            </div>
             <button onClick={handleClearFilters} className="px-3 py-1.5 rounded-full bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-9 transition-colors">Limpar</button>
         </div>
       </div>
@@ -547,7 +553,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     <td className="px-6 py-4 text-text-secondary whitespace-nowrap">{title.devedor}</td>
                     <td className="px-6 py-4 text-text-secondary whitespace-nowrap">{formatDateToBR(title.novoVencimento)}</td>
                     <td className="px-6 py-4 text-right font-semibold text-text-primary whitespace-nowrap">
-                        {title.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        {formatCurrency(title.valor)}
                     </td>
                     </tr>
                 ))
@@ -606,7 +612,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     </div>
                     <div>
                         <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Valor</label>
-                        <input name="valor" value={(editingTitle.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.valor ? 'border-danger' : ''}`} />
+                        <input name="valor" value={formatCurrency(Number(editingTitle.valor || 0))} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.valor ? 'border-danger' : ''}`} />
                         {errors.valor && <p className="text-danger text-xs mt-1 ml-1">{errors.valor}</p>}
                     </div>
                 </div>
