@@ -1,5 +1,4 @@
 
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, CalendarClockIcon, SpinnerIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
 
@@ -210,6 +209,17 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const handleDeleteClick = (id: string) => {
         const action = () => setBoletos(prev => prev.filter(b => b.id !== id));
         setConfirmAction({ action, message: 'Tem certeza que deseja excluir este boleto?' });
+        setIsConfirmOpen(true);
+    };
+
+    const handleResetTable = () => {
+        const action = () => {
+            setBoletos([]);
+        };
+        setConfirmAction({ 
+            action, 
+            message: 'ATENÇÃO: Tem certeza que deseja apagar TODOS os registros da tabela? Esta ação é irreversível e deve ser feita antes de importar uma nova lista.' 
+        });
         setIsConfirmOpen(true);
     };
 
@@ -436,6 +446,9 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     <h2 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Boletos a Receber</h2>
                 </div>
                 <div className="flex items-center flex-wrap gap-2">
+                    <button onClick={handleResetTable} className="flex items-center gap-2 bg-white border border-border text-danger font-medium py-2 px-4 rounded-full hover:bg-red-50 text-sm h-9 transition-colors" title="Apagar todos os registros">
+                        <TrashIcon className="h-4 w-4" /> Resetar Tabela
+                    </button>
                     <button onClick={handleExportXLSX} className="flex items-center gap-2 bg-white border border-border text-text-primary font-medium py-2 px-4 rounded-full hover:bg-secondary text-sm h-9 transition-colors">
                         <DownloadIcon className="h-4 w-4" /> Exportar
                     </button>
