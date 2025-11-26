@@ -135,6 +135,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   // Filter states
   const [statusFilter, setStatusFilter] = useState<StatusTitulo | 'Todos'>('Todos');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
   // Infinite scroll states
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -143,25 +144,31 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
   useEffect(() => {
     setSelectedTitles(new Set());
-  }, [statusFilter, searchTerm]);
+  }, [statusFilter, searchTerm, dateRange]);
 
-  const titlesFilteredBySearch = useMemo(() => {
+  const titlesFilteredBySearchAndDate = useMemo(() => {
     const lowercasedSearchTerm = searchTerm.toLowerCase();
     return titles.filter(title => {
-      return (
+      const matchesSearch = (
         title.fornecedor.toLowerCase().includes(lowercasedSearchTerm) ||
         title.devedor.toLowerCase().includes(lowercasedSearchTerm) ||
         title.numeroTitulo.toLowerCase().includes(lowercasedSearchTerm)
       );
+      
+      const matchesDate = 
+        (!dateRange.start || title.novoVencimento >= dateRange.start) &&
+        (!dateRange.end || title.novoVencimento <= dateRange.end);
+
+      return matchesSearch && matchesDate;
     });
-  }, [titles, searchTerm]);
+  }, [titles, searchTerm, dateRange]);
 
   const filteredTitles = useMemo(() => {
     setDisplayCount(ITEMS_PER_LOAD); 
-    return titlesFilteredBySearch.filter(title => {
+    return titlesFilteredBySearchAndDate.filter(title => {
       return statusFilter === 'Todos' || title.status === statusFilter;
     });
-  }, [titlesFilteredBySearch, statusFilter]);
+  }, [titlesFilteredBySearchAndDate, statusFilter]);
 
   const totals = useMemo(() => {
       const result = {
@@ -170,7 +177,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           total: { count: 0, value: 0 }
       };
 
-      titlesFilteredBySearch.forEach(title => {
+      titlesFilteredBySearchAndDate.forEach(title => {
           if (result[title.status]) {
               result[title.status].count++;
               result[title.status].value += title.valor;
@@ -179,11 +186,12 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           result.total.value += title.valor;
       });
       return result;
-  }, [titlesFilteredBySearch]);
+  }, [titlesFilteredBySearchAndDate]);
 
   const handleClearFilters = () => {
     setStatusFilter('Todos');
     setSearchTerm('');
+    setDateRange({ start: '', end: '' });
   };
 
   const handleExportXLSX = () => {
@@ -495,7 +503,29 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             <SearchIcon className="h-4 w-4 text-text-secondary" />
             </div>
         </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
+            <div className="relative">
+                <select 
+                    value={statusFilter} 
+                    onChange={(e) => setStatusFilter(e.target.value as StatusTitulo | 'Todos')}
+                    className="bg-white border border-border rounded-xl px-3 py-1.5 pr-8 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary appearance-none h-9"
+                >
+                    <option value="Todos">Todos os Status</option>
+                    <option value={StatusTitulo.A_PRORROGAR}>{StatusTitulo.A_PRORROGAR}</option>
+                    <option value={StatusTitulo.PRORROGADO}>{StatusTitulo.PRORROGADO}</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-text-secondary">
+                    <ChevronDownIcon className="h-4 w-4" />
+                </div>
+            </div>
+
+            <div className="flex items-center gap-2 bg-secondary rounded-xl px-2 border border-border h-9">
+                <span className="text-xs font-medium text-text-secondary whitespace-nowrap">Novo Venc.:</span>
+                <input type="date" value={dateRange.start} onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))} className="bg-transparent border-none p-0 text-sm text-text-primary focus:ring-0 w-24"/>
+                <span className="text-xs text-text-secondary">-</span>
+                <input type="date" value={dateRange.end} onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))} className="bg-transparent border-none p-0 text-sm text-text-primary focus:ring-0 w-24"/>
+            </div>
+
             <button onClick={handleClearFilters} className="px-3 py-1.5 rounded-full bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-9 transition-colors">Limpar</button>
         </div>
       </div>
