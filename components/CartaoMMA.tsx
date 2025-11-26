@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { UploadIcon, SearchIcon, DownloadIcon, ArrowLeftIcon } from './icons';
 
@@ -328,7 +329,7 @@ const CartaoMMA: React.FC<CartaoMmaProps> = ({ onBack }) => {
             </div>
 
             <div className="bg-card shadow-md rounded-2xl overflow-x-auto">
-                <table className="w-full text-base text-left text-text-secondary">
+                <table className="w-full text-sm text-left text-text-secondary">
                     <thead className="text-sm text-text-primary uppercase bg-secondary">
                         <tr>
                             {['Data da Transação', 'Extrato da conta', 'Transação', 'Valor original', 'Categoria da Compra', 'Status'].map(header => (

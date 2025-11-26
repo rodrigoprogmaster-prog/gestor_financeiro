@@ -1,9 +1,10 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, ArrowLeftIcon, SpinnerIcon, ChevronDownIcon, RefreshIcon } from './icons';
+import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, ArrowLeftIcon, SpinnerIcon, ChevronDownIcon, RefreshIcon, ClipboardCheckIcon } from './icons';
 
 enum StatusBoleto {
   A_VENCER = 'A Vencer',
+  LANCADO_SOLINTER = 'Lançado no Solinter',
   VENCIDO = 'Vencido',
   PAGO = 'Pago',
 }
@@ -15,6 +16,7 @@ interface Boleto {
   vencimento: string; // YYYY-MM-DD
   valor: number;
   pago: boolean;
+  lancadoSolinter?: boolean;
 }
 
 interface DespesaRecorrente {
@@ -116,7 +118,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [editingBoleto, setEditingBoleto] = useState<Partial<Boleto> & { vencimento_br?: string } | null>(null);
     const [boletoErrors, setBoletoErrors] = useState<BoletoErrors>({});
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState<StatusBoleto | 'Todos'>(StatusBoleto.VENCIDO);
+    const [statusFilter, setStatusFilter] = useState<StatusBoleto | 'Todos'>(StatusBoleto.A_VENCER);
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
@@ -148,6 +150,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
     const getDynamicStatus = (boleto: Boleto): StatusBoleto => {
         if (boleto.pago) return StatusBoleto.PAGO;
+        if (boleto.lancadoSolinter) return StatusBoleto.LANCADO_SOLINTER;
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
         const vencimento = new Date(boleto.vencimento + 'T00:00:00');
@@ -222,7 +225,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const handleOpenAddModal = () => {
         if (activeView === 'boletos') {
             setBoletoErrors({});
-            setEditingBoleto({ vencimento_br: '', pago: false });
+            setEditingBoleto({ vencimento_br: '', pago: false, lancadoSolinter: false });
         } else {
             setDespesaErrors({});
             setEditingDespesa({ diaVencimento: 1, recorrencia: 'Mensal', status: 'Pendente' });
@@ -257,6 +260,14 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         if (boleto.pago) return;
         const action = () => setBoletos(boletos.map(b => b.id === boleto.id ? { ...b, pago: true } : b));
         setConfirmAction({ action, message: 'Deseja marcar este boleto como pago?' });
+        setIsConfirmOpen(true);
+    };
+
+    const handleToggleSolinter = (boleto: Boleto) => {
+        if (boleto.pago) return;
+        const newVal = !boleto.lancadoSolinter;
+        const action = () => setBoletos(boletos.map(b => b.id === boleto.id ? { ...b, lancadoSolinter: newVal } : b));
+        setConfirmAction({ action, message: newVal ? 'Deseja marcar este boleto como lançado no Solinter?' : 'Deseja remover o status de lançado no Solinter?' });
         setIsConfirmOpen(true);
     };
 
@@ -372,7 +383,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     
                     if (existingKeys.has(duplicateKey)) { duplicateCount++; continue; }
 
-                    newBoletos.push({ ...newBoletoData, id: `import-${Date.now()}-${index}`, pago: false });
+                    newBoletos.push({ ...newBoletoData, id: `import-${Date.now()}-${index}`, pago: false, lancadoSolinter: false });
                     existingKeys.add(duplicateKey);
                     importedCount++;
                 }
@@ -491,7 +502,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
         {activeView === 'boletos' ? (
             <>
-                <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="mb-6 grid grid-cols-1 sm:grid-cols-4 gap-4">
                     {(Object.values(StatusBoleto) as StatusBoleto[]).map(status => {
                         const total = totals[status] || { count: 0, value: 0 };
                         const isActive = statusFilter === status;
@@ -547,7 +558,11 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             </thead>
                             <tbody className="divide-y divide-border bg-white">
                                 {filteredBoletos.length > 0 ? filteredBoletos.slice(0, displayCount).map(boleto => (
-                                    <tr key={boleto.id} className="hover:bg-secondary transition-colors">
+                                    <tr 
+                                        key={boleto.id} 
+                                        className="hover:bg-secondary transition-colors cursor-pointer"
+                                        onClick={() => handleEditClick(boleto)}
+                                    >
                                         <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{boleto.fornecedor}</td>
                                         <td className="px-6 py-4 text-text-secondary whitespace-nowrap">{boleto.pagador}</td>
                                         <td className="px-6 py-4 text-text-secondary whitespace-nowrap">{formatDateToBR(boleto.vencimento)}</td>
@@ -559,13 +574,20 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                                 ? 'bg-danger/20 text-danger border-danger/30' 
                                                 : boleto.dynamicStatus === StatusBoleto.PAGO 
                                                 ? 'bg-success/20 text-success border-success/30' 
+                                                : boleto.dynamicStatus === StatusBoleto.LANCADO_SOLINTER
+                                                ? 'bg-blue-100 text-blue-700 border-blue-200'
                                                 : 'bg-primary/20 text-primary border-primary/30'
                                             }`}>
                                                 {boleto.dynamicStatus}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-center">
+                                        <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex items-center justify-center gap-2">
+                                                {!boleto.pago && (
+                                                    <button onClick={() => handleToggleSolinter(boleto)} title={boleto.lancadoSolinter ? "Desmarcar Solinter" : "Lançar no Solinter"} className={`p-1.5 rounded-full transition-colors ${boleto.lancadoSolinter ? 'text-blue-600 bg-blue-100 hover:bg-blue-200' : 'text-text-secondary hover:text-blue-600 hover:bg-blue-100'}`}>
+                                                        <ClipboardCheckIcon className="h-4 w-4"/>
+                                                    </button>
+                                                )}
                                                 {!boleto.pago && <button onClick={() => handleMarkAsPaid(boleto)} title="Pagar" className="text-success p-1.5 rounded-full hover:bg-success/10 transition-colors"><CheckIcon className="h-4 w-4"/></button>}
                                                 <button onClick={() => handleEditClick(boleto)} title="Editar" className="text-primary p-1.5 rounded-full hover:bg-primary/10 transition-colors"><EditIcon className="h-4 w-4"/></button>
                                                 <button onClick={() => handleDeleteClick(boleto.id)} title="Excluir" className="text-danger p-1.5 rounded-full hover:bg-danger/10 transition-colors"><TrashIcon className="h-4 w-4"/></button>
@@ -686,6 +708,18 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                         <input name="valor" value={formatCurrency(editingBoleto.valor || 0)} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.valor ? 'border-danger' : ''}`} />
                                         {boletoErrors.valor && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.valor}</p>}
                                     </div>
+                                </div>
+                                <div>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            name="lancadoSolinter" 
+                                            checked={editingBoleto.lancadoSolinter || false} 
+                                            onChange={(e) => setEditingBoleto(prev => ({ ...prev, lancadoSolinter: e.target.checked }))}
+                                            className="h-5 w-5 text-primary rounded focus:ring-primary border-gray-300"
+                                        />
+                                        <span className="text-sm font-bold text-text-primary">Lançado no Solinter</span>
+                                    </label>
                                 </div>
                             </>
                         ) : editingDespesa ? (

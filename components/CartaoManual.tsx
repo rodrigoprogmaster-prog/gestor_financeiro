@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { PlusIcon, TrashIcon, EditIcon, SearchIcon, DownloadIcon, ArrowLeftIcon } from './icons';
 
@@ -8,6 +9,7 @@ interface ManualTransaction {
   transacao: string;
   categoria: string;
   valor: number;
+  status?: string; // Added status field
 }
 
 // Date helpers
@@ -103,7 +105,8 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
             dataTransacao_br: '', 
             transacao: '',
             categoria: '',
-            valor: 0 
+            valor: 0,
+            status: 'Pendente'
         });
         setIsModalOpen(true);
     };
@@ -120,6 +123,15 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
         const action = () => setTransactions(prev => prev.filter(t => t.id !== id));
         setConfirmAction({ action, message: 'Deseja excluir esta transação?' });
         setIsConfirmOpen(true);
+    };
+
+    const handleStatusToggle = (id: string) => {
+        setTransactions(prev => prev.map(t => {
+            if (t.id === id) {
+                return { ...t, status: t.status === 'Lançado' ? 'Pendente' : 'Lançado' };
+            }
+            return t;
+        }));
     };
 
     const handleCloseModal = () => {
@@ -158,7 +170,8 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
             transacao: editingTransaction.transacao,
             categoria: editingTransaction.categoria || 'Geral',
             valor: editingTransaction.valor,
-            dataTransacao: formatDateToISO(editingTransaction.dataTransacao_br)
+            dataTransacao: formatDateToISO(editingTransaction.dataTransacao_br),
+            status: editingTransaction.status || 'Pendente'
         };
 
         if (editingTransaction.id) {
@@ -185,12 +198,13 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
             'Data': formatDateToBR(t.dataTransacao),
             'Descrição': t.transacao,
             'Categoria': t.categoria,
-            'Valor': t.valor
+            'Valor': t.valor,
+            'Status': t.status || 'Pendente'
         }));
 
         const ws = XLSX.utils.json_to_sheet(dataToExport);
         
-        XLSX.utils.sheet_add_aoa(ws, [[null, null, 'Total:', totals]], { origin: -1 });
+        XLSX.utils.sheet_add_aoa(ws, [[null, null, null, 'Total:', totals]], { origin: -1 });
         
         const range = XLSX.utils.decode_range(ws['!ref']);
         // Format value column (index 3 -> D)
@@ -252,30 +266,40 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
             </div>
 
             <div className="bg-card shadow-md rounded-2xl overflow-x-auto">
-                <table className="w-full text-base text-left text-text-secondary">
+                <table className="w-full text-sm text-left text-text-secondary">
                     <thead className="text-sm text-text-primary uppercase bg-secondary">
                         <tr>
                             <th className="px-6 py-3">Data</th>
                             <th className="px-6 py-3">Descrição</th>
                             <th className="px-6 py-3">Categoria</th>
                             <th className="px-6 py-3 text-right">Valor</th>
+                            <th className="px-6 py-3 text-center">Status</th>
                             <th className="px-6 py-3 text-center">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {filteredTransactions.length > 0 ? (
                             filteredTransactions.map(item => (
-                                <tr key={item.id} className="bg-card border-b border-border hover:bg-secondary transition-colors">
+                                <tr 
+                                    key={item.id} 
+                                    className="bg-card border-b border-border hover:bg-secondary transition-colors cursor-pointer"
+                                    onClick={() => handleStatusToggle(item.id)}
+                                >
                                     <td className="px-6 py-4">{formatDateToBR(item.dataTransacao)}</td>
                                     <td className="px-6 py-4 font-medium text-text-primary">{item.transacao}</td>
                                     <td className="px-6 py-4">{item.categoria}</td>
                                     <td className="px-6 py-4 text-right font-semibold text-text-primary">{formatCurrency(item.valor)}</td>
                                     <td className="px-6 py-4 text-center">
+                                        <span className={`px-2 py-1 text-xs font-bold rounded-full border ${item.status === 'Lançado' ? 'bg-success/10 text-success border-success/20' : 'bg-secondary text-text-secondary border-border'}`}>
+                                            {item.status || 'Pendente'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
                                         <div className="flex items-center justify-center gap-2">
-                                            <button onClick={() => handleEditClick(item)} className="text-primary hover:text-primary/80 p-2 rounded-full hover:bg-primary/10 transition-colors">
+                                            <button onClick={(e) => { e.stopPropagation(); handleEditClick(item); }} className="text-primary hover:text-primary/80 p-2 rounded-full hover:bg-primary/10 transition-colors">
                                                 <EditIcon className="h-5 w-5" />
                                             </button>
-                                            <button onClick={() => handleDeleteClick(item.id)} className="text-danger hover:text-danger/80 p-2 rounded-full hover:bg-danger/10 transition-colors">
+                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(item.id); }} className="text-danger hover:text-danger/80 p-2 rounded-full hover:bg-danger/10 transition-colors">
                                                 <TrashIcon className="h-5 w-5" />
                                             </button>
                                         </div>
@@ -284,7 +308,7 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={5} className="text-center py-16">
+                                <td colSpan={6} className="text-center py-16">
                                     <div className="flex flex-col items-center justify-center text-text-secondary">
                                         <SearchIcon className="w-12 h-12 mb-4 text-gray-300" />
                                         <h3 className="text-xl font-semibold text-text-primary">Nenhuma Transação Encontrada</h3>
