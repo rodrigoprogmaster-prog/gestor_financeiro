@@ -107,7 +107,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [errors, setErrors] = useState<BoletoErrors>({});
     
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState<StatusBoletoReceber | 'Todos'>('Todos');
+    const [statusFilter, setStatusFilter] = useState<StatusBoletoReceber | 'Todos'>(StatusBoletoReceber.VENCIDO);
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
     const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
     
