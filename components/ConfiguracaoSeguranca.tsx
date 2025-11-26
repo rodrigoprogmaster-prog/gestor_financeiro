@@ -78,7 +78,11 @@ const ChangePasswordModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     );
 };
 
-const googleFonts = ['Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Oswald', 'Source Sans Pro', 'Poppins', 'Merriweather', 'Playfair Display', 'Inter', 'Nunito', 'Raleway'];
+const googleFonts = [
+    'Inter', 'Roboto', 'Lato', 'Montserrat', 'Open Sans', 'Poppins', 
+    'Source Sans 3', 'Outfit', 'DM Sans', 'Plus Jakarta Sans', 'Work Sans', 
+    'Manrope', 'Raleway', 'Fira Sans', 'Nunito Sans'
+];
 
 const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [isUnlocked, setIsUnlocked] = useState(false);
