@@ -27,3 +27,9 @@ export interface ContaBancaria {
   agencia: string;
   contaCorrente: string; // Represents C/C
 }
+
+export interface SearchItem {
+  label: string;
+  view: AppView;
+  keywords: string[];
+}

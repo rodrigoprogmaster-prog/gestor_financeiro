@@ -4,14 +4,16 @@ import Clock from './Clock';
 import {
   WalletIcon,
   MenuIcon,
+  SearchIcon, // Import SearchIcon
 } from './icons';
 
 interface HeaderProps {
   setView: (view: AppView) => void;
   onToggleSidebar: () => void;
+  onOpenGlobalSearch: () => void; // New prop
 }
 
-const Header: React.FC<HeaderProps> = ({ setView, onToggleSidebar }) => {
+const Header: React.FC<HeaderProps> = ({ setView, onToggleSidebar, onOpenGlobalSearch }) => {
   
   const handleLogoClick = () => {
     setView(AppView.DASHBOARD);
@@ -43,6 +45,18 @@ const Header: React.FC<HeaderProps> = ({ setView, onToggleSidebar }) => {
       </div>
       
       <div className="flex items-center gap-3">
+        {/* Global Search Input */}
+        <button
+            onClick={onOpenGlobalSearch}
+            className="flex items-center gap-2 px-3 py-2 rounded-full bg-secondary text-text-secondary border border-border hover:bg-border transition-colors text-sm"
+            aria-label="Buscar em todo o sistema"
+            title="Buscar em todo o sistema (Ctrl + Enter)"
+        >
+            <SearchIcon className="h-4 w-4" />
+            <span className="hidden sm:inline-block">Buscar...</span>
+            <span className="hidden md:inline-block text-xs font-mono text-primary/70 bg-white/50 px-1.5 py-0.5 rounded-md border border-primary/20">Ctrl+Enter</span>
+        </button>
+
         <div className="hidden md:block text-right mr-4">
           <Clock />
         </div>

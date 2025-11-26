@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { AppView } from './types';
+import React, { useState, useEffect, useCallback } from 'react';
+import { AppView, SearchItem } from './types';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -15,6 +15,7 @@ import ConfiguracaoSeguranca from './components/ConfiguracaoSeguranca';
 import PrevisaoFinanceiraHome from './components/PrevisaoFinanceiraHome';
 import PagamentosDiariosHome from './components/PagamentosDiariosHome';
 import GerenciadorTarefas from './components/GerenciadorTarefas';
+import GlobalSearch from './components/GlobalSearch';
 
 
 const App: React.FC = () => {
@@ -23,6 +24,31 @@ const App: React.FC = () => {
     return sessionStorage.getItem('isAuthenticated') === 'true';
   });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
+  const [globalSearchTerm, setGlobalSearchTerm] = useState('');
+
+  const handleCloseGlobalSearch = useCallback(() => {
+    setIsGlobalSearchOpen(false);
+    setGlobalSearchTerm('');
+  }, []);
+
+  useEffect(() => {
+    // Global keyboard shortcut for search (Ctrl + Enter)
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === 'Enter') {
+        event.preventDefault(); // Prevent default browser action for Ctrl+Enter
+        setIsGlobalSearchOpen(prev => !prev);
+      } else if (event.key === 'Escape' && isGlobalSearchOpen) {
+        event.preventDefault();
+        handleCloseGlobalSearch();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isGlobalSearchOpen, handleCloseGlobalSearch]);
 
   useEffect(() => {
     // Apply theme on load
@@ -114,6 +140,12 @@ const App: React.FC = () => {
   
   const handleToggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
+  const handleSearchNavigate = useCallback((view: AppView) => {
+    setCurrentView(view);
+    handleCloseGlobalSearch();
+  }, [handleCloseGlobalSearch]);
+
+
   if (!isAuthenticated) {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
@@ -129,13 +161,11 @@ const App: React.FC = () => {
       case AppView.TITULOS_PRORROGADOS:
         return <TitulosProrrogados />;
       case AppView.PREVISAO_FINANCEIRA:
-        return <PrevisaoFinanceiraHome initialTab="fabrica" />;
-      case AppView.PAGAMENTOS_DIARIOS:
-        return <PagamentosDiariosHome initialTab="fabrica" />;
       case AppView.PREVISAO_FABRICA: // These are sub-views, their `onBack` prop will be to return to PrevisaoFinanceiraHome
         return <PrevisaoFinanceiraHome initialTab="fabrica" />;
       case AppView.PREVISAO_CRISTIANO: // These are sub-views, their `onBack` prop will be to return to PrevisaoFinanceiraHome
         return <PrevisaoFinanceiraHome initialTab="cristiano" />;
+      case AppView.PAGAMENTOS_DIARIOS:
       case AppView.PAGAMENTOS_FABRICA: // These are sub-views, their `onBack` prop will be to return to PagamentosDiariosHome
         return <PagamentosDiariosHome initialTab="fabrica" />;
       case AppView.PAGAMENTOS_CRISTIANO: // These are sub-views, their `onBack` prop will be to return to PagamentosDiariosHome
@@ -163,6 +193,7 @@ const App: React.FC = () => {
       <Header 
         setView={setCurrentView} 
         onToggleSidebar={handleToggleSidebar} 
+        onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
       />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar 
@@ -178,6 +209,16 @@ const App: React.FC = () => {
             </div>
         </main>
       </div>
+      
+      {isGlobalSearchOpen && (
+        <GlobalSearch
+          isOpen={isGlobalSearchOpen}
+          searchTerm={globalSearchTerm}
+          setSearchTerm={setGlobalSearchTerm}
+          onNavigate={handleSearchNavigate}
+          onClose={handleCloseGlobalSearch}
+        />
+      )}
     </div>
   );
 };
