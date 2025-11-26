@@ -1,9 +1,8 @@
 
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, 
     // Add ArrowLeftIcon here
-    ArrowLeftIcon, SpinnerIcon, ChevronDownIcon } from './icons';
+    ArrowLeftIcon, SpinnerIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
 
 // Enum for status
 enum StatusTitulo {
@@ -100,9 +99,8 @@ const newTitleTemplate: Omit<Title, 'id'> = {
   status: StatusTitulo.A_PRORROGAR,
 };
 
-// Constants for infinite scroll
-const ITEMS_PER_LOAD = 20;
-const SCROLL_THRESHOLD = 100; // pixels from the bottom to trigger loading
+// Constants for pagination
+const ITEMS_PER_PAGE = 20;
 
 const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const STORAGE_KEY = 'titulos_prorrogados_data';
@@ -132,7 +130,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     message: string
   }>({ action: null, message: '' });
   const [errors, setErrors] = useState<TitleErrors>({});
-  const [selectedTitles, setSelectedTitles] = new Set<number>();
+  const [selectedTitles, setSelectedTitles] = useState<Set<number>>(new Set());
 
 
   // Filter states
@@ -140,13 +138,12 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
-  // Infinite scroll states
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [displayCount, setDisplayCount] = useState(ITEMS_PER_LOAD);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     setSelectedTitles(new Set());
+    setCurrentPage(1); // Reset page on filters change
   }, [statusFilter, searchTerm, dateRange]);
 
   const titlesFilteredBySearchAndDate = useMemo(() => {
@@ -167,11 +164,16 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   }, [titles, searchTerm, dateRange]);
 
   const filteredTitles = useMemo(() => {
-    setDisplayCount(ITEMS_PER_LOAD); 
     return titlesFilteredBySearchAndDate.filter(title => {
       return statusFilter === 'Todos' || title.status === statusFilter;
     });
   }, [titlesFilteredBySearchAndDate, statusFilter]);
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredTitles.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedTitles = filteredTitles.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
 
   const totals = useMemo(() => {
       const result = {
@@ -429,20 +431,6 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       setConfirmAction({ action: null, message: '' });
   }
 
-  const handleScroll = () => {
-    if (scrollRef.current) {
-        const { scrollTop, clientHeight, scrollHeight } = scrollRef.current;
-        if (scrollHeight - scrollTop - clientHeight < SCROLL_THRESHOLD && !isLoadingMore && displayCount < filteredTitles.length) {
-            setIsLoadingMore(true);
-            setTimeout(() => {
-                setDisplayCount(prevCount => Math.min(prevCount + ITEMS_PER_LOAD, filteredTitles.length));
-                setIsLoadingMore(false);
-            }, 300); // Simulate network delay
-        }
-    }
-  };
-
-
   return (
     <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in flex flex-col h-full">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
@@ -540,7 +528,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       </div>
 
       <div className="bg-card shadow-sm rounded-2xl overflow-hidden flex flex-col flex-grow border border-border">
-        <div ref={scrollRef} onScroll={handleScroll} className="overflow-x-auto overflow-y-auto h-full">
+        <div className="overflow-x-auto overflow-y-auto flex-grow">
             <table className="min-w-full divide-y divide-border text-sm text-left">
             <thead className="bg-secondary text-xs uppercase font-medium text-text-secondary sticky top-0 z-10">
                 <tr>
@@ -562,8 +550,8 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 </tr>
             </thead>
             <tbody className="divide-y divide-border bg-white">
-                {filteredTitles.length > 0 ? (
-                filteredTitles.slice(0, displayCount).map((title) => (
+                {paginatedTitles.length > 0 ? (
+                paginatedTitles.map((title) => (
                     <tr 
                         key={title.id} 
                         className={`hover:bg-secondary transition-colors cursor-pointer ${selectedTitles.has(title.id) ? 'bg-primary/5' : ''}`}
@@ -607,16 +595,33 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     </td>
                 </tr>
                 )}
-                 {isLoadingMore && (
-                    <tr>
-                        <td colSpan={8} className="text-center py-4 text-primary">
-                            <SpinnerIcon className="h-5 w-5 animate-spin mx-auto" />
-                            Carregando mais...
-                        </td>
-                    </tr>
-                )}
             </tbody>
             </table>
+        </div>
+        {/* Pagination Footer */}
+        <div className="flex justify-between items-center p-4 border-t border-border bg-card rounded-b-2xl">
+            <div className="text-sm text-text-secondary">
+                Exibindo {filteredTitles.length > 0 ? startIndex + 1 : 0} a {Math.min(startIndex + ITEMS_PER_PAGE, filteredTitles.length)} de {filteredTitles.length} registros
+            </div>
+            <div className="flex items-center gap-2">
+                <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    title="Página Anterior"
+                >
+                    <ChevronLeftIcon className="h-5 w-5 text-text-primary" />
+                </button>
+                <span className="text-sm font-medium text-text-primary">Página {currentPage} de {Math.max(1, totalPages)}</span>
+                <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    title="Próxima Página"
+                >
+                    <ChevronRightIcon className="h-5 w-5 text-text-primary" />
+                </button>
+            </div>
         </div>
       </div>
 

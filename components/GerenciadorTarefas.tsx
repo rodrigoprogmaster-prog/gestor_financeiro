@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { PlusIcon, TrashIcon, SearchIcon, EditIcon, CheckIcon, CalendarClockIcon, ArrowLeftIcon, ListIcon, KanbanIcon, ChevronDownIcon } from './icons';
+import { PlusIcon, TrashIcon, SearchIcon, EditIcon, CheckIcon, CalendarClockIcon, ArrowLeftIcon, ListIcon, KanbanIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
 
 // Enums
 enum StatusTarefa {
@@ -52,6 +52,8 @@ const isValidBRDate = (dateString: string): boolean => {
     return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
 };
 
+const ITEMS_PER_PAGE = 20;
+
 const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const STORAGE_KEY = 'gerenciador_tarefas_data';
     const [tarefas, setTarefas] = useState<Tarefa[]>(() => {
@@ -78,10 +80,16 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [isLembreteOpen, setIsLembreteOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'tarefas' | 'analise'>('tarefas');
     const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
+    const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(tarefas));
     }, [tarefas]);
+
+    // Reset page on filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, statusFilter, dateRange]);
 
     useEffect(() => {
         const today = new Date();
@@ -134,6 +142,11 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             return new Date(a.dataVencimento).getTime() - new Date(b.dataVencimento).getTime();
         });
     }, [allTarefasWithStatus, statusFilter, searchTerm, dateRange]);
+
+    // Pagination Logic
+    const totalPages = Math.ceil(filteredTarefas.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const paginatedTarefas = filteredTarefas.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
     const analysisData = useMemo(() => {
         const statusCounts: Record<string, number> = { 'Atrasada': 0, [StatusTarefa.PENDENTE]: 0, [StatusTarefa.EM_ANDAMENTO]: 0, [StatusTarefa.CONCLUIDA]: 0 };
@@ -358,15 +371,44 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             </div>
 
             {viewMode === 'list' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 flex-grow content-start overflow-y-auto pb-4 pr-1 custom-scrollbar">
-                    {filteredTarefas.length > 0 ? filteredTarefas.map(tarefa => renderTaskCard(tarefa)) : (
-                        <div className="col-span-full flex flex-col items-center justify-center text-text-secondary py-20 bg-white/50 rounded-3xl border-2 border-dashed border-border">
-                            <SearchIcon className="w-12 h-12 mb-4 text-gray-300"/>
-                            <h3 className="text-lg font-bold text-text-primary">Nenhuma Tarefa Encontrada</h3>
-                            <p className="text-sm mt-2">Tente ajustar os filtros ou crie uma nova tarefa para começar.</p>
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 flex-grow content-start overflow-y-auto pb-4 pr-1 custom-scrollbar">
+                        {paginatedTarefas.length > 0 ? paginatedTarefas.map(tarefa => renderTaskCard(tarefa)) : (
+                            <div className="col-span-full flex flex-col items-center justify-center text-text-secondary py-20 bg-white/50 rounded-3xl border-2 border-dashed border-border">
+                                <SearchIcon className="w-12 h-12 mb-4 text-gray-300"/>
+                                <h3 className="text-lg font-bold text-text-primary">Nenhuma Tarefa Encontrada</h3>
+                                <p className="text-sm mt-2">Tente ajustar os filtros ou crie uma nova tarefa para começar.</p>
+                            </div>
+                        )}
+                    </div>
+                    {/* Pagination Footer */}
+                    {filteredTarefas.length > 0 && (
+                        <div className="flex justify-between items-center p-4 border-t border-border bg-card rounded-b-2xl mt-4">
+                            <div className="text-sm text-text-secondary">
+                                Exibindo {filteredTarefas.length > 0 ? startIndex + 1 : 0} a {Math.min(startIndex + ITEMS_PER_PAGE, filteredTarefas.length)} de {filteredTarefas.length} registros
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    title="Página Anterior"
+                                >
+                                    <ChevronLeftIcon className="h-5 w-5 text-text-primary" />
+                                </button>
+                                <span className="text-sm font-medium text-text-primary">Página {currentPage} de {Math.max(1, totalPages)}</span>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages || totalPages === 0}
+                                    className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    title="Próxima Página"
+                                >
+                                    <ChevronRightIcon className="h-5 w-5 text-text-primary" />
+                                </button>
+                            </div>
                         </div>
                     )}
-                </div>
+                </>
             ) : (
                 <div className="flex-grow overflow-hidden pb-2">
                     {renderKanban()}
@@ -381,81 +423,102 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         const renderProgressBar = (count: number, total: number, colorClass: string) => {
             const percentage = total > 0 ? (count / total) * 100 : 0;
             return (
-                <div className="w-full bg-secondary/50 rounded-full h-3 mt-3 overflow-hidden">
-                    <div className={`h-3 rounded-full ${colorClass} transition-all duration-500`} style={{ width: `${percentage}%` }}></div>
+                <div className="w-full bg-secondary rounded-full h-2.5 mt-2">
+                    <div className={`h-2.5 rounded-full ${colorClass}`} style={{ width: `${percentage}%` }}></div>
                 </div>
             );
         };
 
         return (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 overflow-y-auto pb-6">
-                <div className="bg-white p-8 rounded-3xl border border-border shadow-sm">
-                    <div className="flex items-center gap-3 mb-8 border-b border-border pb-4">
-                        <div className="p-3 bg-blue-50 rounded-2xl text-blue-600"><KanbanIcon className="h-6 w-6" /></div>
-                        <h4 className="font-bold text-xl text-text-primary">Por Status</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 overflow-y-auto pb-4 custom-scrollbar">
+                {/* Status Card */}
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-border">
+                    <h4 className="font-bold text-lg text-text-primary mb-4">Por Status</h4>
+                    <div className="space-y-4">
+                        <div>
+                            <div className="flex justify-between text-sm mb-1">
+                                <span className="text-text-secondary">Concluídas</span>
+                                <span className="font-bold text-text-primary">{statusCounts[StatusTarefa.CONCLUIDA]} ({total > 0 ? Math.round((statusCounts[StatusTarefa.CONCLUIDA] / total) * 100) : 0}%)</span>
+                            </div>
+                            {renderProgressBar(statusCounts[StatusTarefa.CONCLUIDA], total, 'bg-success')}
+                        </div>
+                        <div>
+                            <div className="flex justify-between text-sm mb-1">
+                                <span className="text-text-secondary">Em Andamento</span>
+                                <span className="font-bold text-text-primary">{statusCounts[StatusTarefa.EM_ANDAMENTO]} ({total > 0 ? Math.round((statusCounts[StatusTarefa.EM_ANDAMENTO] / total) * 100) : 0}%)</span>
+                            </div>
+                            {renderProgressBar(statusCounts[StatusTarefa.EM_ANDAMENTO], total, 'bg-primary')}
+                        </div>
+                        <div>
+                            <div className="flex justify-between text-sm mb-1">
+                                <span className="text-text-secondary">Pendentes</span>
+                                <span className="font-bold text-text-primary">{statusCounts[StatusTarefa.PENDENTE]} ({total > 0 ? Math.round((statusCounts[StatusTarefa.PENDENTE] / total) * 100) : 0}%)</span>
+                            </div>
+                            {renderProgressBar(statusCounts[StatusTarefa.PENDENTE], total, 'bg-warning')}
+                        </div>
+                         <div>
+                            <div className="flex justify-between text-sm mb-1">
+                                <span className="text-text-secondary">Atrasadas</span>
+                                <span className="font-bold text-text-primary">{statusCounts['Atrasada']} ({total > 0 ? Math.round((statusCounts['Atrasada'] / total) * 100) : 0}%)</span>
+                            </div>
+                            {renderProgressBar(statusCounts['Atrasada'], total, 'bg-danger')}
+                        </div>
                     </div>
-                    <ul className="space-y-8">
-                        {Object.entries(statusCounts).map(([status, count]) => (
-                            <li key={status}>
-                                <div className="flex justify-between items-end mb-1">
-                                    <span className="text-sm font-bold text-text-secondary uppercase tracking-wide">{status}</span>
-                                    <div className="text-right">
-                                        <span className="text-xl font-bold text-text-primary">{count as number}</span>
-                                        <span className="text-xs text-text-secondary ml-1 font-medium">({total > 0 ? Math.round(((count as number)/total)*100) : 0}%)</span>
-                                    </div>
-                                </div>
-                                {renderProgressBar(count as number, total, status === 'Atrasada' ? 'bg-red-500' : status === StatusTarefa.CONCLUIDA ? 'bg-green-500' : 'bg-primary')}
-                            </li>
-                        ))}
-                    </ul>
                 </div>
-                 <div className="bg-white p-8 rounded-3xl border border-border shadow-sm">
-                    <div className="flex items-center gap-3 mb-8 border-b border-border pb-4">
-                        <div className="p-3 bg-yellow-50 rounded-2xl text-yellow-600"><ArrowLeftIcon className="h-6 w-6 rotate-90" /></div>
-                        <h4 className="font-bold text-xl text-text-primary">Por Prioridade</h4>
+
+                {/* Priority Card */}
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-border">
+                    <h4 className="font-bold text-lg text-text-primary mb-4">Por Prioridade</h4>
+                    <div className="space-y-4">
+                         <div>
+                            <div className="flex justify-between text-sm mb-1">
+                                <span className="text-text-secondary">Alta</span>
+                                <span className="font-bold text-text-primary">{priorityCounts[PrioridadeTarefa.ALTA]}</span>
+                            </div>
+                            {renderProgressBar(priorityCounts[PrioridadeTarefa.ALTA], total, 'bg-danger')}
+                        </div>
+                        <div>
+                            <div className="flex justify-between text-sm mb-1">
+                                <span className="text-text-secondary">Média</span>
+                                <span className="font-bold text-text-primary">{priorityCounts[PrioridadeTarefa.MEDIA]}</span>
+                            </div>
+                            {renderProgressBar(priorityCounts[PrioridadeTarefa.MEDIA], total, 'bg-warning')}
+                        </div>
+                        <div>
+                            <div className="flex justify-between text-sm mb-1">
+                                <span className="text-text-secondary">Baixa</span>
+                                <span className="font-bold text-text-primary">{priorityCounts[PrioridadeTarefa.BAIXA]}</span>
+                            </div>
+                            {renderProgressBar(priorityCounts[PrioridadeTarefa.BAIXA], total, 'bg-blue-500')}
+                        </div>
                     </div>
-                    <ul className="space-y-8">
-                        {Object.entries(priorityCounts).map(([priority, count]) => (
-                             <li key={priority}>
-                                <div className="flex justify-between items-end mb-1">
-                                    <span className="text-sm font-bold text-text-secondary uppercase tracking-wide">{priority}</span>
-                                    <div className="text-right">
-                                        <span className="text-xl font-bold text-text-primary">{count as number}</span>
-                                    </div>
-                                </div>
-                                {renderProgressBar(count as number, total, priority === PrioridadeTarefa.ALTA ? 'bg-red-500' : priority === PrioridadeTarefa.MEDIA ? 'bg-yellow-500' : 'bg-blue-500')}
-                            </li>
-                        ))}
-                    </ul>
                 </div>
-                 <div className="bg-white p-8 rounded-3xl border border-border shadow-sm">
-                    <div className="flex items-center gap-3 mb-8 border-b border-border pb-4">
-                        <div className="p-3 bg-purple-50 rounded-2xl text-purple-600"><ListIcon className="h-6 w-6" /></div>
-                        <h4 className="font-bold text-xl text-text-primary">Por Categoria</h4>
-                    </div>
-                     <ul className="space-y-8 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                        {Object.entries(categoryCounts).sort(([,a],[,b]) => (b as number) - (a as number)).map(([category, count]) => (
-                             <li key={category}>
-                                <div className="flex justify-between items-end mb-1">
-                                    <span className="text-sm font-bold text-text-secondary uppercase tracking-wide">{category}</span>
-                                    <span className="text-xl font-bold text-text-primary">{count as number}</span>
-                                </div>
-                                {renderProgressBar(count as number, total, 'bg-indigo-500')}
-                            </li>
+
+                {/* Categories Card */}
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-border">
+                    <h4 className="font-bold text-lg text-text-primary mb-4">Categorias</h4>
+                    <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                        {Object.entries(categoryCounts).map(([cat, count]) => (
+                            <div key={cat} className="flex justify-between items-center p-2 hover:bg-secondary/50 rounded-lg transition-colors">
+                                <span className="text-sm font-medium text-text-secondary">{cat || 'Sem Categoria'}</span>
+                                <span className="text-xs font-bold bg-secondary px-2 py-1 rounded-full text-text-primary">{count}</span>
+                            </div>
                         ))}
-                    </ul>
+                        {Object.keys(categoryCounts).length === 0 && (
+                            <p className="text-sm text-text-secondary text-center py-4">Nenhuma categoria registrada.</p>
+                        )}
+                    </div>
                 </div>
             </div>
         );
     };
 
-
     return (
-        <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in flex flex-col h-full bg-background">
-            <div className="flex items-center justify-between mb-8">
+        <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in flex flex-col h-full">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4 shrink-0">
                 <div className="flex items-center gap-4">
                     {onBack && (
-                        <button onClick={onBack} className="flex items-center gap-2 py-2 px-5 rounded-full bg-white border border-border hover:bg-secondary text-text-primary font-bold transition-colors h-11 text-sm shadow-sm">
+                        <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-9">
                             <ArrowLeftIcon className="h-4 w-4" />
                             Voltar
                         </button>
@@ -463,87 +526,120 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     <h2 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Gerenciador de Tarefas</h2>
                 </div>
                 
-                <div className="bg-secondary p-1 rounded-full border border-border hidden sm:flex">
-                    <button onClick={() => setActiveTab('tarefas')} className={`px-6 h-10 rounded-full text-sm font-bold transition-all ${activeTab === 'tarefas' ? 'bg-white text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}>Tarefas</button>
-                    <button onClick={() => setActiveTab('analise')} className={`px-6 h-10 rounded-full text-sm font-bold transition-all ${activeTab === 'analise' ? 'bg-white text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}>Análise</button>
+                <div className="flex bg-secondary p-1 rounded-full border border-border">
+                    <button onClick={() => setActiveTab('tarefas')} className={`px-4 py-1.5 text-sm font-bold rounded-full transition-all ${activeTab === 'tarefas' ? 'bg-white text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}>Tarefas</button>
+                    <button onClick={() => setActiveTab('analise')} className={`px-4 py-1.5 text-sm font-bold rounded-full transition-all ${activeTab === 'analise' ? 'bg-white text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}>Análise</button>
                 </div>
             </div>
 
-            {/* Mobile Tabs */}
-            <div className="sm:hidden mb-6 border-b border-border flex">
-                 <button onClick={() => setActiveTab('tarefas')} className={`flex-1 py-3 text-sm font-bold border-b-2 ${activeTab === 'tarefas' ? 'border-primary text-primary' : 'border-transparent text-text-secondary'}`}>Tarefas</button>
-                 <button onClick={() => setActiveTab('analise')} className={`flex-1 py-3 text-sm font-bold border-b-2 ${activeTab === 'analise' ? 'border-primary text-primary' : 'border-transparent text-text-secondary'}`}>Análise</button>
-            </div>
+            {activeTab === 'tarefas' ? renderTarefas() : renderAnalise()}
 
-            <div className="flex-grow flex flex-col overflow-hidden">
-                {activeTab === 'tarefas' ? renderTarefas() : renderAnalise()}
-            </div>
-
+            {/* Add/Edit Modal */}
             {isModalOpen && editingTarefa && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-8">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8">
                         <h3 className="text-2xl font-bold text-text-primary mb-6 text-center">{editingTarefa.id ? 'Editar Tarefa' : 'Nova Tarefa'}</h3>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="md:col-span-2">
-                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2 ml-1">Título <span className="text-danger">*</span></label>
-                                <input id="titulo" name="titulo" value={editingTarefa.titulo || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-medium h-12 ${errors.titulo ? 'border-danger' : ''}`} placeholder="O que precisa ser feito?" />
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Título</label>
+                                <input name="titulo" value={editingTarefa.titulo || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.titulo ? 'border-danger' : ''}`} placeholder="O que precisa ser feito?" />
                                 {errors.titulo && <p className="text-danger text-xs mt-1 ml-1">{errors.titulo}</p>}
                             </div>
                             
-                            <div className="md:col-span-2">
-                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2 ml-1">Descrição</label>
-                                <textarea id="descricao" name="descricao" value={editingTarefa.descricao || ''} onChange={handleInputChange} rows={3} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none resize-none" placeholder="Detalhes adicionais..." />
+                            <div>
+                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Descrição</label>
+                                <textarea name="descricao" value={editingTarefa.descricao || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none min-h-[100px] resize-none" placeholder="Detalhes da tarefa..." />
                             </div>
 
-                            <div>
-                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2 ml-1">Categoria <span className="text-danger">*</span></label>
-                                <input id="categoria" name="categoria" value={editingTarefa.categoria || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.categoria ? 'border-danger' : ''}`} placeholder="Ex: Financeiro" />
-                                {errors.categoria && <p className="text-danger text-xs mt-1 ml-1">{errors.categoria}</p>}
-                            </div>
-                            
-                            <div>
-                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2 ml-1">Vencimento <span className="text-danger">*</span></label>
-                                <input id="dataVencimento_br" name="dataVencimento_br" value={editingTarefa.dataVencimento_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.dataVencimento ? 'border-danger' : ''}`} />
-                                {errors.dataVencimento && <p className="text-danger text-xs mt-1 ml-1">{errors.dataVencimento}</p>}
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2 ml-1">Prioridade</label>
-                                <div className="relative">
-                                    <select id="prioridade" name="prioridade" value={editingTarefa.prioridade || PrioridadeTarefa.MEDIA} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none h-12">
-                                        <option value={PrioridadeTarefa.ALTA}>Alta</option>
-                                        <option value={PrioridadeTarefa.MEDIA}>Média</option>
-                                        <option value={PrioridadeTarefa.BAIXA}>Baixa</option>
-                                    </select>
-                                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Categoria</label>
+                                    <input name="categoria" value={editingTarefa.categoria || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.categoria ? 'border-danger' : ''}`} placeholder="Ex: Financeiro" />
+                                    {errors.categoria && <p className="text-danger text-xs mt-1 ml-1">{errors.categoria}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Vencimento</label>
+                                    <input name="dataVencimento_br" value={editingTarefa.dataVencimento_br || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.dataVencimento ? 'border-danger' : ''}`} placeholder="DD/MM/AAAA" />
+                                    {errors.dataVencimento && <p className="text-danger text-xs mt-1 ml-1">{errors.dataVencimento}</p>}
                                 </div>
                             </div>
-                            
-                            <div>
-                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2 ml-1">Status</label>
-                                <div className="relative">
-                                    <select id="status" name="status" value={editingTarefa.status || StatusTarefa.PENDENTE} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none h-12">
-                                        <option value={StatusTarefa.PENDENTE}>Pendente</option>
-                                        <option value={StatusTarefa.EM_ANDAMENTO}>Em Andamento</option>
-                                        <option value={StatusTarefa.CONCLUIDA}>Concluída</option>
-                                    </select>
-                                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Prioridade</label>
+                                    <div className="relative">
+                                        <select name="prioridade" value={editingTarefa.prioridade || PrioridadeTarefa.MEDIA} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 appearance-none ${errors.prioridade ? 'border-danger' : ''}`}>
+                                            <option value={PrioridadeTarefa.ALTA}>Alta</option>
+                                            <option value={PrioridadeTarefa.MEDIA}>Média</option>
+                                            <option value={PrioridadeTarefa.BAIXA}>Baixa</option>
+                                        </select>
+                                        <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
+                                    </div>
+                                    {errors.prioridade && <p className="text-danger text-xs mt-1 ml-1">{errors.prioridade}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Status</label>
+                                    <div className="relative">
+                                        <select name="status" value={editingTarefa.status || StatusTarefa.PENDENTE} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 appearance-none ${errors.status ? 'border-danger' : ''}`}>
+                                            <option value={StatusTarefa.PENDENTE}>Pendente</option>
+                                            <option value={StatusTarefa.EM_ANDAMENTO}>Em Andamento</option>
+                                            <option value={StatusTarefa.CONCLUIDA}>Concluída</option>
+                                        </select>
+                                        <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
+                                    </div>
+                                    {errors.status && <p className="text-danger text-xs mt-1 ml-1">{errors.status}</p>}
                                 </div>
                             </div>
                         </div>
-                        
                         <div className="flex justify-center gap-3 mt-8">
                             <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                            <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar Tarefa</button>
+                            <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {isConfirmOpen && <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"><div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center"><h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar</h3><p className="text-text-secondary mb-8">{confirmAction.message}</p><div className="flex justify-center gap-4"><button onClick={() => setIsConfirmOpen(false)} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button><button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button></div></div></div>}
+            {/* Confirmation Modal */}
+            {isConfirmOpen && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center">
+                        <h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar</h3>
+                        <p className="text-text-secondary mb-8">{confirmAction.message}</p>
+                        <div className="flex justify-center gap-4">
+                            <button onClick={() => setIsConfirmOpen(false)} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
+                            <button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-            {isLembreteOpen && <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"><div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden p-8"><div className="flex items-center justify-center gap-2 mb-6"><CalendarClockIcon className="h-6 w-6 text-primary" /><h3 className="text-xl font-bold text-text-primary">Lembretes</h3></div><div className=""><p className="text-text-secondary mb-6 text-center">Tarefas vencendo hoje ou atrasadas:</p><div className="max-h-60 overflow-y-auto bg-secondary rounded-xl border border-transparent p-4 custom-scrollbar"><ul className="space-y-3">{lembretes.map(tarefa => (<li key={tarefa.id} className="flex justify-between items-center text-sm p-3 bg-white rounded-lg shadow-sm"><span className="font-medium text-text-primary">{tarefa.titulo}</span><span className={`text-xs font-bold ${getDynamicStatus(tarefa) === 'Atrasada' ? 'text-danger' : 'text-warning'}`}>{formatDateToBR(tarefa.dataVencimento)}</span></li>))}</ul></div></div><div className="flex justify-center mt-8"><button onClick={() => setIsLembreteOpen(false)} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Fechar</button></div></div></div>}
+            {/* Reminder Modal (Only shows on mount if tasks due today) */}
+            {isLembreteOpen && lembretes.length > 0 && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+                        <div className="flex items-center justify-center gap-2 mb-6">
+                            <CalendarClockIcon className="h-8 w-8 text-warning" />
+                            <h3 className="text-xl font-bold text-text-primary">Tarefas para Hoje</h3>
+                        </div>
+                        <div className="max-h-64 overflow-y-auto custom-scrollbar mb-6 space-y-3">
+                            {lembretes.map(t => (
+                                <div key={t.id} className="p-3 bg-secondary/30 rounded-xl border border-border flex justify-between items-center">
+                                    <div>
+                                        <p className="font-bold text-sm text-text-primary">{t.titulo}</p>
+                                        <p className="text-xs text-text-secondary">{t.categoria} - {t.prioridade}</p>
+                                    </div>
+                                    {getDynamicStatus(t) === 'Atrasada' && (
+                                        <span className="text-[10px] font-bold text-danger bg-danger/10 px-2 py-1 rounded-full">Atrasada</span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex justify-center">
+                            <button onClick={() => setIsLembreteOpen(false)} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold hover:bg-primary-hover transition-colors shadow-lg shadow-primary/20">Entendi</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

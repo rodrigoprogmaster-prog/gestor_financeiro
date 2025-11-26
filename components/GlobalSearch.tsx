@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { AppView, SearchItem } from '../types';
 import { SearchIcon, XIcon } from './icons';
@@ -19,6 +20,7 @@ const SEARCH_ITEMS: SearchItem[] = [
   { label: 'Tarefas', view: AppView.GERENCIADOR_TAREFAS, keywords: ['lista', 'afazeres', 'pendências', 'prioridades', 'kanban'] },
   { label: 'Títulos Prorrogados', view: AppView.TITULOS_PRORROGADOS, keywords: ['prorrogação', 'vencimento', 'dívidas'] },
   { label: 'Contas Bancárias', view: AppView.CADASTRO_CONTAS_BANCARIAS, keywords: ['bancos', 'agências', 'cc', 'pix', 'cadastro'] },
+  { label: 'Consulta CNPJ', view: AppView.CONSULTA_CNPJ, keywords: ['cnpj', 'receita', 'cadastro', 'situação', 'sócios'] },
   { label: 'Cartões', view: AppView.GERENCIADOR_CARTOES, keywords: ['crédito', 'mma', 'worldwide', 'adm', 'fatura'] },
   { label: 'Fechamento de Período', view: AppView.FECHAMENTO_PERIODO, keywords: ['conciliação', 'caixa', 'liquidação'] },
   { label: 'Previsão Financeira', view: AppView.PREVISAO_FINANCEIRA, keywords: ['previsão', 'futuro', 'planejamento'] },

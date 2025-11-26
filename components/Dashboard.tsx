@@ -295,7 +295,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
     }
 
     return (
-        <div className="p-6 lg:p-10 max-w-7xl mx-auto animate-fade-in flex flex-col gap-8 h-full overflow-y-auto">
+        <div className="p-4 sm:p-6 lg:p-10 w-full h-full overflow-y-auto animate-fade-in flex flex-col gap-8">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
@@ -306,8 +306,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
                         {todayDate}
                     </p>
                 </div>
-                
-                {/* Optional Global Actions could go here */}
             </div>
 
             {/* Summary Stats */}

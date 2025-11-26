@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import CartaoMMA from './CartaoMMA';
 import CartaoWorldWide from './CartaoWorldWide';
@@ -67,7 +68,7 @@ const GerenciadorCartoes: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     };
 
     return (
-        <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in">
+        <div className="p-4 sm:p-6 lg:p-8 w-full h-full overflow-y-auto animate-fade-in">
             {selectedCard === null ? (
                 <>
                     <div className="flex items-center gap-4 mb-6">

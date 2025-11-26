@@ -307,9 +307,9 @@ const CadastroContasBancarias: React.FC<{ onBack?: () => void }> = ({ onBack }) 
     };
 
     return (
-        <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in">
+        <div className="p-4 sm:p-6 lg:p-8 w-full h-full flex flex-col animate-fade-in">
             <input type="file" ref={fileInputRef} onChange={handleFileImport} className="hidden" accept=".xlsx, .xls" />
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4 shrink-0">
                 <div className="flex items-center gap-4">
                     {onBack && (
                         <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">
@@ -342,7 +342,8 @@ const CadastroContasBancarias: React.FC<{ onBack?: () => void }> = ({ onBack }) 
                     </button>
                 </div>
             </div>
-            <div className="mb-4 relative w-full sm:w-1/3">
+            
+            <div className="mb-4 relative w-full sm:w-1/3 shrink-0">
                 <input
                     type="text"
                     placeholder="Buscar por qualquer campo..."
@@ -354,82 +355,85 @@ const CadastroContasBancarias: React.FC<{ onBack?: () => void }> = ({ onBack }) 
                     <SearchIcon className="h-5 w-5 text-text-secondary" />
                 </div>
             </div>
-             <div className="mb-6">
+             <div className="mb-6 shrink-0">
                 <div className="bg-card p-4 rounded-2xl shadow-md border border-border text-center sm:max-w-sm">
                     <p className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Total de Contas</p>
                     <p className="text-2xl font-bold text-primary">{filteredContas.length}</p>
                 </div>
             </div>
-            <div className="bg-card shadow-md rounded-2xl overflow-x-auto">
-                <table className="w-full text-sm text-left text-text-secondary">
-                    <thead className="text-sm text-text-primary uppercase bg-secondary">
-                        <tr>
-                            <th scope="col" className="px-6 py-3">
-                                <input
-                                    type="checkbox"
-                                    className="h-5 w-5 text-primary bg-background border-border rounded focus:ring-primary"
-                                    checked={filteredContas.length > 0 && selectedContas.size === filteredContas.length}
-                                    onChange={handleSelectAll}
-                                    aria-label="Selecionar todas as contas"
-                                />
-                            </th>
-                            <th scope="col" className="px-6 py-3">Titular</th>
-                            <th scope="col" className="px-6 py-3">CNPJ</th>
-                            <th scope="col" className="px-6 py-3">PIX</th>
-                            <th scope="col" className="px-6 py-3">Banco</th>
-                            <th scope="col" className="px-6 py-3">Agência</th>
-                            <th scope="col" className="px-6 py-3">C/C</th>
-                            <th scope="col" className="px-6 py-3 text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredContas.length > 0 ? (
-                            filteredContas.map((conta) => (
-                                <tr 
-                                    key={conta.id} 
-                                    className={`bg-card border-b border-border hover:bg-secondary transition-colors duration-200 cursor-pointer ${selectedContas.has(conta.id) ? 'bg-primary/10' : ''}`}
-                                    onDoubleClick={() => handleRowDoubleClick(conta)}
-                                >
-                                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                                        <input
-                                            type="checkbox"
-                                            className="h-5 w-5 text-primary bg-background border-border rounded focus:ring-primary"
-                                            checked={selectedContas.has(conta.id)}
-                                            onChange={() => handleSelectConta(conta.id)}
-                                            aria-label={`Selecionar conta de ${conta.titular}`}
-                                        />
-                                    </td>
-                                    <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{conta.titular}</td>
-                                    <td className="px-6 py-4">{conta.cnpj}</td>
-                                    <td className="px-6 py-4">{conta.pix}</td>
-                                    <td className="px-6 py-4">{conta.banco}</td>
-                                    <td className="px-6 py-4">{conta.agencia}</td>
-                                    <td className="px-6 py-4">{conta.contaCorrente}</td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center justify-center gap-2">
-                                            <button onClick={(e) => handleEditClick(e, conta)} className="text-primary hover:text-primary/80 p-2 rounded-full hover:bg-primary/10 transition-colors" aria-label="Editar conta">
-                                                <EditIcon className="h-5 w-5" />
-                                            </button>
-                                            <button onClick={(e) => handleDeleteClick(e, conta.id)} className="text-danger hover:text-danger/80 p-2 rounded-full hover:bg-danger/10 transition-colors" aria-label="Excluir conta">
-                                                <TrashIcon className="h-5 w-5" />
-                                            </button>
+
+            <div className="bg-card shadow-md rounded-2xl overflow-hidden flex flex-col flex-grow border border-border">
+                <div className="overflow-x-auto overflow-y-auto flex-grow">
+                    <table className="w-full text-sm text-left text-text-secondary">
+                        <thead className="text-sm text-text-primary uppercase bg-secondary sticky top-0 z-10 shadow-sm">
+                            <tr>
+                                <th scope="col" className="px-6 py-3">
+                                    <input
+                                        type="checkbox"
+                                        className="h-5 w-5 text-primary bg-background border-border rounded focus:ring-primary"
+                                        checked={filteredContas.length > 0 && selectedContas.size === filteredContas.length}
+                                        onChange={handleSelectAll}
+                                        aria-label="Selecionar todas as contas"
+                                    />
+                                </th>
+                                <th scope="col" className="px-6 py-3">Titular</th>
+                                <th scope="col" className="px-6 py-3">CNPJ</th>
+                                <th scope="col" className="px-6 py-3">PIX</th>
+                                <th scope="col" className="px-6 py-3">Banco</th>
+                                <th scope="col" className="px-6 py-3">Agência</th>
+                                <th scope="col" className="px-6 py-3">C/C</th>
+                                <th scope="col" className="px-6 py-3 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                            {filteredContas.length > 0 ? (
+                                filteredContas.map((conta) => (
+                                    <tr 
+                                        key={conta.id} 
+                                        className={`bg-card border-b border-border hover:bg-secondary transition-colors duration-200 cursor-pointer ${selectedContas.has(conta.id) ? 'bg-primary/10' : ''}`}
+                                        onDoubleClick={() => handleRowDoubleClick(conta)}
+                                    >
+                                        <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                                            <input
+                                                type="checkbox"
+                                                className="h-5 w-5 text-primary bg-background border-border rounded focus:ring-primary"
+                                                checked={selectedContas.has(conta.id)}
+                                                onChange={() => handleSelectConta(conta.id)}
+                                                aria-label={`Selecionar conta de ${conta.titular}`}
+                                            />
+                                        </td>
+                                        <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{conta.titular}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">{conta.cnpj}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">{conta.pix}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">{conta.banco}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">{conta.agencia}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">{conta.contaCorrente}</td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <button onClick={(e) => handleEditClick(e, conta)} className="text-primary hover:text-primary/80 p-2 rounded-full hover:bg-primary/10 transition-colors" aria-label="Editar conta">
+                                                    <EditIcon className="h-5 w-5" />
+                                                </button>
+                                                <button onClick={(e) => handleDeleteClick(e, conta.id)} className="text-danger hover:text-danger/80 p-2 rounded-full hover:bg-danger/10 transition-colors" aria-label="Excluir conta">
+                                                    <TrashIcon className="h-5 w-5" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={8} className="text-center py-16">
+                                        <div className="flex flex-col items-center justify-center text-text-secondary">
+                                            <SearchIcon className="w-12 h-12 mb-4 text-gray-300" />
+                                            <h3 className="text-xl font-semibold text-text-primary">Nenhuma Conta Encontrada</h3>
+                                            <p className="mt-1">Tente ajustar sua busca ou adicione uma nova conta.</p>
                                         </div>
                                     </td>
                                 </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan={8} className="text-center py-16">
-                                    <div className="flex flex-col items-center justify-center text-text-secondary">
-                                        <SearchIcon className="w-12 h-12 mb-4 text-gray-300" />
-                                        <h3 className="text-xl font-semibold text-text-primary">Nenhuma Conta Encontrada</h3>
-                                        <p className="mt-1">Tente ajustar sua busca ou adicione uma nova conta.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {isModalOpen && editingConta && (

@@ -323,7 +323,7 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
     };
 
     return (
-        <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in">
+        <div className="p-4 sm:p-6 lg:p-8 w-full h-full overflow-y-auto animate-fade-in">
             {/* Header */}
             <div className="flex items-center gap-4 mb-8 border-b border-border pb-4">
                 {onBack && (
@@ -387,7 +387,7 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
                                 >
                                     {googleFonts.map(font => <option key={font} value={font}>{font}</option>)}
                                 </select>
-                                <button onClick={() => { setFontTarget('all'); handleApplyFont(); }} className="px-3 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary-hover transition-colors">Aplicar</button>
+                                <button onClick={() => { setFontTarget('all'); handleApplyFont(); }} className="px-3 py-2 bg-primary text-white rounded-full text-xs font-bold hover:bg-primary-hover transition-colors">Aplicar</button>
                             </div>
                         </div>
                     </div>

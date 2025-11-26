@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import FechamentoEmpresas from './FechamentoEmpresas';
 import CaixaLiquidacao from './CaixaLiquidacao';
@@ -46,7 +47,7 @@ const FechamentoPeriodo: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     );
 
     return (
-        <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in">
+        <div className="p-4 sm:p-6 lg:p-8 w-full h-full overflow-y-auto animate-fade-in">
             <div className="flex items-center gap-4 mb-8 pb-4 border-b border-border">
                 {onBack && (
                     <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-white border border-border hover:bg-secondary font-medium transition-colors h-9 text-sm">

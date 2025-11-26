@@ -128,7 +128,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 <button
                   type="submit"
                   disabled={isLoading || isSuccess}
-                  className={`group relative w-full flex justify-center py-3 px-6 h-12 text-base font-bold rounded-xl text-white ${getButtonClass()} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg`}
+                  className={`group relative w-full flex justify-center py-3 px-6 h-12 text-base font-bold rounded-full text-white ${getButtonClass()} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg`}
                 >
                   {buttonContent()}
                 </button>

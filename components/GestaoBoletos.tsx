@@ -1,6 +1,7 @@
 
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, CalendarClockIcon, SpinnerIcon, ChevronDownIcon } from './icons';
+import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, CalendarClockIcon, SpinnerIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
 
 // Enum for status
 enum StatusBoletoReceber {
@@ -87,8 +88,8 @@ const parseImportedDate = (dateValue: any): string => {
     return '';
 };
 
-const ITEMS_PER_LOAD = 20;
-const SCROLL_THRESHOLD = 100;
+// Pagination Constants
+const ITEMS_PER_PAGE = 20;
 
 type SortConfig = { key: keyof BoletoReceber | 'dynamicStatus'; direction: 'asc' | 'desc' };
 
@@ -112,20 +113,17 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
     
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const scrollRef = useRef<HTMLDivElement>(null);
-    const [displayCount, setDisplayCount] = useState(ITEMS_PER_LOAD);
-    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(boletos));
     }, [boletos]);
 
-    // Reset display count when filters change
+    // Reset page when filters change
     useEffect(() => {
-        setDisplayCount(ITEMS_PER_LOAD);
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = 0;
-        }
+        setCurrentPage(1);
     }, [statusFilter, searchTerm, dateRange, sortConfig]);
 
     const getDynamicStatus = useMemo(() => (boleto: BoletoReceber): StatusBoletoReceber => {
@@ -172,6 +170,12 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
         return filtered;
     }, [allBoletosWithStatus, statusFilter, searchTerm, dateRange, sortConfig]);
+
+    // Pagination Logic
+    const totalPages = Math.ceil(filteredBoletos.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const paginatedBoletos = filteredBoletos.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
 
     const totals = useMemo(() => {
         return allBoletosWithStatus.reduce((acc, boleto) => {
@@ -423,19 +427,6 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         return null;
     };
 
-    const handleScroll = () => {
-        if (scrollRef.current) {
-            const { scrollTop, clientHeight, scrollHeight } = scrollRef.current;
-            if (scrollHeight - scrollTop - clientHeight < SCROLL_THRESHOLD && !isLoadingMore && displayCount < filteredBoletos.length) {
-                setIsLoadingMore(true);
-                setTimeout(() => {
-                    setDisplayCount(prev => Math.min(prev + ITEMS_PER_LOAD, filteredBoletos.length));
-                    setIsLoadingMore(false);
-                }, 300);
-            }
-        }
-    };
-
     return (
         <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in flex flex-col h-full">
             <input type="file" ref={fileInputRef} onChange={handleFileImport} className="hidden" accept=".xlsx, .xls" />
@@ -498,7 +489,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             </div>
 
             <div className="bg-card border border-border rounded-2xl overflow-hidden flex-grow shadow-sm flex flex-col">
-                <div ref={scrollRef} onScroll={handleScroll} className="overflow-x-auto overflow-y-auto flex-grow">
+                <div className="overflow-x-auto overflow-y-auto flex-grow">
                     <table className="min-w-full divide-y divide-border text-sm text-left">
                         <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider sticky top-0 z-10">
                             <tr>
@@ -511,7 +502,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border bg-white">
-                            {filteredBoletos.length > 0 ? filteredBoletos.slice(0, displayCount).map(boleto => (
+                            {paginatedBoletos.length > 0 ? paginatedBoletos.map(boleto => (
                                 <tr key={boleto.id} className="hover:bg-secondary transition-colors">
                                     <td className="px-6 py-4 text-center w-32">
                                         <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded-full border inline-block w-24 ${
@@ -553,16 +544,33 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                     </td>
                                 </tr>
                             )}
-                            {isLoadingMore && (
-                                <tr>
-                                    <td colSpan={6} className="text-center py-4 text-primary">
-                                        <SpinnerIcon className="h-5 w-5 animate-spin mx-auto" />
-                                        Carregando mais...
-                                    </td>
-                                </tr>
-                            )}
                         </tbody>
                     </table>
+                </div>
+                {/* Pagination Footer */}
+                <div className="flex justify-between items-center p-4 border-t border-border bg-card rounded-b-2xl">
+                    <div className="text-sm text-text-secondary">
+                        Exibindo {filteredBoletos.length > 0 ? startIndex + 1 : 0} a {Math.min(startIndex + ITEMS_PER_PAGE, filteredBoletos.length)} de {filteredBoletos.length} registros
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            title="Página Anterior"
+                        >
+                            <ChevronLeftIcon className="h-5 w-5 text-text-primary" />
+                        </button>
+                        <span className="text-sm font-medium text-text-primary">Página {currentPage} de {Math.max(1, totalPages)}</span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages || totalPages === 0}
+                            className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            title="Próxima Página"
+                        >
+                            <ChevronRightIcon className="h-5 w-5 text-text-primary" />
+                        </button>
+                    </div>
                 </div>
             </div>
 

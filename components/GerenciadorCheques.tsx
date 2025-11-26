@@ -1,6 +1,7 @@
 
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, ArrowLeftIcon, SpinnerIcon, ChevronDownIcon, CalendarClockIcon } from './icons';
+import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, ArrowLeftIcon, SpinnerIcon, ChevronDownIcon, CalendarClockIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
 import { ArrowDownCircleIcon, ArrowUpCircleIcon } from './icons'; // Reusing icons
 
 // Enum for status
@@ -142,10 +143,8 @@ const parseImportedDate = (dateValue: any): string => {
     return ''; // Return empty if format is not recognized
 };
 
-// Constants for infinite scroll
-const ITEMS_PER_LOAD = 20;
-const SCROLL_THRESHOLD = 100;
-
+// Constants for pagination
+const ITEMS_PER_PAGE = 20;
 
 // This component will now manage checks instead of just being a wrapper for an iframe.
 const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
@@ -172,11 +171,8 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [lembreteCheques, setLembreteCheques] = useState<Cheque[]>([]);
   const [isLembreteModalOpen, setIsLembreteModalOpen] = useState(false);
   
-  // Infinite scroll states
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [displayCount, setDisplayCount] = useState(ITEMS_PER_LOAD);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
 
   const getDynamicStatus = useMemo(() => (cheque: Cheque): string => {
     if (cheque.status === StatusCheque.COMPENSADO) return StatusCheque.COMPENSADO;
@@ -215,13 +211,17 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     }
 }, [cheques, getDynamicStatus]);
 
+  // Reset page on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, dateRange]);
+
 
   const allChequesWithDynamicStatus = useMemo(() => {
     return cheques.map(cheque => ({...cheque, dynamicStatus: getDynamicStatus(cheque)}));
   }, [cheques, getDynamicStatus]);
 
   const filteredCheques = useMemo(() => {
-    setDisplayCount(ITEMS_PER_LOAD); // Reset display count on filter change
     const filtered = allChequesWithDynamicStatus.filter(cheque => {
         const statusMatch = statusFilter === 'Todos' || cheque.dynamicStatus === statusFilter;
         
@@ -245,6 +245,11 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         return new Date(a.dataVencimento).getTime() - new Date(b.dataVencimento).getTime();
     });
   }, [allChequesWithDynamicStatus, searchTerm, statusFilter, dateRange]);
+
+  // Pagination calculation
+  const totalPages = Math.ceil(filteredCheques.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedCheques = filteredCheques.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
 
   const totals = useMemo(() => {
@@ -648,25 +653,18 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         setStatusFilter(prev => prev === status ? 'Todos' : status);
     };
 
-    const handleScroll = () => {
-        if (scrollRef.current) {
-            const { scrollTop, clientHeight, scrollHeight } = scrollRef.current;
-            if (scrollHeight - scrollTop - clientHeight < SCROLL_THRESHOLD && !isLoadingMore && displayCount < filteredCheques.length) {
-                setIsLoadingMore(true);
-                setTimeout(() => {
-                    setDisplayCount(prevCount => Math.min(prevCount + ITEMS_PER_LOAD, filteredCheques.length));
-                    setIsLoadingMore(false);
-                }, 300); // Simulate network delay
-            }
-        }
-    };
-
   return (
     <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in flex flex-col h-full">
         <input type="file" ref={fileInputRef} onChange={handleFileImport} className="hidden" accept=".xlsx, .xls" />
         <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
             <div className="flex items-center gap-4">
-                
+                {/* Add onBack button here */}
+                {onBack && (
+                  <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-9">
+                      <ArrowLeftIcon className="h-4 w-4" />
+                      Voltar
+                  </button>
+                )}
                 <h2 className="text-2xl md:text-3xl font-bold text-text-primary">Gerenciador de Cheques</h2>
             </div>
             <div className="flex items-center flex-wrap gap-2">
@@ -706,7 +704,7 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         </div>
 
         <div className="bg-card shadow-sm rounded-2xl overflow-hidden flex flex-col flex-grow border border-border">
-            <div ref={scrollRef} onScroll={handleScroll} className="overflow-x-auto overflow-y-auto h-full">
+            <div className="overflow-x-auto overflow-y-auto flex-grow">
                 <table className="min-w-full divide-y divide-border text-sm text-left">
                     <thead className="bg-secondary text-xs uppercase font-medium text-text-secondary sticky top-0 z-10">
                         <tr>
@@ -722,8 +720,8 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border bg-white">
-                        {filteredCheques.length > 0 ? (
-                            filteredCheques.slice(0, displayCount).map((cheque) => (
+                        {paginatedCheques.length > 0 ? (
+                            paginatedCheques.map((cheque) => (
                                 <tr
                                     key={cheque.id}
                                     onDoubleClick={() => handleDoubleClickRow(cheque)}
@@ -756,16 +754,33 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                 </td>
                             </tr>
                         )}
-                        {isLoadingMore && (
-                            <tr>
-                                <td colSpan={9} className="text-center py-4 text-primary">
-                                    <SpinnerIcon className="h-5 w-5 animate-spin mx-auto" />
-                                    Carregando mais...
-                                </td>
-                            </tr>
-                        )}
                     </tbody>
                 </table>
+            </div>
+            {/* Pagination Footer */}
+            <div className="flex justify-between items-center p-4 border-t border-border bg-card rounded-b-2xl">
+                <div className="text-sm text-text-secondary">
+                    Exibindo {filteredCheques.length > 0 ? startIndex + 1 : 0} a {Math.min(startIndex + ITEMS_PER_PAGE, filteredCheques.length)} de {filteredCheques.length} registros
+                </div>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        title="Página Anterior"
+                    >
+                        <ChevronLeftIcon className="h-5 w-5 text-text-primary" />
+                    </button>
+                    <span className="text-sm font-medium text-text-primary">Página {currentPage} de {Math.max(1, totalPages)}</span>
+                    <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages || totalPages === 0}
+                        className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        title="Próxima Página"
+                    >
+                        <ChevronRightIcon className="h-5 w-5 text-text-primary" />
+                    </button>
+                </div>
             </div>
         </div>
 

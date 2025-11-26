@@ -1,9 +1,7 @@
 
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, 
-    // Add ArrowLeftIcon here
-    ArrowLeftIcon, SpinnerIcon, ChevronDownIcon, RefreshIcon, ClipboardCheckIcon } from './icons';
+import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, ArrowLeftIcon, SpinnerIcon, ChevronDownIcon, RefreshIcon, ClipboardCheckIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
 
 enum StatusBoleto {
   A_VENCER = 'A Vencer',
@@ -89,8 +87,8 @@ const parseImportedDate = (dateValue: any): string => {
     return '';
 };
 
-const ITEMS_PER_LOAD = 20;
-const SCROLL_THRESHOLD = 100;
+// Pagination
+const ITEMS_PER_PAGE = 20;
 
 type SortConfig = { key: keyof Boleto | 'dynamicStatus'; direction: 'asc' | 'desc' };
 
@@ -125,9 +123,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
-    const scrollRef = useRef<HTMLDivElement>(null);
-    const [displayCount, setDisplayCount] = useState(ITEMS_PER_LOAD);
-    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
 
     // Recorrentes Specific UI State
     const [editingDespesa, setEditingDespesa] = useState<Partial<DespesaRecorrente> | null>(null);
@@ -141,12 +137,9 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         localStorage.setItem(STORAGE_KEY_RECORRENTES, JSON.stringify(despesasRecorrentes));
     }, [despesasRecorrentes]);
 
-    // Reset display count when filters or sort change
+    // Reset page when filters or sort change
     useEffect(() => {
-        setDisplayCount(ITEMS_PER_LOAD);
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = 0;
-        }
+        setCurrentPage(1);
     }, [statusFilter, searchTerm, dateRange, sortConfig, activeView]);
 
     // --- BOLETOS LOGIC ---
@@ -192,6 +185,12 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
         return filtered;
     }, [allBoletosWithStatus, statusFilter, searchTerm, dateRange, sortConfig]);
+
+    // Pagination Logic
+    const totalPages = Math.ceil(filteredBoletos.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const paginatedBoletos = filteredBoletos.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
 
     const totals = useMemo(() => {
         const boletosForTotals = allBoletosWithStatus.filter(boleto => {
@@ -327,7 +326,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         if (!editingDespesa.diaVencimento || editingDespesa.diaVencimento < 1 || editingDespesa.diaVencimento > 31) newErrors.diaVencimento = "Dia inválido (1-31).";
         setDespesaErrors(newErrors);
         return Object.keys(newErrors).length === 0;
-    }
+    };
 
     const handleSaveChanges = () => {
         if (activeView === 'boletos') {
@@ -431,19 +430,6 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
     const handleConfirm = () => { confirmAction.action?.(); setIsConfirmOpen(false); };
 
-    const handleScroll = () => {
-        if (scrollRef.current) {
-            const { scrollTop, clientHeight, scrollHeight } = scrollRef.current;
-            if (scrollHeight - scrollTop - clientHeight < SCROLL_THRESHOLD && !isLoadingMore && displayCount < filteredBoletos.length) {
-                setIsLoadingMore(true);
-                setTimeout(() => {
-                    setDisplayCount(prevCount => Math.min(prevCount + ITEMS_PER_LOAD, filteredBoletos.length));
-                    setIsLoadingMore(false);
-                }, 300); // Simulate network delay
-            }
-        }
-    };
-
     const renderSortIcon = (key: keyof Boleto | 'dynamicStatus') => {
         if (sortConfig?.key === key) {
             return (
@@ -541,8 +527,8 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     </div>
                 </div>
 
-                <div className="bg-card border border-border rounded-2xl overflow-hidden flex-grow shadow-sm">
-                    <div ref={scrollRef} onScroll={handleScroll} className="overflow-x-auto overflow-y-auto h-full">
+                <div className="bg-card border border-border rounded-2xl overflow-hidden flex-grow shadow-sm flex flex-col">
+                    <div className="overflow-x-auto overflow-y-auto flex-grow">
                         <table className="min-w-full divide-y divide-border text-sm text-left">
                             <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider sticky top-0 z-10">
                                 <tr>
@@ -566,7 +552,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border bg-white">
-                                {filteredBoletos.length > 0 ? filteredBoletos.slice(0, displayCount).map(boleto => (
+                                {paginatedBoletos.length > 0 ? paginatedBoletos.map(boleto => (
                                     <tr 
                                         key={boleto.id} 
                                         className="hover:bg-secondary transition-colors cursor-pointer"
@@ -614,16 +600,33 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                         </td>
                                     </tr>
                                 )}
-                                {isLoadingMore && (
-                                    <tr>
-                                        <td colSpan={7} className="text-center py-4 text-primary">
-                                            <SpinnerIcon className="h-5 w-5 animate-spin mx-auto" />
-                                            Carregando mais...
-                                        </td>
-                                    </tr>
-                                )}
                             </tbody>
                         </table>
+                    </div>
+                    {/* Pagination Footer */}
+                    <div className="flex justify-between items-center p-4 border-t border-border bg-card rounded-b-2xl">
+                        <div className="text-sm text-text-secondary">
+                            Exibindo {filteredBoletos.length > 0 ? startIndex + 1 : 0} a {Math.min(startIndex + ITEMS_PER_PAGE, filteredBoletos.length)} de {filteredBoletos.length} registros
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                title="Página Anterior"
+                            >
+                                <ChevronLeftIcon className="h-5 w-5 text-text-primary" />
+                            </button>
+                            <span className="text-sm font-medium text-text-primary">Página {currentPage} de {Math.max(1, totalPages)}</span>
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages || totalPages === 0}
+                                className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                title="Próxima Página"
+                            >
+                                <ChevronRightIcon className="h-5 w-5 text-text-primary" />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </>

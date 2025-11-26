@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { AppView, SearchItem } from './types';
 import Header from './components/Header';
@@ -16,6 +17,7 @@ import PrevisaoFinanceiraHome from './components/PrevisaoFinanceiraHome';
 import PagamentosDiariosHome from './components/PagamentosDiariosHome';
 import GerenciadorTarefas from './components/GerenciadorTarefas';
 import GlobalSearch from './components/GlobalSearch';
+import ConsultaCnpj from './components/ConsultaCnpj';
 
 
 const App: React.FC = () => {
@@ -180,13 +182,13 @@ const App: React.FC = () => {
         return <ConfiguracaoSeguranca />;
       case AppView.GERENCIADOR_TAREFAS:
         return <GerenciadorTarefas />;
+      case AppView.CONSULTA_CNPJ:
+        return <ConsultaCnpj />;
       case AppView.DASHBOARD:
       default:
         return <Dashboard setView={setCurrentView} />;
     }
   };
-
-  const isDashboard = currentView === AppView.DASHBOARD;
 
   return (
     <div className="h-screen bg-background font-sans flex flex-col overflow-hidden">
@@ -203,8 +205,9 @@ const App: React.FC = () => {
             onLogout={handleLogout}
             onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
         />
-        <main className={`flex-1 overflow-y-auto bg-background ${isDashboard ? 'p-4 sm:p-6 lg:p-8' : ''}`}>
-            <div className="max-w-full mx-auto">
+        {/* Main content wrapper locked to viewport height, ensuring inner views control their own scrolling */}
+        <main className="flex-1 relative flex flex-col h-full overflow-hidden bg-background">
+            <div className="w-full h-full flex flex-col">
                 {renderView()}
             </div>
         </main>

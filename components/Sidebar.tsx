@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { AppView } from '../types';
 import {
@@ -16,7 +17,8 @@ import {
   ClipboardListIcon,
   XIcon,
   LogoutIcon,
-  SearchIcon, // Import SearchIcon
+  SearchIcon,
+  BuildingIcon, // Import BuildingIcon
 } from './icons';
 
 interface SidebarProps {
@@ -50,6 +52,7 @@ const modules: NavItem[] = [
     { view: AppView.GERENCIADOR_TAREFAS, name: 'Tarefas', icon: <ClipboardListIcon className="h-5 w-5" /> },
     { view: AppView.TITULOS_PRORROGADOS, name: 'Títulos Prorrogados', icon: <CalendarClockIcon className="h-5 w-5" /> },
     { view: AppView.CADASTRO_CONTAS_BANCARIAS, name: 'Contas Bancárias', icon: <DatabaseIcon className="h-5 w-5" /> },
+    { view: AppView.CONSULTA_CNPJ, name: 'Consulta CNPJ', icon: <BuildingIcon className="h-5 w-5" /> },
     { view: AppView.GERENCIADOR_CARTOES, name: 'Cartões', icon: <CreditCardIcon className="h-5 w-5" /> },
     { view: AppView.FECHAMENTO_PERIODO, name: 'Fechamento', icon: <ClipboardCheckIcon className="h-5 w-5" /> },
     {
