@@ -46,6 +46,8 @@ const formatDateToISO = (brDate: string): string => {
 };
 
 const applyDateMask = (value: string): string => value.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})\/(\d{2})(\d)/, '$1/$2/$3').replace(/(\/\d{4})\d+?$/, '$1');
+const applyDayMonthMask = (value: string): string => value.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').slice(0, 5);
+
 const isValidBRDate = (dateString: string): boolean => {
     if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) return false;
     const [day, month, year] = dateString.split('/').map(Number);
@@ -126,8 +128,14 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [currentPage, setCurrentPage] = useState(1);
 
     // Recorrentes Specific UI State
-    const [editingDespesa, setEditingDespesa] = useState<Partial<DespesaRecorrente> | null>(null);
+    // We use 'diaMesLaunch' to store the "DD/MM" string in the modal
+    const [editingDespesa, setEditingDespesa] = useState<(Partial<DespesaRecorrente> & { diaMesLaunch?: string }) | null>(null);
     const [despesaErrors, setDespesaErrors] = useState<DespesaErrors>({});
+    const [recorrentesFilters, setRecorrentesFilters] = useState({
+        empresa: '',
+        descricao: '',
+        dia: ''
+    });
 
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(boletos));
@@ -209,6 +217,32 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         }, {} as Record<StatusBoleto, { count: number; value: number }>);
     }, [allBoletosWithStatus, searchTerm, dateRange]);
 
+    // --- RECORRENTES LOGIC ---
+
+    const uniqueEmpresasRecorrentes = useMemo(() => {
+        return [...new Set(despesasRecorrentes.map(d => d.empresa))].sort();
+    }, [despesasRecorrentes]);
+
+    const filteredRecorrentes = useMemo(() => {
+        return despesasRecorrentes.filter(item => {
+            const empresaMatch = !recorrentesFilters.empresa || item.empresa === recorrentesFilters.empresa;
+            const descricaoMatch = !recorrentesFilters.descricao || item.descricao.toLowerCase().includes(recorrentesFilters.descricao.toLowerCase());
+            const diaMatch = !recorrentesFilters.dia || item.diaVencimento === parseInt(recorrentesFilters.dia, 10);
+            return empresaMatch && descricaoMatch && diaMatch;
+        }).sort((a, b) => a.diaVencimento - b.diaVencimento);
+    }, [despesasRecorrentes, recorrentesFilters]);
+
+    const groupedRecorrentes = useMemo(() => {
+        const groups: Record<number, DespesaRecorrente[]> = {};
+        filteredRecorrentes.forEach(item => {
+            if (!groups[item.diaVencimento]) {
+                groups[item.diaVencimento] = [];
+            }
+            groups[item.diaVencimento].push(item);
+        });
+        return groups;
+    }, [filteredRecorrentes]);
+
     const requestSort = (key: keyof Boleto | 'dynamicStatus') => {
         let direction: 'asc' | 'desc' = 'asc';
         if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
@@ -224,13 +258,18 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         setSortConfig(null);
     };
     
+    const handleClearRecorrentesFilters = () => {
+        setRecorrentesFilters({ empresa: '', descricao: '', dia: '' });
+    };
+
     const handleOpenAddModal = () => {
         if (activeView === 'boletos') {
             setBoletoErrors({});
             setEditingBoleto({ vencimento_br: '', pago: false, lancadoSolinter: false });
         } else {
             setDespesaErrors({});
-            setEditingDespesa({ diaVencimento: 1, recorrencia: 'Mensal', status: 'Pendente' });
+            // Default diaMesLaunch for new recurring expense
+            setEditingDespesa({ diaVencimento: 1, recorrencia: 'Mensal', status: 'Pendente', diaMesLaunch: '' });
         }
         setIsModalOpen(true);
     };
@@ -241,7 +280,12 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             setEditingBoleto({ ...item, vencimento_br: formatDateToBR(item.vencimento) });
         } else {
             setDespesaErrors({});
-            setEditingDespesa({ ...item });
+            // Construct diaMesLaunch for display
+            const diaFormatado = item.diaVencimento.toString().padStart(2, '0');
+            // Use current month as default just for display context, or leave month empty if prefered.
+            // But user wants to "digit day and month". So we can just show DD/MM (current MM).
+            const mesAtual = (new Date().getMonth() + 1).toString().padStart(2, '0');
+            setEditingDespesa({ ...item, diaMesLaunch: `${diaFormatado}/${mesAtual}` });
         }
         setIsModalOpen(true);
     };
@@ -297,10 +341,25 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         } else if (activeView === 'recorrentes' && editingDespesa) {
             const { name, value } = e.target;
             let finalValue: string | number = value;
-            if (name === 'diaVencimento') {
-                finalValue = parseInt(value, 10);
+            
+            if (name === 'diaMesLaunch') {
+                const masked = applyDayMonthMask(value);
+                setEditingDespesa(prev => ({ ...prev, diaMesLaunch: masked }));
+                
+                // Extract day and set diaVencimento
+                if (masked.length >= 2) {
+                    const dia = parseInt(masked.substring(0, 2), 10);
+                    if (!isNaN(dia) && dia >= 1 && dia <= 31) {
+                        setEditingDespesa(prev => (prev ? { ...prev, diaVencimento: dia } : null));
+                    }
+                }
+            } else {
+                if (name === 'diaVencimento') {
+                    finalValue = parseInt(value, 10);
+                }
+                setEditingDespesa(prev => ({ ...prev, [name]: finalValue }));
             }
-            setEditingDespesa(prev => ({ ...prev, [name]: finalValue }));
+
             if (despesaErrors[name as keyof DespesaErrors]) {
                 setDespesaErrors(prev => { const newErrors = { ...prev }; delete newErrors[name as keyof DespesaErrors]; return newErrors; });
             }
@@ -341,9 +400,11 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             setIsConfirmOpen(true);
         } else {
             if (!validateDespesa() || !editingDespesa) return;
+            // Ensure we clean up the temporary property before saving
+            const { diaMesLaunch, ...despesaToSave } = editingDespesa;
             const action = () => {
-                if (editingDespesa.id) setDespesasRecorrentes(despesasRecorrentes.map(d => d.id === editingDespesa.id ? (editingDespesa as DespesaRecorrente) : d));
-                else setDespesasRecorrentes([...despesasRecorrentes, { ...editingDespesa, id: `recorrente-${Date.now()}` } as DespesaRecorrente]);
+                if (despesaToSave.id) setDespesasRecorrentes(despesasRecorrentes.map(d => d.id === despesaToSave.id ? (despesaToSave as DespesaRecorrente) : d));
+                else setDespesasRecorrentes([...despesasRecorrentes, { ...despesaToSave, id: `recorrente-${Date.now()}` } as DespesaRecorrente]);
                 handleCloseModal();
             };
             setConfirmAction({ action, message: `Deseja ${editingDespesa.id ? 'salvar as alterações' : 'adicionar esta despesa'}?` });
@@ -631,60 +692,114 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 </div>
             </>
         ) : (
-            <div className="bg-card border border-border rounded-2xl overflow-hidden flex-grow shadow-sm">
-                <div className="overflow-x-auto overflow-y-auto h-full">
-                    <table className="min-w-full divide-y divide-border text-sm text-left">
-                        <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider sticky top-0 z-10">
-                            <tr>
-                                <th className="px-6 py-3">Empresa</th>
-                                <th className="px-6 py-3">Despesa (Descrição)</th>
-                                <th className="px-6 py-3 text-center">Dia de Vencimento</th>
-                                <th className="px-6 py-3 text-center">Recorrência</th>
-                                <th className="px-6 py-3 text-center">Status</th>
-                                <th className="px-6 py-3 text-center">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border bg-white">
-                            {despesasRecorrentes.length > 0 ? despesasRecorrentes.map(despesa => (
-                                <tr key={despesa.id} className="hover:bg-secondary transition-colors">
-                                    <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{despesa.empresa}</td>
-                                    <td className="px-6 py-4 text-text-secondary">{despesa.descricao}</td>
-                                    <td className="px-6 py-4 text-center font-semibold">{despesa.diaVencimento}</td>
-                                    <td className="px-6 py-4 text-center text-text-secondary">{despesa.recorrencia}</td>
-                                    <td className="px-6 py-4 text-center">
-                                        <button
-                                            onClick={() => handleToggleRecorrenteStatus(despesa.id, despesa.status)}
-                                            className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide transition-colors border ${
-                                                despesa.status === 'Lançado' 
-                                                ? 'bg-success/10 text-success border-success/20 hover:bg-success/20' 
-                                                : 'bg-warning/10 text-warning border-warning/20 hover:bg-warning/20'
-                                            }`}
-                                        >
-                                            {despesa.status}
-                                        </button>
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <div className="flex items-center justify-center gap-2">
-                                            <button onClick={() => handleEditClick(despesa)} title="Editar" className="text-primary p-1.5 rounded-full hover:bg-primary/10 transition-colors"><EditIcon className="h-4 w-4"/></button>
-                                            <button onClick={() => handleDeleteClick(despesa.id)} title="Excluir" className="text-danger p-1.5 rounded-full hover:bg-danger/10 transition-colors"><TrashIcon className="h-4 w-4"/></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )) : (
-                                <tr>
-                                    <td colSpan={6} className="text-center py-16">
-                                        <div className="flex flex-col items-center text-text-secondary">
-                                            <RefreshIcon className="w-10 h-10 mb-3 text-gray-300"/>
-                                            <h3 className="text-lg font-medium text-text-primary">Nenhuma Despesa Recorrente</h3>
-                                            <p className="text-sm">Adicione despesas fixas para acompanhar seus pagamentos.</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+            <>
+                {/* Filters for Recorrentes */}
+                <div className="flex flex-col sm:flex-row items-center mb-4 gap-4 bg-white p-3 rounded-2xl border border-border">
+                    <div className="flex gap-4 w-full">
+                        <div className="relative w-full sm:w-64">
+                            <select 
+                                name="empresa" 
+                                value={recorrentesFilters.empresa} 
+                                onChange={(e) => setRecorrentesFilters(prev => ({ ...prev, empresa: e.target.value }))}
+                                className="w-full pl-3 pr-10 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary appearance-none h-9"
+                            >
+                                <option value="">Todas as Empresas</option>
+                                {uniqueEmpresasRecorrentes.map(empresa => (
+                                    <option key={empresa} value={empresa}>{empresa}</option>
+                                ))}
+                            </select>
+                            <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-text-secondary">
+                                <ChevronDownIcon className="h-4 w-4" />
+                            </div>
+                        </div>
+                        <input 
+                            type="text" 
+                            name="descricao" 
+                            placeholder="Buscar despesa..." 
+                            value={recorrentesFilters.descricao} 
+                            onChange={(e) => setRecorrentesFilters(prev => ({ ...prev, descricao: e.target.value }))} 
+                            className="w-full sm:w-64 px-3 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"
+                        />
+                        <input 
+                            type="number" 
+                            name="dia" 
+                            placeholder="Dia" 
+                            min="1" 
+                            max="31" 
+                            value={recorrentesFilters.dia} 
+                            onChange={(e) => setRecorrentesFilters(prev => ({ ...prev, dia: e.target.value }))} 
+                            className="w-20 px-3 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"
+                        />
+                    </div>
+                    <button onClick={handleClearRecorrentesFilters} className="px-3 py-1.5 rounded-full bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-9 transition-colors whitespace-nowrap">Limpar</button>
                 </div>
-            </div>
+
+                <div className="bg-card border border-border rounded-2xl overflow-hidden flex-grow shadow-sm">
+                    <div className="overflow-x-auto overflow-y-auto h-full">
+                        <table className="min-w-full divide-y divide-border text-sm text-left">
+                            <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider sticky top-0 z-10">
+                                <tr>
+                                    <th className="px-6 py-3">Empresa</th>
+                                    <th className="px-6 py-3">Despesa (Descrição)</th>
+                                    <th className="px-6 py-3 text-center">Recorrência</th>
+                                    <th className="px-6 py-3 text-center">Status</th>
+                                    <th className="px-6 py-3 text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border bg-white">
+                                {Object.keys(groupedRecorrentes).length > 0 ? (
+                                    Object.keys(groupedRecorrentes).sort((a, b) => Number(a) - Number(b)).map(day => (
+                                        <React.Fragment key={day}>
+                                            {/* Group Header */}
+                                            <tr className="bg-secondary/50">
+                                                <td colSpan={5} className="px-6 py-2 font-bold text-text-primary text-xs uppercase tracking-wider border-y border-border">
+                                                    Dia {day.toString().padStart(2, '0')}
+                                                </td>
+                                            </tr>
+                                            {/* Group Items */}
+                                            {groupedRecorrentes[Number(day)].map(despesa => (
+                                                <tr key={despesa.id} className="hover:bg-secondary transition-colors">
+                                                    <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{despesa.empresa}</td>
+                                                    <td className="px-6 py-4 text-text-secondary">{despesa.descricao}</td>
+                                                    <td className="px-6 py-4 text-center text-text-secondary">{despesa.recorrencia}</td>
+                                                    <td className="px-6 py-4 text-center">
+                                                        <button
+                                                            onClick={() => handleToggleRecorrenteStatus(despesa.id, despesa.status)}
+                                                            className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide transition-colors border ${
+                                                                despesa.status === 'Lançado' 
+                                                                ? 'bg-success/10 text-success border-success/20 hover:bg-success/20' 
+                                                                : 'bg-warning/10 text-warning border-warning/20 hover:bg-warning/20'
+                                                            }`}
+                                                        >
+                                                            {despesa.status}
+                                                        </button>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-center">
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            <button onClick={() => handleEditClick(despesa)} title="Editar" className="text-primary p-1.5 rounded-full hover:bg-primary/10 transition-colors"><EditIcon className="h-4 w-4"/></button>
+                                                            <button onClick={() => handleDeleteClick(despesa.id)} title="Excluir" className="text-danger p-1.5 rounded-full hover:bg-danger/10 transition-colors"><TrashIcon className="h-4 w-4"/></button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </React.Fragment>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={5} className="text-center py-16">
+                                            <div className="flex flex-col items-center text-text-secondary">
+                                                <RefreshIcon className="w-10 h-10 mb-3 text-gray-300"/>
+                                                <h3 className="text-lg font-medium text-text-primary">Nenhuma Despesa Recorrente</h3>
+                                                <p className="text-sm">Adicione despesas fixas para acompanhar seus pagamentos.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </>
         )}
 
         {isModalOpen && (
@@ -748,8 +863,8 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Dia de Vencimento</label>
-                                        <input type="number" min="1" max="31" name="diaVencimento" value={editingDespesa.diaVencimento || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.diaVencimento ? 'border-danger' : ''}`} />
+                                        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Dia e Mês (Início)</label>
+                                        <input name="diaMesLaunch" value={editingDespesa.diaMesLaunch || ''} onChange={handleInputChange} placeholder="DD/MM" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.diaVencimento ? 'border-danger' : ''}`} />
                                         {despesaErrors.diaVencimento && <p className="text-danger text-xs mt-1 ml-1">{despesaErrors.diaVencimento}</p>}
                                     </div>
                                     <div>
