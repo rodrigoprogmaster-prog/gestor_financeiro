@@ -15,7 +15,8 @@ import {
   ChevronDownIcon,
   ClipboardListIcon,
   XIcon,
-  LogoutIcon
+  LogoutIcon,
+  SearchIcon, // Import SearchIcon
 } from './icons';
 
 interface SidebarProps {
@@ -24,6 +25,7 @@ interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   onLogout: () => void;
+  onOpenGlobalSearch: () => void; // New prop for global search
 }
 
 type NavLink = {
@@ -69,7 +71,7 @@ const modules: NavItem[] = [
     { view: AppView.CONFIGURACAO_SEGURANCA, name: 'Configurações', icon: <SettingsIcon className="h-5 w-5" /> },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose, onLogout }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose, onLogout, onOpenGlobalSearch }) => {
   // Initialize open submenus based on current view or default to false
   const [openSubMenus, setOpenSubMenus] = useState<Record<string, boolean>>(() => {
       const initialOpen: Record<string, boolean> = {};
@@ -90,6 +92,13 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
 
   const handleNavigation = (view: AppView) => {
     setView(view);
+    if (window.innerWidth < 1024) {
+      onClose();
+    }
+  };
+  
+  const handleOpenSearch = () => {
+    onOpenGlobalSearch();
     if (window.innerWidth < 1024) {
       onClose();
     }
@@ -125,6 +134,19 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
 
         <div className="overflow-y-auto flex-1 py-4 custom-scrollbar">
           <ul className="space-y-1 px-3">
+            {/* Global Search Button */}
+            <li>
+                <button
+                    onClick={handleOpenSearch}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-full text-sm transition-colors font-medium text-slate-400 hover:text-white hover:bg-slate-800"
+                    aria-label="Buscar em todo o sistema"
+                    title="Buscar em todo o sistema (Ctrl + Enter)"
+                >
+                    <SearchIcon className="h-5 w-5" />
+                    <span>Buscar...</span>
+                    <span className="ml-auto text-xs font-mono text-slate-500 bg-slate-700/50 px-1.5 py-0.5 rounded-md border border-slate-600/50">Ctrl+Enter</span>
+                </button>
+            </li>
             {modules.map((module) => {
               if ('children' in module) {
                 const isActive = isParentActive(module);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { WalletIcon, SpinnerIcon, CheckIcon, UserIcon } from './icons';
+import { WalletIcon, SpinnerIcon, CheckIcon, UserIcon, KeyIcon } from './icons';
 
 interface LoginProps {
   onLoginSuccess: () => void;
@@ -67,33 +67,36 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background p-4">
-      <div className="w-full max-w-sm p-8 space-y-8 bg-card rounded-2xl border border-border shadow-sm animate-fade-in">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary p-4 font-sans antialiased">
+      <div className="w-full max-w-sm p-8 space-y-8 bg-card rounded-3xl border-2 border-border shadow-2xl animate-fade-in">
         <div className="flex flex-col items-center">
             {profilePicture ? (
-                <img src={profilePicture} alt="Foto de Perfil" className="h-20 w-20 rounded-full object-cover mb-4 border border-border" />
+                <div className="relative group mb-4">
+                    <img src={profilePicture} alt="Foto de Perfil" className="h-28 w-28 rounded-full object-cover border-3 border-border transition-all duration-300 group-hover:border-primary group-hover:ring-2 ring-primary/20" />
+                </div>
             ) : (
-                <div className="h-20 w-20 rounded-full bg-secondary flex items-center justify-center mb-4 border border-border">
-                    <UserIcon className="h-10 w-10 text-text-secondary" />
+                <div className="h-28 w-28 rounded-full bg-secondary flex items-center justify-center mb-4 border-3 border-border">
+                    <UserIcon className="h-14 w-14 text-text-secondary" />
                 </div>
             )}
-            <div className="flex items-center gap-2 mb-2">
-                <WalletIcon className="h-6 w-6 text-primary" />
-                <h1 className="text-2xl font-bold text-text-primary tracking-tight">
+            <div className="flex items-center gap-3 mb-2">
+                <WalletIcon className="h-8 w-8 text-primary" />
+                <h1 className="text-3xl font-extrabold text-text-primary tracking-tight font-heading">
                 Gerenciador
                 </h1>
             </div>
-            <p className="text-sm text-text-secondary">Digite sua senha para continuar.</p>
+            <p className="text-base text-text-secondary font-medium">Digite sua senha para continuar.</p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="relative">
+             <KeyIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-text-secondary pointer-events-none" />
              <input
                 id="password-input"
                 name="password"
                 type="password"
                 autoComplete="current-password"
                 required
-                className={`appearance-none rounded-xl relative block w-full px-4 py-3 bg-white border placeholder-text-secondary/50 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition-all ${error ? 'border-danger animate-shake' : 'border-border'}`}
+                className={`appearance-none rounded-full relative block w-full pl-12 pr-4 py-3 bg-white border placeholder-text-secondary/50 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition-all ${error ? 'border-danger animate-shake' : 'border-border'}`}
                 placeholder="Senha de Acesso"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -103,7 +106,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           </div>
           
           {error && (
-            <p className="text-center text-xs text-danger">
+            <p className="text-center text-sm text-danger mt-3">
               {error}
             </p>
           )}
@@ -112,7 +115,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             <button
               type="submit"
               disabled={isLoading || isSuccess}
-              className={`group relative w-full flex justify-center py-3 px-4 border text-sm font-medium rounded-full text-white ${getButtonClass()} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200`}
+              className={`group relative w-full flex justify-center py-3 px-6 h-12 text-sm font-bold rounded-3xl text-white ${getButtonClass()} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg`}
             >
               {buttonContent()}
             </button>

@@ -193,7 +193,6 @@ const App: React.FC = () => {
       <Header 
         setView={setCurrentView} 
         onToggleSidebar={handleToggleSidebar} 
-        onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
       />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar 
@@ -202,6 +201,7 @@ const App: React.FC = () => {
             isOpen={isSidebarOpen} 
             onClose={() => setIsSidebarOpen(false)}
             onLogout={handleLogout}
+            onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
         />
         <main className={`flex-1 overflow-y-auto bg-background ${isDashboard ? 'p-4 sm:p-6 lg:p-8' : ''}`}>
             <div className="max-w-full mx-auto">
