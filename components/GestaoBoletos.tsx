@@ -351,13 +351,14 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                  if (boletoMap.has(importKey)) {
                                      // Update existing record
                                      const existingBoleto = boletoMap.get(importKey)!;
-                                     // Only update if status is different to avoid unnecessary processing, 
-                                     // or force update to ensure sync with file
-                                     boletoMap.set(importKey, {
-                                         ...existingBoleto,
-                                         recebido: existingBoleto.recebido || isRecebido // Keep received if true, or update to true if file says so
-                                     });
-                                     updatedCount++;
+                                     // Update status to received if imported file says so, even if previously it wasn't
+                                     if (isRecebido && !existingBoleto.recebido) {
+                                         boletoMap.set(importKey, {
+                                             ...existingBoleto,
+                                             recebido: true
+                                         });
+                                         updatedCount++;
+                                     }
                                  } else {
                                      // Insert new record
                                      const newBoleto: BoletoReceber = {
