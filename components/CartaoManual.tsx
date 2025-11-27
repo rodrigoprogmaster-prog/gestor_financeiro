@@ -75,6 +75,32 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
         localStorage.setItem(storageKey, JSON.stringify(transactions));
     }, [transactions, storageKey]);
 
+    // Lógica inteligente para definir o mês padrão
+    useEffect(() => {
+        const now = new Date();
+        const currentMonth = (now.getMonth() + 1).toString().padStart(2, '0');
+        const currentYear = now.getFullYear();
+        const currentMonthKey = `${currentMonth}/${currentYear}`;
+
+        const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        const nextMonthKey = `${(nextMonthDate.getMonth() + 1).toString().padStart(2, '0')}/${nextMonthDate.getFullYear()}`;
+
+        // Filtrar transações do mês atual
+        const currentMonthTransactions = transactions.filter(t => {
+            if (!t.dataTransacao) return false;
+            const [year, month] = t.dataTransacao.split('-');
+            return `${month}/${year}` === currentMonthKey;
+        });
+
+        // Se houver transações no mês atual e TODAS estiverem 'Lançado', vai para o próximo mês.
+        // Caso contrário, fica no mês atual.
+        if (currentMonthTransactions.length > 0 && currentMonthTransactions.every(t => t.status === 'Lançado')) {
+            setMonthFilter(nextMonthKey);
+        } else {
+            setMonthFilter(currentMonthKey);
+        }
+    }, [transactions]);
+
     const uniqueMonths = useMemo(() => {
         const months = new Set<string>();
         transactions.forEach(item => {

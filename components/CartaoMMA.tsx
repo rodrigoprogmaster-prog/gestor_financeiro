@@ -127,6 +127,45 @@ const CartaoMMA: React.FC<CartaoMmaProps> = ({ onBack }) => {
         localStorage.setItem(STORAGE_KEY_MMA, JSON.stringify(data));
     }, [data]);
 
+    // Lógica inteligente para definir o mês padrão
+    useEffect(() => {
+        const now = new Date();
+        const currentMonth = (now.getMonth() + 1).toString().padStart(2, '0');
+        const currentYear = now.getFullYear();
+        const currentMonthKey = `${currentMonth}/${currentYear}`;
+
+        const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        const nextMonthKey = `${(nextMonthDate.getMonth() + 1).toString().padStart(2, '0')}/${nextMonthDate.getFullYear()}`;
+
+        // Filtrar itens do mês atual
+        const currentMonthItems = data.filter(item => {
+            const dateStr = item['Data da Transação'];
+            if (!dateStr) return false;
+            let date;
+            if (dateStr.includes('/')) {
+                const parts = dateStr.split('/');
+                if (parts.length === 3) {
+                    date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+                }
+            } else {
+                date = new Date(dateStr);
+            }
+            if (date && !isNaN(date.getTime())) {
+                const itemMonthYear = `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                return itemMonthYear === currentMonthKey;
+            }
+            return false;
+        });
+
+        // Se houver itens no mês atual e TODOS estiverem lançados, vai para o próximo mês.
+        // Caso contrário (vazio ou algum pendente), fica no mês atual.
+        if (currentMonthItems.length > 0 && currentMonthItems.every(item => item.Status === 'Lançado')) {
+            setMonthFilter(nextMonthKey);
+        } else {
+            setMonthFilter(currentMonthKey);
+        }
+    }, [data]); // Dependência em data garante que recalcula se importar arquivo novo
+
     const uniqueMonths = useMemo(() => {
         const months = new Set<string>();
         data.forEach(item => {
