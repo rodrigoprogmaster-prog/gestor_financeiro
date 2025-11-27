@@ -152,6 +152,12 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
         setIsActionPasswordModalOpen(true);
     };
     
+    const handleTriggerPhotoUpload = () => {
+        if (photoInputRef.current) {
+            photoInputRef.current.click();
+        }
+    };
+
     const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
@@ -160,8 +166,16 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
                 const base64 = e.target?.result as string;
                 localStorage.setItem('profile_picture', base64);
                 setProfilePicture(base64);
+                
+                // Dispara evento para atualizar o Header e outras partes do sistema instantaneamente
+                window.dispatchEvent(new Event('profilePictureUpdated'));
+                showNotification('Foto de perfil atualizada!');
             };
             reader.readAsDataURL(file);
+        }
+        // Resetar o valor para permitir re-selecionar o mesmo arquivo se necessário
+        if (event.target) {
+            event.target.value = '';
         }
     };
 
@@ -183,11 +197,10 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
     const handleBackup = () => {
         try {
             setIsProcessing(true);
-            // 1. Estrutura do Backup (Versionado para evitar incompatibilidades futuras)
             const backupPayload = {
                 meta: {
                     timestamp: new Date().toISOString(),
-                    version: '2.2', // Versão atualizada
+                    version: '2.2', 
                     appName: 'Gerenciador Financeiro',
                     itemCount: 0
                 },
@@ -195,18 +208,14 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
             };
 
             let count = 0;
-            // 2. Itera sobre o LocalStorage
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 if (key) {
                     const value = localStorage.getItem(key);
                     if (value) {
                         try {
-                            // Tenta fazer o parse para salvar como Objeto JSON no arquivo (fica legível)
-                            // Se for uma string pura (ex: tema 'dark'), salva como string
                             backupPayload.data[key] = JSON.parse(value);
                         } catch (e) {
-                            // Se falhar o parse, salva como string mesmo (ex: senhas ou tokens simples)
                             backupPayload.data[key] = value;
                         }
                         count++;
@@ -215,7 +224,6 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
             }
             backupPayload.meta.itemCount = count;
 
-            // 3. Gera e baixa o arquivo
             const blob = new Blob([JSON.stringify(backupPayload, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -246,7 +254,6 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
                 setIsProcessing(true);
                 const content = e.target?.result as string;
                 
-                // 1. Parse do arquivo
                 let parsed: any;
                 try {
                     parsed = JSON.parse(content);
@@ -256,12 +263,9 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
                 
                 let dataToRestore: Record<string, any> = {};
 
-                // 2. Detecção de Formato: V2+ (Meta + Data) ou Legado (Objeto Plano)
                 if (parsed && typeof parsed === 'object' && parsed.meta && parsed.data) {
-                    // Formato Novo
                     dataToRestore = parsed.data;
                 } else if (parsed && typeof parsed === 'object') {
-                    // Formato Legado (apenas chaves e valores)
                     dataToRestore = parsed;
                 } else {
                     throw new Error("Formato de backup não reconhecido ou corrompido.");
@@ -271,35 +275,26 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
                     throw new Error("O arquivo de backup está vazio.");
                 }
 
-                // Validação básica para garantir que é um backup do sistema
                 const knownKeys = ['boletos_a_receber_data', 'gerenciador_cheques_data', 'theme', 'user_password', 'contas_bancarias', 'boletos_a_pagar_data'];
                 const hasKnownKey = Object.keys(dataToRestore).some(k => knownKeys.some(known => k.includes(known) || k === known));
 
                 if (!hasKnownKey) {
-                    // Se não encontrar nenhuma chave conhecida, alerta o usuário mas permite continuar se ele quiser (arriscado)
                     if(!confirm("Atenção: Este arquivo não parece conter dados reconhecidos deste sistema. Deseja restaurar mesmo assim?")) {
                         setIsProcessing(false);
                         return;
                     }
                 }
 
-                // 3. Solicita senha antes de sobrescrever dados
                 requestPassword(() => {
                     try {
-                        // Limpa dados atuais
                         localStorage.clear();
                         
-                        // Lógica de Restauração Corrigida
                         Object.entries(dataToRestore).forEach(([key, value]) => {
                             if (typeof value === 'object' && value !== null) {
-                                // CRUCIAL: Se for objeto/array, converte para string JSON antes de salvar no localStorage.
-                                // O localStorage só aceita strings. Se salvar objeto direto, vira "[object Object]" e quebra o app.
                                 localStorage.setItem(key, JSON.stringify(value));
                             } else if (typeof value === 'string') {
-                                // Se já for string, salva direto.
                                 localStorage.setItem(key, value);
                             } else {
-                                // Números, booleanos, etc. converte para string simples.
                                 localStorage.setItem(key, String(value));
                             }
                         });
@@ -344,21 +339,27 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
                         <UserIcon className="h-5 w-5 text-primary"/> Perfil
                     </h3>
                     <div className="flex items-center gap-6">
-                        <div className="relative group cursor-pointer" onClick={() => photoInputRef.current?.click()}>
+                        <div className="relative group cursor-pointer h-24 w-24 flex-shrink-0" onClick={handleTriggerPhotoUpload}>
                             {profilePicture ? (
-                                <img src={profilePicture} alt="Profile" className="h-24 w-24 rounded-full object-cover border-2 border-border group-hover:border-primary transition-colors" />
+                                <img src={profilePicture} alt="Profile" className="h-24 w-24 rounded-full object-cover border-2 border-border group-hover:border-primary transition-colors shadow-sm" />
                             ) : (
-                                <div className="h-24 w-24 rounded-full bg-secondary flex items-center justify-center border-2 border-border group-hover:border-primary transition-colors">
+                                <div className="h-24 w-24 rounded-full bg-secondary flex items-center justify-center border-2 border-border group-hover:border-primary transition-colors shadow-sm">
                                     <UserIcon className="h-10 w-10 text-text-secondary" />
                                 </div>
                             )}
-                            <div className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[1px]">
                                 <EditIcon className="h-6 w-6 text-white" />
                             </div>
                         </div>
                         <div>
-                            <p className="font-medium text-text-primary">Foto de Perfil</p>
+                            <p className="font-medium text-text-primary text-lg">Foto de Perfil</p>
                             <p className="text-sm text-text-secondary mb-3">Clique na imagem para alterar</p>
+                            <button 
+                                onClick={handleTriggerPhotoUpload}
+                                className="text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full font-bold hover:bg-primary/20 transition-colors"
+                            >
+                                Alterar Foto
+                            </button>
                             <input type="file" ref={photoInputRef} onChange={handlePhotoChange} className="hidden" accept="image/*" />
                         </div>
                     </div>

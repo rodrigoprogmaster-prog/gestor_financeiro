@@ -1,9 +1,10 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { AppView } from '../types';
 import Clock from './Clock';
 import {
-  WalletIcon,
   MenuIcon,
+  UserIcon
 } from './icons';
 
 interface HeaderProps {
@@ -12,9 +13,35 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ setView, onToggleSidebar }) => {
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Carregar imagem inicial
+    const savedPicture = localStorage.getItem('profile_picture');
+    setProfilePicture(savedPicture);
+
+    // Escutar evento de atualização de perfil (disparado em ConfiguracaoSeguranca)
+    const handleProfileUpdate = () => {
+      const updatedPicture = localStorage.getItem('profile_picture');
+      setProfilePicture(updatedPicture);
+    };
+
+    window.addEventListener('profilePictureUpdated', handleProfileUpdate);
+    // Também escutar evento de storage para sincronia entre abas (opcional)
+    window.addEventListener('storage', handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener('profilePictureUpdated', handleProfileUpdate);
+      window.removeEventListener('storage', handleProfileUpdate);
+    };
+  }, []);
   
   const handleLogoClick = () => {
     setView(AppView.DASHBOARD);
+  };
+
+  const handleProfileClick = () => {
+    setView(AppView.CONFIGURACAO_SEGURANCA);
   };
 
   return (
@@ -38,7 +65,6 @@ const Header: React.FC<HeaderProps> = ({ setView, onToggleSidebar }) => {
             </h1>
         </div>
         
-        {/* Breadcrumb Placeholder or Page Title could go here */}
         <div className="hidden md:flex items-center text-sm text-gray-500">
             <span className="font-medium text-orange-600">Bem-vindo</span>
         </div>
@@ -48,7 +74,24 @@ const Header: React.FC<HeaderProps> = ({ setView, onToggleSidebar }) => {
         <div className="hidden md:block text-right">
           <Clock />
         </div>
-        <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-gray-200 to-gray-300 border border-white shadow-sm"></div>
+        
+        <button 
+          onClick={handleProfileClick}
+          className="relative h-10 w-10 rounded-full bg-secondary border border-gray-200 shadow-sm overflow-hidden hover:ring-2 hover:ring-orange-200 transition-all cursor-pointer group"
+          title="Ir para Configurações"
+        >
+          {profilePicture ? (
+            <img 
+              src={profilePicture} 
+              alt="Perfil" 
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="h-full w-full flex items-center justify-center bg-gradient-to-tr from-gray-100 to-gray-200 text-gray-400 group-hover:text-orange-600 transition-colors">
+               <UserIcon className="h-5 w-5" />
+            </div>
+          )}
+        </button>
       </div>
     </header>
   );

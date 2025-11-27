@@ -199,12 +199,12 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="h-screen bg-background font-sans flex flex-col overflow-hidden">
+    <div className="w-full h-full bg-background font-sans flex flex-col overflow-hidden text-text-primary">
       <Header 
         setView={setCurrentView} 
         onToggleSidebar={handleToggleSidebar} 
       />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden min-h-0">
         <Sidebar 
             currentView={currentView} 
             setView={setCurrentView} 
@@ -213,9 +213,9 @@ const App: React.FC = () => {
             onLogout={handleLogout}
             onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
         />
-        {/* Main content wrapper locked to viewport height, ensuring inner views control their own scrolling */}
-        <main className="flex-1 relative flex flex-col h-full overflow-hidden bg-background">
-            <div className="w-full h-full flex flex-col">
+        {/* Main content wrapper with min-w-0 to prevent flex children from overflowing */}
+        <main className="flex-1 relative flex flex-col h-full overflow-hidden bg-background min-w-0">
+            <div className="w-full h-full flex flex-col overflow-hidden">
                 {renderView()}
             </div>
         </main>

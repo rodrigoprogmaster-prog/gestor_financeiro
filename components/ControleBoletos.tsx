@@ -90,7 +90,6 @@ const parseImportedDate = (dateValue: any): string => {
     return '';
 };
 
-// Pagination
 const ITEMS_PER_PAGE = 20;
 
 type SortConfig = { key: keyof Boleto | 'dynamicStatus'; direction: 'asc' | 'desc' };
@@ -101,24 +100,20 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
     const [activeView, setActiveView] = useState<'boletos' | 'recorrentes' | 'notas_fiscais'>('boletos');
 
-    // --- Boletos State ---
     const [boletos, setBoletos] = useState<Boleto[]>(() => {
         const saved = localStorage.getItem(STORAGE_KEY);
         return saved ? JSON.parse(saved) : [];
     });
 
-    // --- Recorrentes State ---
     const [despesasRecorrentes, setDespesasRecorrentes] = useState<DespesaRecorrente[]>(() => {
         const saved = localStorage.getItem(STORAGE_KEY_RECORRENTES);
         return saved ? JSON.parse(saved) : [];
     });
 
-    // Shared UI State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<{ action: (() => void) | null, message: string }>({ action: null, message: '' });
     
-    // Boletos Specific UI State
     const [editingBoleto, setEditingBoleto] = useState<Partial<Boleto> & { vencimento_br?: string } | null>(null);
     const [boletoErrors, setBoletoErrors] = useState<BoletoErrors>({});
     const [searchTerm, setSearchTerm] = useState('');
@@ -128,25 +123,20 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
 
-    // Recorrentes Specific UI State
-    // We use 'diaMesLaunch' to store the "DD/MM" string in the modal
     const [editingDespesa, setEditingDespesa] = useState<(Partial<DespesaRecorrente> & { diaMesLaunch?: string }) | null>(null);
     const [despesaErrors, setDespesaErrors] = useState<DespesaErrors>({});
     const [recorrentesFilters, setRecorrentesFilters] = useState({
         empresa: '',
         descricao: '',
         diaMes: '',
-        status: '' // Novo filtro de status
+        status: ''
     });
 
-    // --- Autocomplete Data Sources ---
     const uniqueFornecedores = useMemo(() => [...new Set(boletos.map(b => b.fornecedor).filter(Boolean))].sort(), [boletos]);
     const uniquePagadores = useMemo(() => [...new Set(boletos.map(b => b.pagador).filter(Boolean))].sort(), [boletos]);
     const uniqueEmpresasRecorrentes = useMemo(() => [...new Set(despesasRecorrentes.map(d => d.empresa).filter(Boolean))].sort(), [despesasRecorrentes]);
     const uniqueDescricoesRecorrentes = useMemo(() => [...new Set(despesasRecorrentes.map(d => d.descricao).filter(Boolean))].sort(), [despesasRecorrentes]);
 
-
-    // Date context for Recorrentes view
     const today = new Date();
     const currentDay = today.getDate();
     const currentMonthName = today.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
@@ -159,12 +149,9 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         localStorage.setItem(STORAGE_KEY_RECORRENTES, JSON.stringify(despesasRecorrentes));
     }, [despesasRecorrentes]);
 
-    // Reset page when filters or sort change
     useEffect(() => {
         setCurrentPage(1);
     }, [statusFilter, searchTerm, dateRange, sortConfig, activeView]);
-
-    // --- BOLETOS LOGIC ---
 
     const getDynamicStatus = (boleto: Boleto): StatusBoleto => {
         if (boleto.pago) return StatusBoleto.PAGO;
@@ -208,11 +195,9 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         return filtered;
     }, [allBoletosWithStatus, statusFilter, searchTerm, dateRange, sortConfig]);
 
-    // Pagination Logic
     const totalPages = Math.ceil(filteredBoletos.length / ITEMS_PER_PAGE);
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const paginatedBoletos = filteredBoletos.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
 
     const totals = useMemo(() => {
         const boletosForTotals = allBoletosWithStatus.filter(boleto => {
@@ -231,26 +216,19 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         }, {} as Record<StatusBoleto, { count: number; value: number }>);
     }, [allBoletosWithStatus, searchTerm, dateRange]);
 
-    // --- RECORRENTES LOGIC ---
-
     const filteredRecorrentes = useMemo(() => {
         return despesasRecorrentes.filter(item => {
             const empresaMatch = !recorrentesFilters.empresa || item.empresa === recorrentesFilters.empresa;
             const descricaoMatch = !recorrentesFilters.descricao || item.descricao.toLowerCase().includes(recorrentesFilters.descricao.toLowerCase());
             const statusMatch = !recorrentesFilters.status || item.status === recorrentesFilters.status;
-            
-            // Day filter logic: extracts day from DD or DD/MM input
             let diaMatch = true;
             if (recorrentesFilters.diaMes) {
                 const cleanInput = recorrentesFilters.diaMes.replace(/\D/g, '');
                 if (cleanInput.length > 0) {
-                    // If user types "05", search matches day 5. If "0505", search matches day 5.
-                    // We assume the user wants to filter by the Due Day primarily.
                     const searchDay = parseInt(cleanInput.slice(0, 2), 10);
                     diaMatch = item.diaVencimento === searchDay;
                 }
             }
-            
             return empresaMatch && descricaoMatch && diaMatch && statusMatch;
         }).sort((a, b) => a.diaVencimento - b.diaVencimento);
     }, [despesasRecorrentes, recorrentesFilters]);
@@ -291,7 +269,6 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             setEditingBoleto({ vencimento_br: '', pago: false, lancadoSolinter: false });
         } else {
             setDespesaErrors({});
-            // Default diaMesLaunch for new recurring expense
             setEditingDespesa({ diaVencimento: 1, recorrencia: 'Mensal', status: 'Pendente', diaMesLaunch: '' });
         }
         setIsModalOpen(true);
@@ -314,10 +291,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             setEditingBoleto({ ...item, vencimento_br: formatDateToBR(item.vencimento) });
         } else {
             setDespesaErrors({});
-            // Construct diaMesLaunch for display
             const diaFormatado = item.diaVencimento.toString().padStart(2, '0');
-            // Use current month as default just for display context, or leave month empty if prefered.
-            // But user wants to "digit day and month". So we can just show DD/MM (current MM).
             const mesAtual = (new Date().getMonth() + 1).toString().padStart(2, '0');
             setEditingDespesa({ ...item, diaMesLaunch: `${diaFormatado}/${mesAtual}` });
         }
@@ -380,7 +354,6 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 const masked = applyDayMonthMask(value);
                 setEditingDespesa(prev => ({ ...prev, diaMesLaunch: masked }));
                 
-                // Extract day and set diaVencimento
                 if (masked.length >= 2) {
                     const dia = parseInt(masked.substring(0, 2), 10);
                     if (!isNaN(dia) && dia >= 1 && dia <= 31) {
@@ -434,7 +407,6 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             setIsConfirmOpen(true);
         } else {
             if (!validateDespesa() || !editingDespesa) return;
-            // Ensure we clean up the temporary property before saving
             const { diaMesLaunch, ...despesaToSave } = editingDespesa;
             const action = () => {
                 if (despesaToSave.id) setDespesasRecorrentes(despesasRecorrentes.map(d => d.id === despesaToSave.id ? (despesaToSave as DespesaRecorrente) : d));
@@ -742,6 +714,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         ) : (
             <>
                 {/* Filters for Recorrentes */}
+                {/* ... (Recorrentes Logic remains mostly the same, simplified for brevity) ... */}
                 <div className="flex flex-col gap-4 mb-4">
                     <div className="bg-primary/10 border border-primary/20 rounded-xl p-3 text-center">
                         <p className="text-sm font-semibold text-primary uppercase tracking-wide">Mês de Referência: {currentMonthName}</p>
@@ -749,58 +722,20 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     <div className="flex flex-col sm:flex-row items-center gap-4 bg-white p-3 rounded-2xl border border-border">
                         <div className="flex gap-4 w-full">
                             <div className="relative w-full sm:w-64">
-                                <select 
-                                    name="empresa" 
-                                    value={recorrentesFilters.empresa} 
-                                    onChange={(e) => setRecorrentesFilters(prev => ({ ...prev, empresa: e.target.value }))}
-                                    className="w-full pl-3 pr-10 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary appearance-none h-9"
-                                >
+                                <select name="empresa" value={recorrentesFilters.empresa} onChange={(e) => setRecorrentesFilters(prev => ({ ...prev, empresa: e.target.value }))} className="w-full pl-3 pr-10 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary appearance-none h-9">
                                     <option value="">Todas as Empresas</option>
-                                    {uniqueEmpresasRecorrentes.map(empresa => (
-                                        <option key={empresa} value={empresa}>{empresa}</option>
-                                    ))}
+                                    {uniqueEmpresasRecorrentes.map(empresa => (<option key={empresa} value={empresa}>{empresa}</option>))}
                                 </select>
-                                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-text-secondary">
-                                    <ChevronDownIcon className="h-4 w-4" />
-                                </div>
+                                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
                             </div>
-                            
                             <div className="relative w-32">
-                                <select
-                                    name="status"
-                                    value={recorrentesFilters.status}
-                                    onChange={(e) => setRecorrentesFilters(prev => ({ ...prev, status: e.target.value }))}
-                                    className="w-full pl-3 pr-8 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary appearance-none h-9"
-                                >
-                                    <option value="">Todos</option>
-                                    <option value="Pendente">Pendente</option>
-                                    <option value="Lançado">Lançado</option>
+                                <select name="status" value={recorrentesFilters.status} onChange={(e) => setRecorrentesFilters(prev => ({ ...prev, status: e.target.value }))} className="w-full pl-3 pr-8 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary appearance-none h-9">
+                                    <option value="">Todos</option><option value="Pendente">Pendente</option><option value="Lançado">Lançado</option>
                                 </select>
-                                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-text-secondary">
-                                    <ChevronDownIcon className="h-4 w-4" />
-                                </div>
+                                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
                             </div>
-
-                            <input 
-                                type="text" 
-                                name="descricao" 
-                                placeholder="Buscar despesa..." 
-                                value={recorrentesFilters.descricao} 
-                                onChange={(e) => setRecorrentesFilters(prev => ({ ...prev, descricao: e.target.value }))} 
-                                className="w-full sm:w-64 px-3 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"
-                            />
-                            <input 
-                                type="text" 
-                                name="diaMes" 
-                                placeholder="Dia (ex: 15)" 
-                                value={recorrentesFilters.diaMes} 
-                                onChange={(e) => {
-                                    // Allow user to type DD or DD/MM freely, we will filter in logic
-                                    const val = applyDayMonthMask(e.target.value);
-                                    setRecorrentesFilters(prev => ({ ...prev, diaMes: val }));
-                                }} 
-                                className="w-24 px-3 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"
-                            />
+                            <input type="text" name="descricao" placeholder="Buscar despesa..." value={recorrentesFilters.descricao} onChange={(e) => setRecorrentesFilters(prev => ({ ...prev, descricao: e.target.value }))} className="w-full sm:w-64 px-3 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/>
+                            <input type="text" name="diaMes" placeholder="Dia (ex: 15)" value={recorrentesFilters.diaMes} onChange={(e) => setRecorrentesFilters(prev => ({ ...prev, diaMes: applyDayMonthMask(e.target.value) }))} className="w-24 px-3 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/>
                         </div>
                         <button onClick={handleClearRecorrentesFilters} className="px-3 py-1.5 rounded-full bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-9 transition-colors whitespace-nowrap">Limpar</button>
                     </div>
@@ -824,30 +759,19 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                         const isToday = Number(day) === currentDay;
                                         return (
                                         <React.Fragment key={day}>
-                                            {/* Group Header */}
                                             <tr className={`${isToday ? 'bg-blue-100 text-blue-800 border-l-4 border-l-primary' : 'bg-secondary/50'}`}>
                                                 <td colSpan={5} className="px-6 py-2 font-bold text-xs uppercase tracking-wider border-y border-border flex items-center">
                                                     Dia {day.toString().padStart(2, '0')}
                                                     {isToday && <span className="ml-2 text-[10px] bg-primary text-white px-2 py-0.5 rounded-full shadow-sm">HOJE</span>}
                                                 </td>
                                             </tr>
-                                            {/* Group Items */}
                                             {groupedRecorrentes[Number(day)].map(despesa => (
                                                 <tr key={despesa.id} className={`hover:bg-secondary transition-colors ${isToday ? 'bg-blue-50/30' : ''}`}>
                                                     <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{despesa.empresa}</td>
                                                     <td className="px-6 py-4 text-text-secondary">{despesa.descricao}</td>
                                                     <td className="px-6 py-4 text-center text-text-secondary">{despesa.recorrencia}</td>
                                                     <td className="px-6 py-4 text-center">
-                                                        <button
-                                                            onClick={() => handleToggleRecorrenteStatus(despesa.id, despesa.status)}
-                                                            className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide transition-colors border ${
-                                                                despesa.status === 'Lançado' 
-                                                                ? 'bg-success/10 text-success border-success/20 hover:bg-success/20' 
-                                                                : 'bg-warning/10 text-warning border-warning/20 hover:bg-warning/20'
-                                                            }`}
-                                                        >
-                                                            {despesa.status}
-                                                        </button>
+                                                        <button onClick={() => handleToggleRecorrenteStatus(despesa.id, despesa.status)} className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide transition-colors border ${despesa.status === 'Lançado' ? 'bg-success/10 text-success border-success/20 hover:bg-success/20' : 'bg-warning/10 text-warning border-warning/20 hover:bg-warning/20'}`}>{despesa.status}</button>
                                                     </td>
                                                     <td className="px-6 py-4 text-center">
                                                         <div className="flex items-center justify-center gap-2">
@@ -865,7 +789,6 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                             <div className="flex flex-col items-center text-text-secondary">
                                                 <RefreshIcon className="w-10 h-10 mb-3 text-gray-300"/>
                                                 <h3 className="text-lg font-medium text-text-primary">Nenhuma Despesa Recorrente</h3>
-                                                <p className="text-sm">Adicione despesas fixas para acompanhar seus pagamentos.</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -879,120 +802,38 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
         {isModalOpen && (
             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 overflow-visible">
-                    <h3 className="text-2xl font-bold text-text-primary mb-6 text-center">
-                        {activeView === 'boletos' 
-                            ? (editingBoleto?.id ? 'Editar Boleto' : 'Novo Boleto')
-                            : (editingDespesa?.id ? 'Editar Despesa' : 'Nova Despesa Recorrente')}
-                    </h3>
+                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden">
+                    <div className="shrink-0 p-6 pb-2">
+                        <h3 className="text-2xl font-bold text-text-primary text-center">
+                            {activeView === 'boletos' ? (editingBoleto?.id ? 'Editar Boleto' : 'Novo Boleto') : (editingDespesa?.id ? 'Editar Despesa' : 'Nova Despesa Recorrente')}
+                        </h3>
+                    </div>
                     
-                    <div className="space-y-4">
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
                         {activeView === 'boletos' && editingBoleto ? (
                             <>
-                                <div>
-                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Fornecedor</label>
-                                    <AutocompleteInput
-                                        name="fornecedor"
-                                        value={editingBoleto.fornecedor || ''}
-                                        onChange={handleInputChange}
-                                        suggestions={uniqueFornecedores}
-                                        className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.fornecedor ? 'border-danger' : ''}`}
-                                    />
-                                    {boletoErrors.fornecedor && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.fornecedor}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Pagador</label>
-                                    <AutocompleteInput
-                                        name="pagador"
-                                        value={editingBoleto.pagador || ''}
-                                        onChange={handleInputChange}
-                                        suggestions={uniquePagadores}
-                                        className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.pagador ? 'border-danger' : ''}`}
-                                    />
-                                    {boletoErrors.pagador && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.pagador}</p>}
-                                </div>
+                                <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Fornecedor</label><AutocompleteInput name="fornecedor" value={editingBoleto.fornecedor || ''} onChange={handleInputChange} suggestions={uniqueFornecedores} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.fornecedor ? 'border-danger' : ''}`} />{boletoErrors.fornecedor && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.fornecedor}</p>}</div>
+                                <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Pagador</label><AutocompleteInput name="pagador" value={editingBoleto.pagador || ''} onChange={handleInputChange} suggestions={uniquePagadores} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.pagador ? 'border-danger' : ''}`} />{boletoErrors.pagador && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.pagador}</p>}</div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Vencimento</label>
-                                        <input name="vencimento_br" value={editingBoleto.vencimento_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.vencimento ? 'border-danger' : ''}`} />
-                                        {boletoErrors.vencimento && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.vencimento}</p>}
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Valor</label>
-                                        <input name="valor" value={formatCurrency(editingBoleto.valor || 0)} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.valor ? 'border-danger' : ''}`} />
-                                        {boletoErrors.valor && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.valor}</p>}
-                                    </div>
+                                    <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Vencimento</label><input name="vencimento_br" value={editingBoleto.vencimento_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.vencimento ? 'border-danger' : ''}`} />{boletoErrors.vencimento && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.vencimento}</p>}</div>
+                                    <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Valor</label><input name="valor" value={formatCurrency(editingBoleto.valor || 0)} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.valor ? 'border-danger' : ''}`} />{boletoErrors.valor && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.valor}</p>}</div>
                                 </div>
-                                <div>
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            name="lancadoSolinter" 
-                                            checked={editingBoleto.lancadoSolinter || false} 
-                                            onChange={(e) => setEditingBoleto(prev => ({ ...prev, lancadoSolinter: e.target.checked }))}
-                                            className="h-5 w-5 text-primary rounded focus:ring-primary border-gray-300"
-                                        />
-                                        <span className="text-sm font-bold text-text-primary">Lançado no Solinter</span>
-                                    </label>
-                                </div>
+                                <div><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="lancadoSolinter" checked={editingBoleto.lancadoSolinter || false} onChange={(e) => setEditingBoleto(prev => ({ ...prev, lancadoSolinter: e.target.checked }))} className="h-5 w-5 text-primary rounded focus:ring-primary border-gray-300" /><span className="text-sm font-bold text-text-primary">Lançado no Solinter</span></label></div>
                             </>
                         ) : editingDespesa ? (
                             <>
-                                <div>
-                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Empresa</label>
-                                    <AutocompleteInput
-                                        name="empresa"
-                                        value={editingDespesa.empresa || ''}
-                                        onChange={handleInputChange}
-                                        suggestions={uniqueEmpresasRecorrentes}
-                                        className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.empresa ? 'border-danger' : ''}`}
-                                    />
-                                    {despesaErrors.empresa && <p className="text-danger text-xs mt-1 ml-1">{despesaErrors.empresa}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Despesa (Descrição)</label>
-                                    <AutocompleteInput
-                                        name="descricao"
-                                        value={editingDespesa.descricao || ''}
-                                        onChange={handleInputChange}
-                                        suggestions={uniqueDescricoesRecorrentes}
-                                        className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.descricao ? 'border-danger' : ''}`}
-                                    />
-                                    {despesaErrors.descricao && <p className="text-danger text-xs mt-1 ml-1">{despesaErrors.descricao}</p>}
-                                </div>
+                                <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Empresa</label><AutocompleteInput name="empresa" value={editingDespesa.empresa || ''} onChange={handleInputChange} suggestions={uniqueEmpresasRecorrentes} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.empresa ? 'border-danger' : ''}`} />{despesaErrors.empresa && <p className="text-danger text-xs mt-1 ml-1">{despesaErrors.empresa}</p>}</div>
+                                <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Despesa (Descrição)</label><AutocompleteInput name="descricao" value={editingDespesa.descricao || ''} onChange={handleInputChange} suggestions={uniqueDescricoesRecorrentes} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.descricao ? 'border-danger' : ''}`} />{despesaErrors.descricao && <p className="text-danger text-xs mt-1 ml-1">{despesaErrors.descricao}</p>}</div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Dia e Mês (Início)</label>
-                                        <input name="diaMesLaunch" value={editingDespesa.diaMesLaunch || ''} onChange={handleInputChange} placeholder="DD/MM" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.diaVencimento ? 'border-danger' : ''}`} />
-                                        {despesaErrors.diaVencimento && <p className="text-danger text-xs mt-1 ml-1">{despesaErrors.diaVencimento}</p>}
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Recorrência</label>
-                                        <div className="relative">
-                                            <select name="recorrencia" value={editingDespesa.recorrencia || 'Mensal'} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 appearance-none">
-                                                <option value="Mensal">Mensal</option>
-                                                <option value="Semanal">Semanal</option>
-                                                <option value="Anual">Anual</option>
-                                            </select>
-                                            <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
-                                        </div>
-                                    </div>
+                                    <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Dia e Mês (Início)</label><input name="diaMesLaunch" value={editingDespesa.diaMesLaunch || ''} onChange={handleInputChange} placeholder="DD/MM" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.diaVencimento ? 'border-danger' : ''}`} />{despesaErrors.diaVencimento && <p className="text-danger text-xs mt-1 ml-1">{despesaErrors.diaVencimento}</p>}</div>
+                                    <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Recorrência</label><div className="relative"><select name="recorrencia" value={editingDespesa.recorrencia || 'Mensal'} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 appearance-none"><option value="Mensal">Mensal</option><option value="Semanal">Semanal</option><option value="Anual">Anual</option></select><div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div></div></div>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Status</label>
-                                    <div className="relative">
-                                        <select name="status" value={editingDespesa.status || 'Pendente'} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 appearance-none">
-                                            <option value="Pendente">Pendente</option>
-                                            <option value="Lançado">Lançado</option>
-                                        </select>
-                                        <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
-                                    </div>
-                                </div>
+                                <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Status</label><div className="relative"><select name="status" value={editingDespesa.status || 'Pendente'} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 appearance-none"><option value="Pendente">Pendente</option><option value="Lançado">Lançado</option></select><div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div></div></div>
                             </>
                         ) : null}
                     </div>
 
-                     <div className="flex justify-center gap-3 mt-8">
+                     <div className="shrink-0 p-6 pt-4 border-t border-gray-100 flex justify-center gap-3 bg-gray-50">
                         <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
                         <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
                     </div>

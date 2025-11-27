@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { PlusIcon, TrashIcon, EditIcon, SearchIcon, DownloadIcon, ArrowLeftIcon } from './icons';
+import { PlusIcon, TrashIcon, EditIcon, SearchIcon, DownloadIcon, ArrowLeftIcon, ChevronDownIcon } from './icons';
 
 // Data structure
 interface ManualTransaction {
@@ -54,6 +54,8 @@ interface CartaoManualProps {
     onBack: () => void;
 }
 
+type SortConfig = { key: keyof ManualTransaction; direction: 'asc' | 'desc' };
+
 const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }) => {
     const [transactions, setTransactions] = useState<ManualTransaction[]>(() => {
         const saved = localStorage.getItem(storageKey);
@@ -65,6 +67,9 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<{ action: (() => void) | null, message: string }>({ action: null, message: '' });
     const [monthFilter, setMonthFilter] = useState('');
+    
+    // Sorting state
+    const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
     
     useEffect(() => {
         localStorage.setItem(storageKey, JSON.stringify(transactions));
@@ -88,17 +93,57 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
     }, [transactions]);
 
     const filteredTransactions = useMemo(() => {
-        if (!monthFilter) return transactions;
-        return transactions.filter(t => {
-            if (!t.dataTransacao) return false;
-            const [year, month] = t.dataTransacao.split('-');
-            return `${month}/${year}` === monthFilter;
-        });
-    }, [transactions, monthFilter]);
+        let result = transactions;
+        
+        if (monthFilter) {
+            result = result.filter(t => {
+                if (!t.dataTransacao) return false;
+                const [year, month] = t.dataTransacao.split('-');
+                return `${month}/${year}` === monthFilter;
+            });
+        }
+
+        if (sortConfig !== null) {
+            result = [...result].sort((a, b) => {
+                const aValue = a[sortConfig.key] || '';
+                const bValue = b[sortConfig.key] || '';
+
+                if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+                if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        } else {
+            // Default sort by date desc
+            result = [...result].sort((a, b) => b.dataTransacao.localeCompare(a.dataTransacao));
+        }
+        
+        return result;
+    }, [transactions, monthFilter, sortConfig]);
 
     const totals = useMemo(() => {
         return filteredTransactions.reduce((acc, t) => acc + t.valor, 0);
     }, [filteredTransactions]);
+
+    const requestSort = (key: keyof ManualTransaction) => {
+        let direction: 'asc' | 'desc' = 'asc';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const renderSortIcon = (key: keyof ManualTransaction) => {
+        if (sortConfig?.key === key) {
+            return (
+                <ChevronDownIcon 
+                    className={`h-4 w-4 inline-block ml-1 transition-transform duration-200 ${
+                        sortConfig.direction === 'asc' ? 'rotate-180' : ''
+                    }`} 
+                />
+            );
+        }
+        return null;
+    };
 
     const handleOpenAddModal = () => {
         setEditingTransaction({ 
@@ -233,8 +278,8 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
     };
 
     return (
-        <div className="animate-fade-in">
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
+        <div className="animate-fade-in flex flex-col h-full">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4 flex-shrink-0">
                 <div className="flex items-center gap-4">
                     <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">
                         <ArrowLeftIcon className="h-5 w-5" />
@@ -265,7 +310,7 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
                 </div>
             </div>
 
-            <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4 flex-shrink-0">
                 <div className="bg-card p-4 rounded-2xl border border-border shadow-sm text-center">
                     <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Valor Total</p>
                     <p className="text-xl font-bold text-primary">{formatCurrency(totals)}</p>
@@ -276,67 +321,72 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
                 </div>
             </div>
 
-            <div className="bg-card shadow-md rounded-2xl overflow-x-auto">
-                <table className="w-full text-sm text-left text-text-secondary">
-                    <thead className="text-sm text-text-primary uppercase bg-secondary">
-                        <tr>
-                            <th className="px-6 py-3">Data</th>
-                            <th className="px-6 py-3">Descrição</th>
-                            <th className="px-6 py-3">Categoria</th>
-                            <th className="px-6 py-3 text-right">Valor</th>
-                            <th className="px-6 py-3 text-center">Status</th>
-                            <th className="px-6 py-3 text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredTransactions.length > 0 ? (
-                            filteredTransactions.map(item => (
-                                <tr 
-                                    key={item.id} 
-                                    className="bg-card border-b border-border hover:bg-secondary transition-colors cursor-pointer"
-                                    onClick={() => handleStatusToggle(item.id)}
-                                >
-                                    <td className="px-6 py-4">{formatDateToBR(item.dataTransacao)}</td>
-                                    <td className="px-6 py-4 font-medium text-text-primary">{item.transacao}</td>
-                                    <td className="px-6 py-4">{item.categoria}</td>
-                                    <td className="px-6 py-4 text-right font-semibold text-text-primary">{formatCurrency(item.valor)}</td>
-                                    <td className="px-6 py-4 text-center">
-                                        <span className={`px-2 py-1 text-xs font-bold rounded-full border ${item.status === 'Lançado' ? 'bg-success/10 text-success border-success/20' : 'bg-secondary text-text-secondary border-border'}`}>
-                                            {item.status || 'Pendente'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
-                                        <div className="flex items-center justify-center gap-2">
-                                            <button onClick={(e) => { e.stopPropagation(); handleEditClick(item); }} className="text-primary hover:text-primary/80 p-2 rounded-full hover:bg-primary/10 transition-colors">
-                                                <EditIcon className="h-5 w-5" />
-                                            </button>
-                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(item.id); }} className="text-danger hover:text-danger/80 p-2 rounded-full hover:bg-danger/10 transition-colors">
-                                                <TrashIcon className="h-5 w-5" />
-                                            </button>
+            <div className="bg-card shadow-md rounded-2xl overflow-hidden flex flex-col flex-grow border border-border">
+                <div className="overflow-x-auto overflow-y-auto flex-grow">
+                    <table className="min-w-full divide-y divide-border text-sm text-left">
+                        <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider sticky top-0 z-10 shadow-sm">
+                            <tr>
+                                <th className="px-6 py-3 cursor-pointer hover:bg-border/50 select-none" onClick={() => requestSort('dataTransacao')}>Data {renderSortIcon('dataTransacao')}</th>
+                                <th className="px-6 py-3 cursor-pointer hover:bg-border/50 select-none" onClick={() => requestSort('transacao')}>Descrição {renderSortIcon('transacao')}</th>
+                                <th className="px-6 py-3 cursor-pointer hover:bg-border/50 select-none" onClick={() => requestSort('categoria')}>Categoria {renderSortIcon('categoria')}</th>
+                                <th className="px-6 py-3 text-right cursor-pointer hover:bg-border/50 select-none" onClick={() => requestSort('valor')}>Valor {renderSortIcon('valor')}</th>
+                                <th className="px-6 py-3 text-center cursor-pointer hover:bg-border/50 select-none" onClick={() => requestSort('status')}>Status {renderSortIcon('status')}</th>
+                                <th className="px-6 py-3 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border bg-white">
+                            {filteredTransactions.length > 0 ? (
+                                filteredTransactions.map(item => (
+                                    <tr 
+                                        key={item.id} 
+                                        className="hover:bg-secondary transition-colors cursor-pointer"
+                                        onClick={() => handleStatusToggle(item.id)}
+                                    >
+                                        <td className="px-6 py-4 whitespace-nowrap">{formatDateToBR(item.dataTransacao)}</td>
+                                        <td className="px-6 py-4 font-medium text-text-primary">{item.transacao}</td>
+                                        <td className="px-6 py-4">{item.categoria}</td>
+                                        <td className="px-6 py-4 text-right font-semibold text-text-primary whitespace-nowrap">{formatCurrency(item.valor)}</td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className={`px-2 py-1 text-xs font-bold rounded-full border ${item.status === 'Lançado' ? 'bg-success/10 text-success border-success/20' : 'bg-secondary text-text-secondary border-border'}`}>
+                                                {item.status || 'Pendente'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                            <div className="flex items-center justify-center gap-2">
+                                                <button onClick={(e) => { e.stopPropagation(); handleEditClick(item); }} className="text-primary hover:text-primary/80 p-2 rounded-full hover:bg-primary/10 transition-colors">
+                                                    <EditIcon className="h-5 w-5" />
+                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(item.id); }} className="text-danger hover:text-danger/80 p-2 rounded-full hover:bg-danger/10 transition-colors">
+                                                    <TrashIcon className="h-5 w-5" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={6} className="text-center py-16">
+                                        <div className="flex flex-col items-center justify-center text-text-secondary">
+                                            <SearchIcon className="w-12 h-12 mb-4 text-gray-300" />
+                                            <h3 className="text-xl font-semibold text-text-primary">Nenhuma Transação Encontrada</h3>
+                                            <p className="mt-1">Adicione um lançamento manual para começar.</p>
                                         </div>
                                     </td>
                                 </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan={6} className="text-center py-16">
-                                    <div className="flex flex-col items-center justify-center text-text-secondary">
-                                        <SearchIcon className="w-12 h-12 mb-4 text-gray-300" />
-                                        <h3 className="text-xl font-semibold text-text-primary">Nenhuma Transação Encontrada</h3>
-                                        <p className="mt-1">Adicione um lançamento manual para começar.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {isModalOpen && editingTransaction && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                    <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-                        <h3 className="text-xl font-bold mb-6 text-text-primary">{editingTransaction.id ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
-                        <div className="space-y-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden">
+                        <div className="shrink-0 p-6 pb-2 border-b border-gray-100">
+                            <h3 className="text-xl font-bold text-text-primary text-center">{editingTransaction.id ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-text-secondary mb-1">Data</label>
                                 <input 
@@ -345,7 +395,7 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
                                     onChange={handleInputChange} 
                                     placeholder="DD/MM/AAAA"
                                     maxLength={10}
-                                    className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                                    className="w-full bg-background border border-border rounded-xl px-3 py-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12"
                                 />
                             </div>
                             <div>
@@ -354,7 +404,7 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
                                     name="transacao" 
                                     value={editingTransaction.transacao || ''} 
                                     onChange={handleInputChange} 
-                                    className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                                    className="w-full bg-background border border-border rounded-xl px-3 py-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12"
                                 />
                             </div>
                             <div>
@@ -364,7 +414,7 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
                                     value={editingTransaction.categoria || ''} 
                                     onChange={handleInputChange} 
                                     placeholder="Ex: Alimentação, Transporte"
-                                    className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                                    className="w-full bg-background border border-border rounded-xl px-3 py-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12"
                                 />
                             </div>
                             <div>
@@ -373,26 +423,27 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
                                     name="valor" 
                                     value={formatCurrency(editingTransaction.valor || 0)} 
                                     onChange={handleInputChange} 
-                                    className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                                    className="w-full bg-background border border-border rounded-xl px-3 py-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12"
                                 />
                             </div>
                         </div>
-                        <div className="mt-8 flex justify-end gap-4">
-                            <button onClick={handleCloseModal} className="px-4 py-2 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                            <button onClick={handleSaveChanges} className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Salvar</button>
+
+                        <div className="shrink-0 p-6 pt-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
+                            <button onClick={handleCloseModal} className="px-6 py-2.5 rounded-xl bg-secondary hover:bg-border font-semibold transition-colors text-text-secondary">Cancelar</button>
+                            <button onClick={handleSaveChanges} className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold transition-colors shadow-lg shadow-primary/20">Salvar</button>
                         </div>
                     </div>
                 </div>
             )}
 
             {isConfirmOpen && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
                     <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
                         <h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar</h3>
                         <p className="text-text-secondary mb-8">{confirmAction.message}</p>
                         <div className="flex justify-center gap-4">
-                            <button onClick={() => setIsConfirmOpen(false)} className="px-6 py-2.5 rounded-lg bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                            <button onClick={handleConfirm} className="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Confirmar</button>
+                            <button onClick={() => setIsConfirmOpen(false)} className="px-6 py-2.5 rounded-xl bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
+                            <button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold transition-colors shadow-lg shadow-primary/20">Confirmar</button>
                         </div>
                     </div>
                 </div>
