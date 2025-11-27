@@ -2,6 +2,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, ArrowLeftIcon, SpinnerIcon, ChevronDownIcon, RefreshIcon, ClipboardCheckIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
 import AutocompleteInput from './AutocompleteInput';
+import GerenciadorNotasFiscais from './GerenciadorNotasFiscais';
 
 enum StatusBoleto {
   A_VENCER = 'A Vencer',
@@ -98,7 +99,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const STORAGE_KEY = 'boletos_a_pagar_data';
     const STORAGE_KEY_RECORRENTES = 'despesas_recorrentes_data';
 
-    const [activeView, setActiveView] = useState<'boletos' | 'recorrentes'>('boletos');
+    const [activeView, setActiveView] = useState<'boletos' | 'recorrentes' | 'notas_fiscais'>('boletos');
 
     // --- Boletos State ---
     const [boletos, setBoletos] = useState<Boleto[]>(() => {
@@ -537,6 +538,10 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         return null;
     };
 
+    if (activeView === 'notas_fiscais') {
+        return <GerenciadorNotasFiscais onBack={onBack} />;
+    }
+
     return (
     <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in flex flex-col h-full">
         <input type="file" ref={fileInputRef} onChange={handleFileImport} className="hidden" accept=".xlsx, .xls" />
@@ -572,6 +577,16 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         }`}
                     >
                         Recorrentes
+                    </button>
+                    <button
+                        onClick={() => setActiveView('notas_fiscais')}
+                        className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
+                            activeView === 'notas_fiscais'
+                            ? 'bg-white text-primary shadow-sm ring-1 ring-black/5'
+                            : 'text-text-secondary hover:text-text-primary'
+                        }`}
+                    >
+                        Notas Fiscais
                     </button>
                 </div>
             </div>
