@@ -455,9 +455,8 @@ export const PrevisaoCristiano: React.FC = () => {
             if (existingPayment) {
                 updatedPaymentsForDate.push({
                     ...existingPayment,
-                    receitas: prev.receitas, // Update with new forecast value
-                    despesas: prev.despesas, // Update with new forecast value
-                    // Preserve existing envia/recebe if they were set, otherwise keep 0.
+                    receitas: prev.receitas,
+                    despesas: prev.despesas,
                     envia: existingPayment.envia || 0, 
                     recebe: existingPayment.recebe || 0,
                 });
@@ -707,7 +706,6 @@ export const PrevisaoCristiano: React.FC = () => {
                                     <tr>
                                         <td colSpan={2} className="text-center py-16 text-text-secondary">
                                             Nenhuma despesa registrada com os filtros selecionados.
-                                        
                                         </td>
                                     </tr>
                                 )}
@@ -781,6 +779,26 @@ export const PrevisaoCristiano: React.FC = () => {
                     </div>
                 </div>
               )}
+              
+              {isGerarPrevisaoModalOpen && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center">
+                        <h3 className="text-xl font-bold mb-4 text-text-primary">Gerar Previsão</h3>
+                        <p className="text-text-secondary mb-4">Informe a semana para agrupar os lançamentos.</p>
+                        <input
+                            type="text"
+                            placeholder="Ex: Semana 42"
+                            value={semanaParaGerar}
+                            onChange={(e) => setSemanaParaGerar(e.target.value)}
+                            className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 mb-6"
+                        />
+                        <div className="flex justify-center gap-4">
+                            <button onClick={() => setIsGerarPrevisaoModalOpen(false)} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
+                            <button onClick={handleProceedToConfirmGerar} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Continuar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
             </div>
           );
         };
