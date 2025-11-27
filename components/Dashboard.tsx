@@ -4,12 +4,11 @@ import {
     CheckIcon, 
     CalendarClockIcon, 
     SparklesIcon, 
-    SearchIcon, 
-    RefreshIcon,
     ArrowUpCircleIcon,
     ArrowDownCircleIcon,
     ClipboardListIcon,
-    TrendingUpIcon
+    TrendingUpIcon,
+    CreditCardIcon
 } from './icons';
 
 interface DashboardProps {
@@ -49,6 +48,7 @@ const getTomorrowISO = () => {
 const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
     const [items, setItems] = useState<Item[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<'entradas' | 'saidas'>('entradas');
 
     useEffect(() => {
         const today = getTodayISO();
@@ -58,7 +58,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
 
         const loadedItems: Item[] = [];
 
-        // Load data from local storage (omitted detailed parsing logic for brevity, assuming same logic as before)
         const loadData = (key: string, type: any, filterFn: any) => {
             const data = localStorage.getItem(key);
             if (data) {
@@ -120,94 +119,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
         setItems(prev => prev.filter(i => i.id !== item.id));
     };
 
-    const renderItem = (item: Item) => {
-        let title = '';
-        let details = '';
-        let icon = null;
-        let borderColor = 'border-gray-200';
-        let amountClass = 'text-gray-600';
-        let tag = null;
-
-        const valor = 'valor' in item ? (item.valor || 0) : 0;
-        const valorFormatted = valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-        switch(item.type) {
-            case 'boletoReceber':
-                title = item.cliente || item.credor || 'Cliente';
-                details = `Recebimento`;
-                borderColor = 'border-l-emerald-500';
-                amountClass = 'text-emerald-600 font-semibold';
-                tag = <span className="text-[10px] font-bold uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Receber</span>;
-                break;
-            case 'cheque':
-                title = item.emitente;
-                details = `Cheque Nº ${item.numero}`;
-                borderColor = 'border-l-emerald-500';
-                amountClass = 'text-emerald-600 font-semibold';
-                tag = <span className="text-[10px] font-bold uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Cheque</span>;
-                break;
-            case 'tarefa':
-                title = item.titulo;
-                details = `Prioridade: ${item.prioridade}`;
-                borderColor = 'border-l-orange-500';
-                tag = <span className="text-[10px] font-bold uppercase text-orange-700 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-100">Tarefa</span>;
-                break;
-            case 'boletoPagar':
-                title = item.fornecedor || item.pagador || 'Fornecedor';
-                details = `Pagamento`;
-                borderColor = 'border-l-red-500';
-                amountClass = 'text-red-600 font-semibold';
-                tag = <span className="text-[10px] font-bold uppercase text-red-700 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">Pagar</span>;
-                break;
-            case 'lembreteRecorrente':
-                title = item.descricao;
-                details = `${item.empresa}`;
-                icon = <RefreshIcon className="h-4 w-4 text-blue-500" />;
-                borderColor = 'border-l-blue-500';
-                tag = <span className="text-[10px] font-bold uppercase text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Lembrete</span>;
-                break;
-        }
-        
-        return (
-             <div key={item.id} className={`bg-white p-4 rounded-xl shadow-sm border border-gray-100 border-l-[3px] ${borderColor} hover:shadow-md transition-all duration-200 group flex justify-between items-center gap-4`}>
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                            {icon}
-                            <h5 className="font-semibold text-gray-900 truncate text-sm" title={title}>{title}</h5>
-                        </div>
-                        {tag}
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <p className="text-xs text-gray-500 truncate">{details}</p>
-                        {'valor' in item && (
-                            <p className={`text-sm ${amountClass}`}>{valorFormatted}</p>
-                        )}
-                    </div>
-                </div>
-                
-                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button 
-                        onClick={() => handleConcluir(item)} 
-                        title="Concluir" 
-                        className="p-1.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-600 hover:text-white transition-colors"
-                    >
-                        <CheckIcon className="h-4 w-4"/>
-                    </button>
-                    {item.type !== 'lembreteRecorrente' && (
-                        <button 
-                            onClick={() => handleAdiar(item)} 
-                            title="Adiar" 
-                            className="p-1.5 rounded-full bg-orange-50 text-orange-600 border border-orange-100 hover:bg-orange-600 hover:text-white transition-colors"
-                        >
-                            <CalendarClockIcon className="h-4 w-4"/>
-                        </button>
-                    )}
-                </div>
-            </div>
-        );
-    };
-
     const priorities = items.filter(i => i.type === 'tarefa' || i.type === 'lembreteRecorrente');
     const inflows = items.filter(i => i.type === 'boletoReceber' || i.type === 'cheque');
     const outflows = items.filter(i => i.type === 'boletoPagar');
@@ -223,37 +134,108 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
     const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
     const todayDate = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
 
-    const SummaryCard = ({ icon, label, count, colorClass, bgClass, borderColor }: any) => (
-        <div className={`flex flex-col items-center justify-center p-5 rounded-xl border ${borderColor} bg-white shadow-sm hover:shadow-md transition-shadow`}>
-            <div className={`p-3 rounded-full ${bgClass} mb-3`}>
+    const SummaryCard = ({ icon, label, count, colorClass, bgClass, onClick }: any) => (
+        <div onClick={onClick} className={`flex items-center p-4 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group`}>
+            <div className={`p-3 rounded-xl ${bgClass} mr-4 transition-colors`}>
                 {React.cloneElement(icon, { className: `h-6 w-6 ${colorClass}` })}
             </div>
-            <p className="text-2xl font-bold text-gray-900">{count}</p>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</p>
+            <div>
+                <p className="text-2xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors">{count}</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</p>
+            </div>
         </div>
     );
 
-    const SectionColumn = ({ title, icon, items, emptyMessage }: any) => (
-        <div className="flex flex-col h-full bg-gray-50/50 rounded-2xl p-4 border border-gray-100">
-            <div className="flex items-center gap-2 mb-4">
-                <div className="p-1.5 bg-white rounded-lg shadow-sm border border-gray-100 text-gray-500">
-                    {icon}
-                </div>
-                <h3 className="text-base font-bold text-gray-800">{title}</h3>
-                <span className="ml-auto text-xs font-bold bg-white px-2 py-1 rounded-full text-gray-500 border border-gray-200 shadow-sm">{items.length}</span>
-            </div>
-            <div className="flex-grow space-y-3 overflow-y-auto custom-scrollbar pr-1 max-h-[500px]">
-                {items.length > 0 ? (
-                    items.map(renderItem)
-                ) : (
-                    <div className="flex flex-col items-center justify-center h-40 text-gray-400 bg-white rounded-xl border border-dashed border-gray-200">
-                        <CheckIcon className="h-8 w-8 mb-2 opacity-20" />
-                        <p className="text-sm font-medium opacity-60">{emptyMessage}</p>
+    const renderListItem = (item: Item, minimal: boolean = false) => {
+        let title = '';
+        let subtitle = '';
+        let valueElement = null;
+        let actionColor = '';
+        let iconBg = '';
+        
+        const valor = 'valor' in item ? (item.valor || 0) : 0;
+        const valorFormatted = valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        switch(item.type) {
+            case 'boletoReceber':
+                title = item.cliente || item.credor || 'Cliente';
+                subtitle = 'Boleto a Receber';
+                valueElement = <span className="text-emerald-600 font-bold">{valorFormatted}</span>;
+                actionColor = 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100';
+                iconBg = 'bg-emerald-100 text-emerald-600';
+                break;
+            case 'cheque':
+                title = item.emitente;
+                subtitle = `Cheque Nº ${item.numero}`;
+                valueElement = <span className="text-emerald-600 font-bold">{valorFormatted}</span>;
+                actionColor = 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100';
+                iconBg = 'bg-emerald-100 text-emerald-600';
+                break;
+            case 'boletoPagar':
+                title = item.fornecedor || item.pagador || 'Fornecedor';
+                subtitle = 'Boleto a Pagar';
+                valueElement = <span className="text-red-600 font-bold">{valorFormatted}</span>;
+                actionColor = 'text-red-600 bg-red-50 hover:bg-red-100';
+                iconBg = 'bg-red-100 text-red-600';
+                break;
+            case 'tarefa':
+                title = item.titulo;
+                subtitle = item.prioridade;
+                actionColor = 'text-orange-600 bg-orange-50 hover:bg-orange-100';
+                iconBg = 'bg-orange-100 text-orange-600';
+                break;
+            case 'lembreteRecorrente':
+                title = item.descricao;
+                subtitle = item.empresa;
+                actionColor = 'text-blue-600 bg-blue-50 hover:bg-blue-100';
+                iconBg = 'bg-blue-100 text-blue-600';
+                break;
+        }
+
+        return (
+            <div key={item.id} className="group flex items-center justify-between p-3.5 bg-white border border-gray-100 rounded-xl hover:border-orange-200 hover:shadow-sm transition-all">
+                <div className="flex items-center gap-3 overflow-hidden">
+                    <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${iconBg} bg-opacity-20`}>
+                        {item.type.includes('boleto') && <CreditCardIcon className="h-4 w-4" />}
+                        {item.type === 'cheque' && <TrendingUpIcon className="h-4 w-4" />}
+                        {item.type === 'tarefa' && <ClipboardListIcon className="h-4 w-4" />}
+                        {item.type === 'lembreteRecorrente' && <CalendarClockIcon className="h-4 w-4" />}
                     </div>
-                )}
+                    <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-semibold text-gray-900 truncate" title={title}>{title}</span>
+                        <span className="text-xs text-gray-500 truncate">{subtitle}</span>
+                    </div>
+                </div>
+                
+                <div className="flex items-center gap-4 pl-2 flex-shrink-0">
+                    {valueElement && !minimal && (
+                        <div className="text-right hidden sm:block">
+                            {valueElement}
+                        </div>
+                    )}
+                    
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); handleConcluir(item); }}
+                            className={`p-1.5 rounded-lg ${actionColor} transition-colors`}
+                            title="Concluir"
+                        >
+                            <CheckIcon className="h-4 w-4" />
+                        </button>
+                        {item.type !== 'lembreteRecorrente' && (
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); handleAdiar(item); }}
+                                className="p-1.5 rounded-lg text-gray-400 bg-gray-50 hover:bg-gray-200 hover:text-gray-600 transition-colors"
+                                title="Adiar"
+                            >
+                                <CalendarClockIcon className="h-4 w-4" />
+                            </button>
+                        )}
+                    </div>
+                </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     if (isLoading) {
         return (
@@ -274,60 +256,100 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
                     <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-1">
                         {greeting}, <span className="text-orange-600">Bem-vindo</span>.
                     </h1>
-                    <p className="text-gray-500 capitalize font-medium text-sm">
+                    <p className="text-gray-500 font-medium text-sm capitalize">
                         {todayDate}
                     </p>
                 </div>
-                <button className="hidden sm:flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-orange-600 transition-colors bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm hover:border-orange-200">
-                    <CalendarClockIcon className="h-4 w-4" />
-                    <span>Ver agenda completa</span>
-                </button>
             </div>
 
-            {/* Summary Stats */}
+            {/* Stats Overview */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <SummaryCard icon={<ClipboardListIcon/>} label="Tarefas" count={counts.tarefas} colorClass="text-orange-600" bgClass="bg-orange-50" borderColor="border-orange-100" />
-                <SummaryCard icon={<ArrowUpCircleIcon/>} label="A Receber" count={counts.receber} colorClass="text-emerald-600" bgClass="bg-emerald-50" borderColor="border-emerald-100" />
-                <SummaryCard icon={<ArrowDownCircleIcon/>} label="A Pagar" count={counts.pagar} colorClass="text-red-600" bgClass="bg-red-50" borderColor="border-red-100" />
-                <SummaryCard icon={<SparklesIcon/>} label="Total Pendente" count={counts.total} colorClass="text-gray-600" bgClass="bg-gray-100" borderColor="border-gray-200" />
+                <SummaryCard icon={<ClipboardListIcon/>} label="Tarefas" count={counts.tarefas} colorClass="text-orange-600" bgClass="bg-orange-50" />
+                <SummaryCard icon={<ArrowUpCircleIcon/>} label="A Receber" count={counts.receber} colorClass="text-emerald-600" bgClass="bg-emerald-50" onClick={() => setActiveTab('entradas')} />
+                <SummaryCard icon={<ArrowDownCircleIcon/>} label="A Pagar" count={counts.pagar} colorClass="text-red-600" bgClass="bg-red-50" onClick={() => setActiveTab('saidas')} />
+                <SummaryCard icon={<SparklesIcon/>} label="Total Pendente" count={counts.total} colorClass="text-gray-600" bgClass="bg-gray-100" />
             </div>
 
-            {/* Main Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-grow">
-                {/* Column 1: Priorities */}
-                <SectionColumn 
-                    title="Prioridades" 
-                    icon={<ClipboardListIcon className="h-4 w-4" />}
-                    items={priorities}
-                    emptyMessage="Nenhuma tarefa pendente."
-                />
-
-                {/* Column 2: Inflows */}
-                <SectionColumn 
-                    title="Entradas" 
-                    icon={<TrendingUpIcon className="h-4 w-4" />}
-                    items={inflows}
-                    emptyMessage="Sem recebimentos hoje."
-                />
-
-                {/* Column 3: Outflows */}
-                <SectionColumn 
-                    title="Saídas" 
-                    icon={<ArrowDownCircleIcon className="h-4 w-4" />}
-                    items={outflows}
-                    emptyMessage="Nada a pagar hoje."
-                />
-            </div>
-            
-            {counts.total === 0 && (
-                <div className="text-center py-12">
-                    <div className="bg-orange-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <SparklesIcon className="h-10 w-10 text-orange-400" />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-grow min-h-0">
+                
+                {/* Left Column: Financial Center (Unified Tabs) */}
+                <div className="lg:col-span-2 flex flex-col h-full bg-gray-50/50 rounded-3xl border border-gray-100 overflow-hidden">
+                    {/* Tabs Header */}
+                    <div className="flex items-center border-b border-gray-200 bg-white px-6">
+                        <button 
+                            onClick={() => setActiveTab('entradas')}
+                            className={`flex items-center gap-2 py-4 px-4 border-b-2 text-sm font-bold transition-all ${activeTab === 'entradas' ? 'border-emerald-500 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <ArrowUpCircleIcon className="h-4 w-4" />
+                            Recebimentos ({inflows.length})
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('saidas')}
+                            className={`flex items-center gap-2 py-4 px-4 border-b-2 text-sm font-bold transition-all ${activeTab === 'saidas' ? 'border-red-500 text-red-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <ArrowDownCircleIcon className="h-4 w-4" />
+                            Pagamentos ({outflows.length})
+                        </button>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900">Tudo Limpo!</h3>
-                    <p className="text-gray-500 max-w-xs mx-auto mt-2">Você não tem pendências registradas para hoje. Aproveite o seu dia.</p>
+
+                    {/* Financial Content */}
+                    <div className="flex-grow p-4 overflow-y-auto custom-scrollbar">
+                        {activeTab === 'entradas' ? (
+                            inflows.length > 0 ? (
+                                <div className="space-y-3">
+                                    {inflows.map(item => renderListItem(item))}
+                                </div>
+                            ) : (
+                                <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                                    <SparklesIcon className="h-10 w-10 mb-3 opacity-20 text-emerald-500" />
+                                    <p className="text-sm">Sem recebimentos pendentes.</p>
+                                </div>
+                            )
+                        ) : (
+                            outflows.length > 0 ? (
+                                <div className="space-y-3">
+                                    {outflows.map(item => renderListItem(item))}
+                                </div>
+                            ) : (
+                                <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                                    <CheckIcon className="h-10 w-10 mb-3 opacity-20 text-red-500" />
+                                    <p className="text-sm">Tudo pago por hoje.</p>
+                                </div>
+                            )
+                        )}
+                    </div>
                 </div>
-            )}
+
+                {/* Right Column: Focus & Priorities */}
+                <div className="lg:col-span-1 flex flex-col h-full bg-orange-50/30 rounded-3xl border border-orange-100/50 p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <ClipboardListIcon className="h-5 w-5 text-orange-600" />
+                            Minhas Prioridades
+                        </h3>
+                        <span className="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-1 rounded-full">{priorities.length}</span>
+                    </div>
+                    
+                    <div className="flex-grow overflow-y-auto custom-scrollbar space-y-3 pr-1">
+                        {priorities.length > 0 ? (
+                            priorities.map(item => renderListItem(item, true))
+                        ) : (
+                            <div className="h-full flex flex-col items-center justify-center text-gray-400 bg-white rounded-2xl border border-dashed border-orange-100">
+                                <p className="text-sm font-medium text-orange-400">Lista vazia.</p>
+                                <p className="text-xs mt-1">Aproveite o dia livre!</p>
+                            </div>
+                        )}
+                    </div>
+                    
+                    {/* Quick Add Button Hint */}
+                    <button 
+                        onClick={() => setView(AppView.GERENCIADOR_TAREFAS)}
+                        className="w-full mt-4 py-3 rounded-xl bg-white border border-orange-200 text-orange-700 font-bold text-sm hover:bg-orange-50 transition-colors shadow-sm"
+                    >
+                        Gerenciar Tarefas
+                    </button>
+                </div>
+            </div>
         </div>
     );
 };
