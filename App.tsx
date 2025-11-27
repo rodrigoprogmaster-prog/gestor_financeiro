@@ -4,9 +4,9 @@ import { AppView, SearchItem } from './types';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
-import GerenciadorCheques from './components/GerenciadorCheques';
+import BoletosAReceber from './components/ControleCheques'; // Renomeado para clareza
 import GestaoBoletos from './components/GestaoBoletos';
-import BoletosAPagar from './components/ControleBoletos';
+import BoletosAPagar from './components/ControleBoletos'; // Renomeado para clareza
 import TitulosProrrogados from './components/TitulosProrrogados';
 import Login from './components/Login';
 import CadastroContasBancarias from './components/CadastroContasBancarias';
@@ -155,7 +155,7 @@ const App: React.FC = () => {
   const renderView = () => {
     switch (currentView) {
       case AppView.CONTROLE_CHEQUES:
-        return <GerenciadorCheques />;
+        return <BoletosAReceber />;
       case AppView.GESTAO_BOLETOS:
         return <GestaoBoletos />;
       case AppView.CONTROLE_BOLETOS:

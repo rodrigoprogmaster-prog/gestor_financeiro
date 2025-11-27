@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import PagamentosFabrica from './PagamentosFabrica';
 import PagamentosCristiano from './PagamentosCristiano';
