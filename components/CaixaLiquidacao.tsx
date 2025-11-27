@@ -61,6 +61,7 @@ const CaixaLiquidacao: React.FC<CaixaLiquidacaoProps> = ({ storageKey, title, on
     const [editingCell, setEditingCell] = useState<string | null>(null);
     const [editingValue, setEditingValue] = useState<string>(''); // Will store raw digits, e.g., "12345"
     const inputRef = useRef<HTMLInputElement>(null);
+    const mesRefInputRef = useRef<HTMLInputElement>(null);
     
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<{ action: (() => void) | null, message: string }>({ action: null, message: '' });
@@ -68,6 +69,19 @@ const CaixaLiquidacao: React.FC<CaixaLiquidacaoProps> = ({ storageKey, title, on
     useEffect(() => {
         localStorage.setItem(storageKey, JSON.stringify(allSaldos));
     }, [allSaldos, storageKey]);
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.ctrlKey && event.key === '+') {
+                event.preventDefault();
+                if (mesRefInputRef.current) {
+                    mesRefInputRef.current.focus();
+                }
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     useEffect(() => {
         if (editingCell && inputRef.current) {
@@ -191,6 +205,7 @@ const CaixaLiquidacao: React.FC<CaixaLiquidacaoProps> = ({ storageKey, title, on
                 <div className="flex flex-col w-full sm:w-auto">
                     <div className="flex items-center gap-2">
                         <input
+                            ref={mesRefInputRef}
                             type="text"
                             value={mesReferencia}
                             onChange={handleMesReferenciaChange}

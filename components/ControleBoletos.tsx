@@ -296,6 +296,17 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         setIsModalOpen(true);
     };
 
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.ctrlKey && event.key === '+') {
+                event.preventDefault();
+                handleOpenAddModal();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [activeView]);
+
     const handleEditClick = (item: any) => {
         if (activeView === 'boletos') {
             setBoletoErrors({});

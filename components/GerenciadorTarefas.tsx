@@ -146,6 +146,29 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         }
     }, []);
 
+    const handleOpenAddModal = () => {
+        setErrors({});
+        setEditingTarefa({ 
+            dataVencimento_br: '', 
+            status: StatusTarefa.PENDENTE,
+            prioridade: PrioridadeTarefa.MEDIA,
+            recorrencia: RecorrenciaTarefa.NENHUMA,
+            categoria: '',
+        });
+        setIsModalOpen(true);
+    };
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.ctrlKey && event.key === '+') {
+                event.preventDefault();
+                handleOpenAddModal();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
     const handlePrevMonth = () => {
         setCurrentViewDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
     };
@@ -233,18 +256,6 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
         return { statusCounts, priorityCounts, categoryCounts, total: tarefas.length };
     }, [allTarefasWithStatus, tarefas.length]);
-
-    const handleOpenAddModal = () => {
-        setErrors({});
-        setEditingTarefa({ 
-            dataVencimento_br: '', 
-            status: StatusTarefa.PENDENTE,
-            prioridade: PrioridadeTarefa.MEDIA,
-            recorrencia: RecorrenciaTarefa.NENHUMA,
-            categoria: '',
-        });
-        setIsModalOpen(true);
-    };
 
     const handleEditClick = (tarefa: Tarefa) => {
         setErrors({});

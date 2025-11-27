@@ -262,6 +262,19 @@ export const PrevisaoFabrica: React.FC = () => {
         });
         setIsAddEntryModalOpen(true);
     };
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.ctrlKey && event.key === '+') {
+                event.preventDefault();
+                if (view === 'previsao') {
+                    handleOpenAddEntryModal();
+                }
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [view, dateFilter]);
     
     const handleProceedToConfirmGerar = () => {
         if (!semanaParaGerar.trim()) {
@@ -689,119 +702,4 @@ export const PrevisaoFabrica: React.FC = () => {
                             <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider">
                                 <tr>
                                     <th className="px-6 py-3">Empresa</th>
-                                    <th className="px-6 py-3 text-right">Despesas</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border bg-white">
-                                {despesasPorEmpresa.length > 0 ? (
-                                    despesasPorEmpresa.map(item => (
-                                        <tr key={item.empresa} className="hover:bg-secondary">
-                                            <td className="px-6 py-4 font-medium text-text-primary">{item.empresa}</td>
-                                            <td className="px-6 py-4 text-right text-danger font-semibold">{formatCurrency(item.totalDespesas)}</td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={2} className="text-center py-16 text-text-secondary">
-                                            Nenhuma despesa registrada com os filtros selecionados.
-                                        
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                  </div>
-                );
-              default:
-                return <></>;
-            }
-          })()}
-          
-          {isEditModalOpen && editingPrevisao && (
-              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-                    <h3 className="text-2xl font-bold text-text-primary mb-6 text-center pt-8">Editar Previsão</h3>
-                    <div className="px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Data</label><input type="date" name="data" value={editingPrevisao.data || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                        <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Semana</label><input type="text" name="semana" value={editingPrevisao.semana || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                        <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label>
-                        <AutocompleteInput name="empresa" value={editingPrevisao.empresa || ''} onChange={handleInputChange} suggestions={uniqueEmpresas} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                        <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Banco</label>
-                        <AutocompleteInput name="tipo" value={editingPrevisao.tipo || ''} onChange={handleInputChange} suggestions={uniqueBancos} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                        <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Receitas</label><input type="text" name="receitas" value={formatCurrency(editingPrevisao.receitas)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                        <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Despesas</label><input type="text" name="despesas" value={formatCurrency(editingPrevisao.despesas)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                    </div>
-                    <div className="px-8 pb-8 flex justify-center gap-3">
-                        <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                        <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
-                    </div>
-                </div>
-              </div>
-          )}
-              
-              {isAddEntryModalOpen && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-                        <h3 className="text-2xl font-bold text-text-primary mb-6 text-center pt-8">Adicionar Lançamento</h3>
-                        <div className="px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Data</label><input type="date" name="data" value={newEntry.data || ''} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                            <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Semana</label><input type="text" name="semana" value={newEntry.semana || ''} onChange={handleNewEntryChange} placeholder="Ex: Semana 32" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                            <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label>
-                            <AutocompleteInput name="empresa" value={newEntry.empresa || ''} onChange={handleNewEntryChange} suggestions={uniqueEmpresas} placeholder="Digite a empresa" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                            <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Banco</label>
-                            <AutocompleteInput name="tipo" value={newEntry.tipo || ''} onChange={handleNewEntryChange} suggestions={uniqueBancos} placeholder="Digite o banco" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                            <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Receitas</label><input type="text" name="receitas" value={formatCurrency(newEntry.receitas)} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                            <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Despesas</label><input type="text" name="despesas" value={formatCurrency(newEntry.despesas)} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                        </div>
-                        <div className="px-8 pb-8 flex justify-center gap-3">
-                            <button onClick={() => setIsAddEntryModalOpen(false)} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                            <button onClick={handleAddNewEntry} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
-                        </div>
-                    </div>
-                </div>
-              )}
-
-              {isGerarPrevisaoModalOpen && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden p-8 text-center">
-                            <h3 className="text-2xl font-bold text-text-primary mb-6">Gerar Dashboard</h3>
-                            <div className="mb-6 text-left">
-                                <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Semana</label>
-                                <input
-                                    type="text"
-                                    value={semanaParaGerar}
-                                    onChange={(e) => setSemanaParaGerar(e.target.value)}
-                                    placeholder="Ex: Semana 42"
-                                    className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"
-                                />
-                            </div>
-                            <div className="flex justify-center gap-3">
-                                <button onClick={() => setIsGerarPrevisaoModalOpen(false)} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                                <button onClick={handleProceedToConfirmGerar} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Gerar</button>
-                            </div>
-                        </div>
-                    </div>
-              )}
-
-              {(isGerarPrevisaoConfirmOpen || isConfirmOpen || isTransferConfirmOpen) && (
-                  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center">
-                        <h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar</h3>
-                        <p className="text-text-secondary mb-8">
-                            {isGerarPrevisaoConfirmOpen ? `Deseja gerar a previsão para "${semanaParaGerar}"?` 
-                             : isTransferConfirmOpen ? `Deseja transferir os lançamentos de ${formatDateToBR(transferDate)} para Pagamentos Diários?` 
-                             : confirmAction.message}
-                        </p>
-                        <div className="flex justify-center gap-4">
-                            <button onClick={() => { setIsGerarPrevisaoConfirmOpen(false); setIsTransferConfirmOpen(false); handleCancelConfirm(); }} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                            <button onClick={isGerarPrevisaoConfirmOpen ? handleGerarPrevisao : isTransferConfirmOpen ? confirmTransfer : handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button>
-                        </div>
-                    </div>
-                </div>
-              )}
-            </div>
-          );
-        };
-
-export default PrevisaoFabrica;
+                               

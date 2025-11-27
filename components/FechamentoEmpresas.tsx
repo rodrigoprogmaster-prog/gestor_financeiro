@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { PlusIcon, TrashIcon, EditIcon, SearchIcon, ArrowLeftIcon } from './icons';
 
 // Data structure
@@ -106,6 +107,7 @@ const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageKey, tit
     });
     const [newMonth, setNewMonth] = useState('');
     const [newMonthError, setNewMonthError] = useState('');
+    const newMonthInputRef = useRef<HTMLInputElement>(null);
 
     const isFabrica = storageKey.includes('fabrica');
     const isCristiano = storageKey.includes('cristiano');
@@ -114,6 +116,19 @@ const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageKey, tit
     useEffect(() => {
         localStorage.setItem(storageKey, JSON.stringify(fechamentos));
     }, [fechamentos, storageKey]);
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.ctrlKey && event.key === '+') {
+                event.preventDefault();
+                if (newMonthInputRef.current) {
+                    newMonthInputRef.current.focus();
+                }
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     const filteredFechamentos = useMemo(() => {
         return fechamentos.filter(f => {
@@ -333,6 +348,7 @@ const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageKey, tit
                     <div className="flex flex-col w-full sm:w-auto">
                         <div className="flex items-center gap-2">
                             <input
+                                ref={newMonthInputRef}
                                 type="text"
                                 value={newMonth}
                                 onChange={handleNewMonthChange}

@@ -155,7 +155,14 @@ export const PrevisaoCristiano: React.FC = () => {
 
     useEffect(() => {
       const savedGeneratedHistory = localStorage.getItem('historicoPrevisoesGeradas_cristiano');
-      if (savedGeneratedHistory) setHistoricoPrevisoesGeradas(JSON.parse(savedGeneratedHistory));
+      if (savedGeneratedHistory) {
+          try {
+            setHistoricoPrevisoesGeradas(JSON.parse(savedGeneratedHistory));
+          } catch (e) {
+            console.error("Failed to parse historicoPrevisoesGeradas_cristiano", e);
+            setHistoricoPrevisoesGeradas([]);
+          }
+      }
     }, []);
 
     useEffect(() => {
@@ -246,6 +253,19 @@ export const PrevisaoCristiano: React.FC = () => {
         });
         setIsAddEntryModalOpen(true);
     };
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.ctrlKey && event.key === '+') {
+                event.preventDefault();
+                if (view === 'previsao') {
+                    handleOpenAddEntryModal();
+                }
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [view, dateFilter]);
     
     const handleProceedToConfirmGerar = () => {
         if (!semanaParaGerar.trim()) {

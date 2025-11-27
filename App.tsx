@@ -35,12 +35,20 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Global keyboard shortcut for search (Ctrl + Enter)
+    // Global keyboard shortcuts
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Ctrl + Enter: Open Global Search
       if (event.ctrlKey && event.key === 'Enter') {
-        event.preventDefault(); // Prevent default browser action for Ctrl+Enter
+        event.preventDefault(); 
         setIsGlobalSearchOpen(prev => !prev);
-      } else if (event.key === 'Escape' && isGlobalSearchOpen) {
+      } 
+      // Alt + Enter: Go to Dashboard
+      else if (event.altKey && event.key === 'Enter') {
+        event.preventDefault();
+        setCurrentView(AppView.DASHBOARD);
+      }
+      // Escape: Close Global Search
+      else if (event.key === 'Escape' && isGlobalSearchOpen) {
         event.preventDefault();
         handleCloseGlobalSearch();
       }

@@ -241,6 +241,17 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     setEditingTitle({ ...newTitleTemplate, vencimentoOriginal: '', novoVencimento: '' });
     setIsModalOpen(true);
   };
+
+  useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.ctrlKey && event.key === '+') {
+                event.preventDefault();
+                handleOpenAddModal();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
   
   const handleSelectTitle = (id: number) => {
     const newSelection = new Set(selectedTitles);

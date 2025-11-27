@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { PlusIcon, TrashIcon, EditIcon, DownloadIcon, SearchIcon } from './icons';
 
@@ -104,6 +105,17 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
         setEditingTransferencia({ ...newTransferenciaTemplate, data_br: formatDateToBR(newTransferenciaTemplate.data) });
         setIsModalOpen(true);
     };
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.ctrlKey && event.key === '+') {
+                event.preventDefault();
+                handleOpenAddModal();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     const handleEditClick = (transferencia: Transferencia) => {
         setErrors({});
