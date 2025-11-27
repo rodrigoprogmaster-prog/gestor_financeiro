@@ -1,7 +1,7 @@
 
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, ArrowLeftIcon, SpinnerIcon, ChevronDownIcon, RefreshIcon, ClipboardCheckIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
+import AutocompleteInput from './AutocompleteInput';
 
 enum StatusBoleto {
   A_VENCER = 'A Vencer',
@@ -138,6 +138,13 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         status: '' // Novo filtro de status
     });
 
+    // --- Autocomplete Data Sources ---
+    const uniqueFornecedores = useMemo(() => [...new Set(boletos.map(b => b.fornecedor).filter(Boolean))].sort(), [boletos]);
+    const uniquePagadores = useMemo(() => [...new Set(boletos.map(b => b.pagador).filter(Boolean))].sort(), [boletos]);
+    const uniqueEmpresasRecorrentes = useMemo(() => [...new Set(despesasRecorrentes.map(d => d.empresa).filter(Boolean))].sort(), [despesasRecorrentes]);
+    const uniqueDescricoesRecorrentes = useMemo(() => [...new Set(despesasRecorrentes.map(d => d.descricao).filter(Boolean))].sort(), [despesasRecorrentes]);
+
+
     // Date context for Recorrentes view
     const today = new Date();
     const currentDay = today.getDate();
@@ -224,10 +231,6 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     }, [allBoletosWithStatus, searchTerm, dateRange]);
 
     // --- RECORRENTES LOGIC ---
-
-    const uniqueEmpresasRecorrentes = useMemo(() => {
-        return [...new Set(despesasRecorrentes.map(d => d.empresa))].sort();
-    }, [despesasRecorrentes]);
 
     const filteredRecorrentes = useMemo(() => {
         return despesasRecorrentes.filter(item => {
@@ -862,12 +865,24 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             <>
                                 <div>
                                     <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Fornecedor</label>
-                                    <input name="fornecedor" value={editingBoleto.fornecedor || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.fornecedor ? 'border-danger' : ''}`} />
+                                    <AutocompleteInput
+                                        name="fornecedor"
+                                        value={editingBoleto.fornecedor || ''}
+                                        onChange={handleInputChange}
+                                        suggestions={uniqueFornecedores}
+                                        className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.fornecedor ? 'border-danger' : ''}`}
+                                    />
                                     {boletoErrors.fornecedor && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.fornecedor}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Pagador</label>
-                                    <input name="pagador" value={editingBoleto.pagador || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.pagador ? 'border-danger' : ''}`} />
+                                    <AutocompleteInput
+                                        name="pagador"
+                                        value={editingBoleto.pagador || ''}
+                                        onChange={handleInputChange}
+                                        suggestions={uniquePagadores}
+                                        className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.pagador ? 'border-danger' : ''}`}
+                                    />
                                     {boletoErrors.pagador && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.pagador}</p>}
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
@@ -899,12 +914,24 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             <>
                                 <div>
                                     <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Empresa</label>
-                                    <input name="empresa" value={editingDespesa.empresa || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.empresa ? 'border-danger' : ''}`} />
+                                    <AutocompleteInput
+                                        name="empresa"
+                                        value={editingDespesa.empresa || ''}
+                                        onChange={handleInputChange}
+                                        suggestions={uniqueEmpresasRecorrentes}
+                                        className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.empresa ? 'border-danger' : ''}`}
+                                    />
                                     {despesaErrors.empresa && <p className="text-danger text-xs mt-1 ml-1">{despesaErrors.empresa}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Despesa (Descrição)</label>
-                                    <input name="descricao" value={editingDespesa.descricao || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.descricao ? 'border-danger' : ''}`} />
+                                    <AutocompleteInput
+                                        name="descricao"
+                                        value={editingDespesa.descricao || ''}
+                                        onChange={handleInputChange}
+                                        suggestions={uniqueDescricoesRecorrentes}
+                                        className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.descricao ? 'border-danger' : ''}`}
+                                    />
                                     {despesaErrors.descricao && <p className="text-danger text-xs mt-1 ml-1">{despesaErrors.descricao}</p>}
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">

@@ -1,9 +1,9 @@
 
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, DatabaseIcon, 
     // Add ArrowLeftIcon here
     ArrowLeftIcon, TrendingUpIcon, ReportIcon, BoletoIcon, SpinnerIcon, TransferIcon } from './icons';
+import AutocompleteInput from './AutocompleteInput';
 
 // Data structure
 interface Previsao {
@@ -148,6 +148,19 @@ export const PrevisaoFabrica: React.FC = () => {
     const scrollRef = useRef<HTMLDivElement>(null);
     // const [displayCount, setDisplayCount] = useState(ITEMS_PER_LOAD); // Removed infinite scroll complexity for stability
 
+    // Combine predefined entries with historical entries for suggestions
+    const uniqueEmpresas = useMemo(() => {
+        const historical = previsoes.map(p => p.empresa).filter(Boolean);
+        const predefined = PREDEFINED_ENTRIES.map(e => e.empresa).filter(Boolean);
+        return [...new Set([...historical, ...predefined])].sort();
+    }, [previsoes]);
+
+    const uniqueBancos = useMemo(() => {
+        const historical = previsoes.map(p => p.tipo).filter(Boolean);
+        const predefined = PREDEFINED_ENTRIES.map(e => e.tipo).filter(Boolean);
+        return [...new Set([...historical, ...predefined, ...FIXED_BANKS])].sort();
+    }, [previsoes]);
+
     useEffect(() => {
         localStorage.setItem('previsoes', JSON.stringify(previsoes));
     }, [previsoes]);
@@ -173,8 +186,6 @@ export const PrevisaoFabrica: React.FC = () => {
         );
     }, [historicoPrevisoesGeradas, dashboardSemanaFilter]);
 
-    const uniqueEmpresas = useMemo(() => [...new Set(PREDEFINED_ENTRIES.map(e => e.empresa))].sort(), []);
-    
     const filteredPrevisoes = useMemo(() => {
         let filtered = previsoes;
         if (dateFilter) {
@@ -714,8 +725,10 @@ export const PrevisaoFabrica: React.FC = () => {
                     <div className="px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Data</label><input type="date" name="data" value={editingPrevisao.data || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                         <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Semana</label><input type="text" name="semana" value={editingPrevisao.semana || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                        <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label><input type="text" name="empresa" value={editingPrevisao.empresa || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                        <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Banco</label><input type="text" name="tipo" value={editingPrevisao.tipo || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                        <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label>
+                        <AutocompleteInput name="empresa" value={editingPrevisao.empresa || ''} onChange={handleInputChange} suggestions={uniqueEmpresas} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                        <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Banco</label>
+                        <AutocompleteInput name="tipo" value={editingPrevisao.tipo || ''} onChange={handleInputChange} suggestions={uniqueBancos} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                         <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Receitas</label><input type="text" name="receitas" value={formatCurrency(editingPrevisao.receitas)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                         <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Despesas</label><input type="text" name="despesas" value={formatCurrency(editingPrevisao.despesas)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                     </div>
@@ -734,8 +747,10 @@ export const PrevisaoFabrica: React.FC = () => {
                         <div className="px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Data</label><input type="date" name="data" value={newEntry.data || ''} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                             <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Semana</label><input type="text" name="semana" value={newEntry.semana || ''} onChange={handleNewEntryChange} placeholder="Ex: Semana 32" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                            <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label><input type="text" name="empresa" value={newEntry.empresa || ''} onChange={handleNewEntryChange} placeholder="Digite a empresa" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                            <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Banco</label><input type="text" name="tipo" value={newEntry.tipo || ''} onChange={handleNewEntryChange} placeholder="Digite o banco" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                            <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label>
+                            <AutocompleteInput name="empresa" value={newEntry.empresa || ''} onChange={handleNewEntryChange} suggestions={uniqueEmpresas} placeholder="Digite a empresa" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                            <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Banco</label>
+                            <AutocompleteInput name="tipo" value={newEntry.tipo || ''} onChange={handleNewEntryChange} suggestions={uniqueBancos} placeholder="Digite o banco" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                             <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Receitas</label><input type="text" name="receitas" value={formatCurrency(newEntry.receitas)} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                             <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Despesas</label><input type="text" name="despesas" value={formatCurrency(newEntry.despesas)} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                         </div>

@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, CalendarClockIcon, SpinnerIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
+import AutocompleteInput from './AutocompleteInput';
 
 // Enum for status
 enum StatusBoletoReceber {
@@ -115,6 +116,10 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
+
+    // --- Autocomplete Data Sources ---
+    const uniqueCredores = useMemo(() => [...new Set(boletos.map(b => b.credor).filter(Boolean))].sort(), [boletos]);
+    const uniqueClientes = useMemo(() => [...new Set(boletos.map(b => b.cliente).filter(Boolean))].sort(), [boletos]);
 
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(boletos));
@@ -595,12 +600,26 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Credor (Cedente)</label>
-                                <input name="credor" value={editingBoleto.credor || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.credor ? 'border-danger' : ''}`} placeholder="Nome do Credor" />
+                                <AutocompleteInput
+                                    name="credor"
+                                    value={editingBoleto.credor || ''}
+                                    onChange={handleInputChange}
+                                    suggestions={uniqueCredores}
+                                    className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.credor ? 'border-danger' : ''}`}
+                                    placeholder="Nome do Credor"
+                                />
                                 {errors.credor && <p className="text-danger text-xs mt-1 ml-1">{errors.credor}</p>}
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Cliente (Sacado)</label>
-                                <input name="cliente" value={editingBoleto.cliente || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.cliente ? 'border-danger' : ''}`} placeholder="Nome do Cliente" />
+                                <AutocompleteInput
+                                    name="cliente"
+                                    value={editingBoleto.cliente || ''}
+                                    onChange={handleInputChange}
+                                    suggestions={uniqueClientes}
+                                    className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.cliente ? 'border-danger' : ''}`}
+                                    placeholder="Nome do Cliente"
+                                />
                                 {errors.cliente && <p className="text-danger text-xs mt-1 ml-1">{errors.cliente}</p>}
                             </div>
                             <div className="grid grid-cols-2 gap-4">

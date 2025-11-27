@@ -1,8 +1,8 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, DatabaseIcon, 
-    // Add ArrowLeftIcon here
     ArrowLeftIcon, TrendingUpIcon, ReportIcon, BoletoIcon, SpinnerIcon, TransferIcon } from './icons';
+import AutocompleteInput from './AutocompleteInput';
 
 // Data structure
 interface Previsao {
@@ -17,7 +17,6 @@ interface Previsao {
 
 interface PrevisaoGerada {
     dias: { data: string; receitas: number; despesas: number; resultado: number; saldo: number }[];
-    // Adjusted interface to match usage
     totais: { totalReceitas: number; totalDespesas: number; totalResultado: number };
     semana: string;
     dataGeracao: string;
@@ -89,10 +88,6 @@ const formatDateToBR = (isoDate: string): string => {
 
 type View = 'menu' | 'previsao' | 'dashboard' | 'banco' | 'empresa';
 
-// Constants for infinite scroll (kept logic but simplified rendering for now)
-const ITEMS_PER_LOAD = 20;
-const SCROLL_THRESHOLD = 100;
-
 export const PrevisaoCristiano: React.FC = () => {
     const [previsoes, setPrevisoes] = useState<Previsao[]>(() => {
         const savedPrevisoes = localStorage.getItem('previsoes_cristiano');
@@ -136,7 +131,19 @@ export const PrevisaoCristiano: React.FC = () => {
     const [transferDate, setTransferDate] = useState('');
 
     const scrollRef = useRef<HTMLDivElement>(null);
-    // const [displayCount, setDisplayCount] = useState(ITEMS_PER_LOAD); // Removed infinite scroll complexity for stability
+
+    // Combine predefined entries with historical entries for suggestions
+    const uniqueEmpresas = useMemo(() => {
+        const historical = previsoes.map(p => p.empresa).filter(Boolean);
+        const predefined = PREDEFINED_ENTRIES.map(e => e.empresa).filter(Boolean);
+        return [...new Set([...historical, ...predefined])].sort();
+    }, [previsoes]);
+
+    const uniqueBancos = useMemo(() => {
+        const historical = previsoes.map(p => p.tipo).filter(Boolean);
+        const predefined = PREDEFINED_ENTRIES.map(e => e.tipo).filter(Boolean);
+        return [...new Set([...historical, ...predefined, ...FIXED_BANKS])].sort();
+    }, [previsoes]);
 
     useEffect(() => {
         localStorage.setItem('previsoes_cristiano', JSON.stringify(previsoes));
@@ -163,8 +170,6 @@ export const PrevisaoCristiano: React.FC = () => {
         );
     }, [historicoPrevisoesGeradas, dashboardSemanaFilter]);
 
-    const uniqueEmpresas = useMemo(() => [...new Set(PREDEFINED_ENTRIES.map(e => e.empresa))].sort(), []);
-    
     const filteredPrevisoes = useMemo(() => {
         let filtered = previsoes;
         if (dateFilter) {
@@ -703,8 +708,10 @@ export const PrevisaoCristiano: React.FC = () => {
                     <div className="px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Data</label><input type="date" name="data" value={editingPrevisao.data || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                         <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Semana</label><input type="text" name="semana" value={editingPrevisao.semana || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                        <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label><input type="text" name="empresa" value={editingPrevisao.empresa || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                        <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Banco</label><input type="text" name="tipo" value={editingPrevisao.tipo || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                        <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label>
+                        <AutocompleteInput name="empresa" value={editingPrevisao.empresa || ''} onChange={handleInputChange} suggestions={uniqueEmpresas} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                        <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Banco</label>
+                        <AutocompleteInput name="tipo" value={editingPrevisao.tipo || ''} onChange={handleInputChange} suggestions={uniqueBancos} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                         <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Receitas</label><input type="text" name="receitas" value={formatCurrency(editingPrevisao.receitas)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                         <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Despesas</label><input type="text" name="despesas" value={formatCurrency(editingPrevisao.despesas)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                     </div>
@@ -723,8 +730,10 @@ export const PrevisaoCristiano: React.FC = () => {
                         <div className="px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Data</label><input type="date" name="data" value={newEntry.data || ''} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                             <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Semana</label><input type="text" name="semana" value={newEntry.semana || ''} onChange={handleNewEntryChange} placeholder="Ex: Semana 32" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                            <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label><input type="text" name="empresa" value={newEntry.empresa || ''} onChange={handleNewEntryChange} placeholder="Digite a empresa" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                            <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Banco</label><input type="text" name="tipo" value={newEntry.tipo || ''} onChange={handleNewEntryChange} placeholder="Digite o banco" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                            <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label>
+                            <AutocompleteInput name="empresa" value={newEntry.empresa || ''} onChange={handleNewEntryChange} suggestions={uniqueEmpresas} placeholder="Digite a empresa" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                            <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Banco</label>
+                            <AutocompleteInput name="tipo" value={newEntry.tipo || ''} onChange={handleNewEntryChange} suggestions={uniqueBancos} placeholder="Digite o banco" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                             <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Receitas</label><input type="text" name="receitas" value={formatCurrency(newEntry.receitas)} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                             <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Despesas</label><input type="text" name="despesas" value={formatCurrency(newEntry.despesas)} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                         </div>
@@ -734,28 +743,6 @@ export const PrevisaoCristiano: React.FC = () => {
                         </div>
                     </div>
                 </div>
-              )}
-
-              {isGerarPrevisaoModalOpen && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden p-8 text-center">
-                            <h3 className="text-2xl font-bold text-text-primary mb-6">Gerar Dashboard</h3>
-                            <div className="mb-6 text-left">
-                                <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Semana</label>
-                                <input
-                                    type="text"
-                                    value={semanaParaGerar}
-                                    onChange={(e) => setSemanaParaGerar(e.target.value)}
-                                    placeholder="Ex: Semana 42"
-                                    className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"
-                                />
-                            </div>
-                            <div className="flex justify-center gap-3">
-                                <button onClick={() => setIsGerarPrevisaoModalOpen(false)} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                                <button onClick={handleProceedToConfirmGerar} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Gerar</button>
-                            </div>
-                        </div>
-                    </div>
               )}
 
               {(isGerarPrevisaoConfirmOpen || isConfirmOpen || isTransferConfirmOpen) && (
@@ -768,7 +755,7 @@ export const PrevisaoCristiano: React.FC = () => {
                              : confirmAction.message}
                         </p>
                         <div className="flex justify-center gap-4">
-                            <button onClick={() => { setIsGerarPrevisaoConfirmOpen(false); setIsTransferConfirmOpen(false); handleCancelConfirm(); }} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
+                            <button onClick={() => { setIsGerarPrevisaoConfirmOpen(false); setIsTransferConfirmOpen(false); if(confirmAction.action) setIsConfirmOpen(false); }} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
                             <button onClick={isGerarPrevisaoConfirmOpen ? handleGerarPrevisao : isTransferConfirmOpen ? confirmTransfer : handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button>
                         </div>
                     </div>
@@ -777,5 +764,3 @@ export const PrevisaoCristiano: React.FC = () => {
             </div>
           );
         };
-
-export default PrevisaoCristiano;
