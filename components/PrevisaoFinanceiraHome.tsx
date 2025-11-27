@@ -1,7 +1,6 @@
+
 import React, { useState } from 'react';
-// Fix: Changed import from default to named import
 import { PrevisaoFabrica } from './PrevisaoFinanceira';
-// Fix: Changed import from default to named import
 import { PrevisaoCristiano } from './HistoricoPrevisoes';
 import { ArrowLeftIcon } from './icons';
 
