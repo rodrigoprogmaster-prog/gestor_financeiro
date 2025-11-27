@@ -10,106 +10,106 @@
     <title>Gerenciador de Sistemas Financeiros</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link id="google-font-body" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
-    <link id="google-font-heading" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link id="google-font-body" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link id="google-font-heading" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       :root {
         --font-body: 'Inter', sans-serif;
         --font-heading: 'Inter', sans-serif;
 
-        /* Sober/Corporate Theme (Slate/Blueish Gray) */
-        --color-primary: #334155; /* slate-700 - Professional Dark */
-        --color-primary-hover: #1e293b; /* slate-800 */
+        /* Minimalist Corporate Theme (Warm Gray & Discrete Orange) */
         
-        --color-secondary: #f8fafc; /* slate-50 - Very light gray for headers/backgrounds */
-        --color-background: #f1f5f9; /* slate-100 - App background */
+        /* Brand Color - Orange 700 - Used for Primary Actions/Active States */
+        --color-primary: #C2410C; 
+        --color-primary-hover: #9A3412; 
+        --color-primary-light: #FFEDD5; /* Orange 100 for backgrounds */
         
-        --color-card: #ffffff;
+        /* Structure Colors */
+        --color-secondary: #F3F4F6; /* Gray 100 - Hover states/Secondary bgs */
+        --color-background: #F9FAFB; /* Gray 50 - App Background */
+        --color-card: #FFFFFF; /* White */
         
-        --color-text-primary: #0f172a; /* slate-900 - High contrast text */
-        --color-text-secondary: #64748b; /* slate-500 - Muted text */
+        /* Typography */
+        --color-text-primary: #111827; /* Gray 900 - Headings */
+        --color-text-secondary: #4B5563; /* Gray 600 - Body Text */
+        --color-text-muted: #9CA3AF; /* Gray 400 - Placeholders/Icons */
         
-        --color-border: #e2e8f0; /* slate-200 - Thin, subtle border */
+        /* Borders */
+        --color-border: #E5E7EB; /* Gray 200 */
         
-        --color-success: #059669; /* emerald-600 - Sober green */
-        --color-warning: #d97706; /* amber-600 - Sober orange */
-        --color-danger: #dc2626; /* red-600 */
+        /* Status Colors (Refined) */
+        --color-success: #059669; /* Emerald 600 */
+        --color-warning: #D97706; /* Amber 600 */
+        --color-danger: #DC2626; /* Red 600 */
       }
 
       html.dark {
-        /* Dark Theme */
-        --color-primary: #94a3b8; /* slate-400 */
-        --color-primary-hover: #cbd5e1; /* slate-300 */
-        --color-secondary: #1e293b; /* slate-800 */
-        --color-background: #0f172a; /* slate-900 */
-        --color-card: #1e293b; /* slate-800 */
-        --color-text-primary: #f8fafc; /* slate-50 */
-        --color-text-secondary: #94a3b8; /* slate-400 */
-        --color-border: #334155; /* slate-700 */
-        --color-success: #34d399;
-        --color-warning: #fbbf24;
-        --color-danger: #f87171;
+        /* Dark Theme - Mapped for consistency if needed, but primary request is Light Theme */
+        --color-primary: #FB923C; /* Orange 400 */
+        --color-primary-hover: #FDBA74; 
+        --color-secondary: #1F2937; 
+        --color-background: #111827; 
+        --color-card: #1F2937; 
+        --color-text-primary: #F9FAFB; 
+        --color-text-secondary: #9CA3AF; 
+        --color-border: #374151; 
+        --color-success: #34D399;
+        --color-warning: #FBBF24;
+        --color-danger: #F87171;
       }
       
       body {
         font-family: var(--font-body);
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        background-color: var(--color-background);
+        color: var(--color-text-primary);
       }
       h1, h2, h3, h4, h5, h6 {
         font-family: var(--font-heading);
       }
       
-      /* Standard Input Styles Override for consistency */
+      /* Input Standardization */
       input, select, textarea {
-        border-width: 1px;
-        border-color: var(--color-border);
-        background-color: var(--color-card); /* Ensure white background even in dark mode */
+        background-color: var(--color-card);
+        border: 1px solid var(--color-border);
         color: var(--color-text-primary);
-        /* Consistent height/padding */
-        height: 2.25rem; /* h-9 */
-        padding: 0.5rem 0.75rem; /* py-2 px-3 */
-        border-radius: 0.375rem; /* rounded-md */
-        font-size: 0.875rem; /* text-sm */
+        height: 2.5rem; /* 40px standard height */
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem; /* 8px rounded */
+        font-size: 0.875rem; /* 14px */
+        line-height: 1.25rem;
+        transition: all 0.2s ease-in-out;
+        width: 100%;
       }
+      
+      /* Focus State - The Orange Ring */
       input:focus, select:focus, textarea:focus {
         border-color: var(--color-primary);
         outline: none;
-        box-shadow: 0 0 0 1px var(--color-primary);
-      }
-      /* Specific overrides for type date to prevent default calendar icon issues */
-      input[type="date"]::-webkit-calendar-picker-indicator {
-        filter: invert(var(--color-filter-invert, 0.5)); /* Adjust color for dark mode */
-      }
-      html.dark input[type="date"]::-webkit-calendar-picker-indicator {
-        filter: invert(0.8); /* More visible in dark mode */
+        box-shadow: 0 0 0 1px var(--color-primary), 0 0 0 4px rgba(194, 65, 12, 0.1); /* Subtle orange ring */
       }
 
-      /* Textarea might need to override height */
       textarea {
         height: auto;
-        min-height: 2.25rem; /* min-h-9 */
+        min-height: 2.5rem;
       }
 
-
-      /* Custom scrollbar for thin lines theme */
+      /* Custom scrollbar */
       ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+        width: 6px;
+        height: 6px;
       }
-
       ::-webkit-scrollbar-track {
-        background: var(--color-background);
+        background: transparent;
       }
-
       ::-webkit-scrollbar-thumb {
-        background: var(--color-border);
-        border-radius: 4px;
+        background: #D1D5DB;
+        border-radius: 3px;
       }
-
       ::-webkit-scrollbar-thumb:hover {
-        background: var(--color-text-secondary);
+        background: #9CA3AF;
       }
     </style>
     <script>
@@ -122,37 +122,29 @@
               heading: ['var(--font-heading)', 'sans-serif'],
             },
             colors: {
-              'primary': 'var(--color-primary)',
+              primary: 'var(--color-primary)',
               'primary-hover': 'var(--color-primary-hover)',
-              'secondary': 'var(--color-secondary)',
-              'background': 'var(--color-background)',
-              'card': 'var(--color-card)',
+              'primary-light': 'var(--color-primary-light)',
+              secondary: 'var(--color-secondary)',
+              background: 'var(--color-background)',
+              card: 'var(--color-card)',
               'text-primary': 'var(--color-text-primary)',
               'text-secondary': 'var(--color-text-secondary)',
-              'border': 'var(--color-border)',
-              'success': 'var(--color-success)',
-              'warning': 'var(--color-warning)',
-              'danger': 'var(--color-danger)',
+              'text-muted': 'var(--color-text-muted)',
+              border: 'var(--color-border)',
+              success: 'var(--color-success)',
+              warning: 'var(--color-warning)',
+              danger: 'var(--color-danger)',
+            },
+            boxShadow: {
+              'sm': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+              'md': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
             },
             animation: {
-              'fade-in': 'fadeIn 0.5s ease-out forwards',
-              'fade-in-down': 'fadeInDown 0.3s ease-out forwards',
-              'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
-              'spin': 'spin 1s linear infinite',
+              'fade-in': 'fadeIn 0.4s ease-out forwards',
             },
             keyframes: {
-              fadeIn: { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
-              fadeInDown: { '0%': { opacity: 0, transform: 'translateY(-5px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
-              shake: {
-                '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
-                '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
-                '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
-                '40%, 60%': { transform: 'translate3d(4px, 0, 0)' },
-              },
-               spin: {
-                from: { transform: 'rotate(0deg)' },
-                to: { transform: 'rotate(360deg)' },
-              },
+              fadeIn: { '0%': { opacity: 0, transform: 'translateY(4px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
             }
           },
         },
@@ -169,7 +161,7 @@
 }
 </script>
 </head>
-  <body class="bg-background text-text-primary text-sm antialiased">
+  <body class="bg-background text-text-primary text-sm antialiased selection:bg-orange-100 selection:text-orange-900">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

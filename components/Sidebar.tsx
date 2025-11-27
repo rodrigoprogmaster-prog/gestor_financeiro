@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { AppView } from '../types';
 import {
@@ -18,7 +17,7 @@ import {
   XIcon,
   LogoutIcon,
   SearchIcon,
-  BuildingIcon, // Import BuildingIcon
+  BuildingIcon,
 } from './icons';
 
 interface SidebarProps {
@@ -27,7 +26,7 @@ interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   onLogout: () => void;
-  onOpenGlobalSearch: () => void; // New prop for global search
+  onOpenGlobalSearch: () => void;
 }
 
 type NavLink = {
@@ -47,7 +46,7 @@ type NavItem = NavLink | NavParent;
 const modules: NavItem[] = [
     { view: AppView.DASHBOARD, name: 'Início', icon: <HomeIcon className="h-5 w-5" /> },
     { view: AppView.GESTAO_BOLETOS, name: 'Boletos a Receber', icon: <ArrowUpCircleIcon className="h-5 w-5" /> },
-    { view: AppView.CONTROLE_CHEQUES, name: 'Gerenciador de Cheques', icon: <CheckIcon className="h-5 w-5" /> },
+    { view: AppView.CONTROLE_CHEQUES, name: 'Cheques', icon: <CheckIcon className="h-5 w-5" /> },
     { view: AppView.CONTROLE_BOLETOS, name: 'Boletos a Pagar', icon: <ArrowDownCircleIcon className="h-5 w-5" /> },
     { view: AppView.GERENCIADOR_TAREFAS, name: 'Tarefas', icon: <ClipboardListIcon className="h-5 w-5" /> },
     { view: AppView.TITULOS_PRORROGADOS, name: 'Títulos Prorrogados', icon: <CalendarClockIcon className="h-5 w-5" /> },
@@ -75,12 +74,10 @@ const modules: NavItem[] = [
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose, onLogout, onOpenGlobalSearch }) => {
-  // Initialize open submenus based on current view or default to false
   const [openSubMenus, setOpenSubMenus] = useState<Record<string, boolean>>(() => {
       const initialOpen: Record<string, boolean> = {};
       modules.forEach(mod => {
           if ('children' in mod) {
-              // Auto-open if a child is active
               if (mod.children.some(child => child.view === currentView)) {
                   initialOpen[mod.name] = true;
               }
@@ -107,7 +104,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
     }
   };
 
-  // Determine if a parent is active (if one of its children is the current view)
   const isParentActive = (parent: NavParent) => {
       return parent.children.some(child => child.view === currentView);
   };
@@ -117,117 +113,123 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
       {/* Mobile Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 bg-gray-900/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"
           onClick={onClose}
         />
       )}
 
-      {/* Sidebar Container */}
+      {/* Sidebar Container - Light Theme */}
       <aside className={`
-        fixed top-0 left-0 z-50 h-full w-64 bg-slate-900 border-r border-slate-800 transform transition-transform duration-300 ease-in-out flex flex-col
-        lg:translate-x-0 lg:static lg:h-auto lg:shadow-none shadow-2xl
+        fixed top-0 left-0 z-50 h-full w-64 bg-white border-r border-gray-200 flex flex-col transition-transform duration-300 ease-in-out
+        lg:static lg:translate-x-0 shadow-xl lg:shadow-none
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800 shrink-0">
-            <span className="text-lg font-bold text-white font-heading tracking-tight">Menu</span>
-            <button onClick={onClose} className="lg:hidden text-slate-400 hover:text-white p-1 rounded-full transition-colors">
+        {/* Header Logo Area */}
+        <div className="h-16 flex items-center justify-between px-6 border-b border-gray-100 shrink-0">
+            <div className="flex items-center gap-2">
+                <div className="h-8 w-8 bg-gradient-to-br from-orange-600 to-orange-700 rounded-lg flex items-center justify-center text-white shadow-sm">
+                    <span className="font-bold font-heading text-lg">G</span>
+                </div>
+                <span className="text-lg font-semibold text-gray-900 font-heading tracking-tight">Financeiro</span>
+            </div>
+            <button onClick={onClose} className="lg:hidden text-gray-400 hover:text-gray-900 p-1 rounded-md transition-colors">
                 <XIcon className="h-6 w-6" />
             </button>
         </div>
 
-        <div className="overflow-y-auto flex-1 py-4 custom-scrollbar">
-          <ul className="space-y-1 px-3">
-            {/* Global Search Button */}
-            <li>
-                <button
-                    onClick={handleOpenSearch}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-full text-sm transition-colors font-medium text-slate-400 hover:text-white hover:bg-slate-800"
-                    aria-label="Buscar em todo o sistema"
-                    title="Buscar em todo o sistema (Ctrl + Enter)"
-                >
-                    <SearchIcon className="h-5 w-5" />
-                    <span>Buscar...</span>
-                    <span className="ml-auto text-xs font-mono text-slate-500 bg-slate-700/50 px-1.5 py-0.5 rounded-md border border-slate-600/50">Ctrl+Enter</span>
-                </button>
-            </li>
+        {/* Scrollable Content */}
+        <div className="overflow-y-auto flex-1 py-6 px-4 custom-scrollbar">
+          
+          {/* Global Search Button */}
+          <button
+              onClick={handleOpenSearch}
+              className="w-full flex items-center gap-3 px-3 py-2.5 mb-6 rounded-lg text-sm font-medium text-gray-500 bg-gray-50 border border-gray-200 hover:border-orange-300 hover:text-gray-900 hover:bg-white transition-all group shadow-sm"
+          >
+              <SearchIcon className="h-4 w-4 text-gray-400 group-hover:text-orange-600 transition-colors" />
+              <span>Buscar...</span>
+              <span className="ml-auto text-[10px] font-mono text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">⌘K</span>
+          </button>
+
+          <nav className="space-y-1">
             {modules.map((module) => {
               if ('children' in module) {
                 const isActive = isParentActive(module);
                 return (
-                  <li key={module.name}>
+                  <div key={module.name} className="mb-1">
                     <button
                       onClick={() => toggleSubMenu(module.name)}
-                      className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-full text-sm transition-colors font-medium
-                        ${isActive ? 'text-white bg-slate-800' : 'text-slate-400 hover:text-white hover:bg-slate-800'}
+                      className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                        ${isActive 
+                            ? 'text-gray-900 bg-gray-50' 
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
                       `}
                     >
                       <div className="flex items-center gap-3">
-                        {module.icon}
+                        <span className={`${isActive ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-500'}`}>
+                            {module.icon}
+                        </span>
                         <span>{module.name}</span>
                       </div>
-                      <ChevronDownIcon className={`h-4 w-4 transform transition-transform duration-200 ${openSubMenus[module.name] ? 'rotate-180' : ''}`} />
+                      <ChevronDownIcon className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${openSubMenus[module.name] ? 'rotate-180' : ''}`} />
                     </button>
                     
-                    {/* Submenu */}
-                    <div className={`overflow-hidden transition-all duration-300 ${openSubMenus[module.name] ? 'max-h-96 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
-                      <ul className="pl-4 space-y-1 border-l border-slate-700 ml-4">
-                        {module.children.map(child => (
-                          <li key={child.view}>
-                            <button
-                              onClick={() => {
-                                handleNavigation(child.view);
-                                // Collapse submenus only if the current view is not part of this submenu anymore
-                                // This is handled by isParentActive at the top, which re-evaluates on currentView change.
-                                // Explicitly closing here can be problematic if switching between child views in the same parent.
-                                // Instead, rely on the useEffect logic in the parent component to derive initialOpen state.
-                              }}
-                              className={`w-full flex items-center gap-3 px-4 py-2 rounded-full text-sm transition-colors
-                                ${currentView === child.view 
-                                  ? 'text-white font-semibold bg-blue-600 shadow-md' 
-                                  : 'text-slate-400 hover:text-white hover:bg-slate-800'}
-                              `}
-                            >
-                              <span>{child.name}</span>
-                            </button>
-                          </li>
-                        ))}
+                    <div className={`overflow-hidden transition-all duration-300 ${openSubMenus[module.name] ? 'max-h-96 opacity-100 pt-1' : 'max-h-0 opacity-0'}`}>
+                      <ul className="space-y-0.5 pl-3">
+                        {module.children.map(child => {
+                            const isChildActive = currentView === child.view;
+                            return (
+                              <li key={child.view}>
+                                <button
+                                  onClick={() => handleNavigation(child.view)}
+                                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all border-l-2
+                                    ${isChildActive 
+                                      ? 'border-orange-600 text-orange-700 bg-orange-50 font-medium' 
+                                      : 'border-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'}
+                                  `}
+                                >
+                                  {child.name}
+                                </button>
+                              </li>
+                            );
+                        })}
                       </ul>
                     </div>
-                  </li>
+                  </div>
                 );
               } else {
                 const isSelected = currentView === module.view;
                 return (
-                  <li key={module.view}>
+                  <div key={module.view} className="mb-1">
                     <button
                       onClick={() => handleNavigation(module.view)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-full text-sm transition-colors font-medium
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all relative overflow-hidden group
                         ${isSelected 
-                          ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/10' 
-                          : 'text-slate-400 hover:text-white hover:bg-slate-800'}
+                          ? 'text-orange-700 bg-orange-50' 
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
                       `}
                     >
-                      <span className={isSelected ? 'text-white' : 'text-slate-400 group-hover:text-white'}>
+                      {isSelected && <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-orange-600 rounded-r-full"></div>}
+                      <span className={`transition-colors ${isSelected ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-500'}`}>
                         {module.icon}
                       </span>
                       <span>{module.name}</span>
                     </button>
-                  </li>
+                  </div>
                 );
               }
             })}
-          </ul>
+          </nav>
         </div>
         
-        <div className="p-4 border-t border-slate-800 shrink-0 space-y-2">
+        {/* Footer */}
+        <div className="p-4 border-t border-gray-100 bg-gray-50/50 shrink-0">
             <button 
                 onClick={onLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-full text-sm transition-colors font-medium text-red-400 hover:bg-red-950/30 hover:text-red-300"
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors group"
             >
-                <LogoutIcon className="h-5 w-5" />
-                <span>Sair</span>
+                <LogoutIcon className="h-5 w-5 text-gray-400 group-hover:text-red-500 transition-colors" />
+                <span>Sair do Sistema</span>
             </button>
-            <p className="text-xs text-center text-slate-600 pt-2">&copy; 2025 Gerenciador PJ</p>
         </div>
       </aside>
     </>

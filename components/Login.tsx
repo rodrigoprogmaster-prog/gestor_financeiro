@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { SpinnerIcon, CheckIcon, UserIcon, KeyIcon, CheckCircleIcon } from './icons';
+import { SpinnerIcon, CheckIcon, UserIcon, KeyIcon, BuildingIcon } from './icons';
 
 interface LoginProps {
   onLoginSuccess: () => void;
@@ -12,7 +12,6 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [profilePicture] = useState(() => localStorage.getItem('profile_picture'));
-
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,112 +28,125 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         setIsSuccess(true);
         setTimeout(() => {
           onLoginSuccess();
-        }, 1000); 
-      }, 1000); 
+        }, 800); 
+      }, 800); 
     } else {
       setError('Senha incorreta. Por favor, tente novamente.');
       setPassword('');
     }
   };
 
-  const buttonContent = () => {
-    if (isSuccess) {
-      return (
-        <>
-          <CheckIcon className="h-5 w-5 mr-2" />
-          Login bem-sucedido!
-        </>
-      );
-    }
-    if (isLoading) {
-      return (
-        <>
-          <SpinnerIcon className="h-5 w-5 mr-2 animate-spin" />
-          Autenticando...
-        </>
-      );
-    }
-    return 'Acessar Sistema';
-  }
-
-  const getButtonClass = () => {
-    if (isSuccess) {
-      return 'bg-success hover:bg-success/90 border-transparent';
-    }
-    if (isLoading) {
-        return 'bg-primary/80 border-transparent cursor-not-allowed';
-    }
-    return 'bg-primary hover:bg-primary-hover border-transparent shadow-sm';
-  }
-
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary p-4 font-sans antialiased">
-      <div className="flex w-full max-w-6xl overflow-hidden rounded-3xl shadow-2xl animate-fade-in bg-card">
-        {/* Left Column - Branding */}
-        <div className="hidden md:flex flex-col justify-center items-center p-12 bg-gradient-to-br from-blue-600 to-blue-800 text-white w-1/2">
-            <div className="p-4 rounded-full bg-white/20 mb-8">
-                <CheckCircleIcon className="h-16 w-16 text-white" />
+    <div className="flex min-h-screen w-full bg-gray-50 font-sans">
+      {/* Left Column - Branding (Desktop only) */}
+      <div className="hidden lg:flex w-1/2 bg-gray-900 text-white flex-col justify-between p-16 relative overflow-hidden">
+        {/* Abstract shapes for visual interest */}
+        <div className="absolute top-0 left-0 w-full h-full opacity-10">
+            <div className="absolute top-[-10%] right-[-10%] w-96 h-96 rounded-full bg-orange-500 blur-3xl"></div>
+            <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 rounded-full bg-blue-500 blur-3xl"></div>
+        </div>
+
+        <div className="relative z-10">
+            <div className="h-14 w-14 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center mb-8 shadow-2xl shadow-orange-900/40 border border-white/10">
+                <BuildingIcon className="h-7 w-7 text-white" />
             </div>
-            <h2 className="text-5xl font-extrabold text-center mb-4 tracking-tight font-heading">
-                Gerenciador Financeiro
-            </h2>
-            <p className="text-lg text-center opacity-80 max-w-sm">
-                Gestão integrada, processos seguros e relatórios inteligentes. O cuidado que seus negócios merecem começa aqui.
+            <h1 className="text-5xl font-bold tracking-tight mb-6 text-white leading-tight">
+                Gerenciador<br/>
+                <span className="text-orange-500">Financeiro</span>
+            </h1>
+            <p className="text-gray-400 text-lg max-w-md leading-relaxed">
+                Controle total sobre suas finanças empresariais. Gestão de boletos, cheques e previsões em um único lugar.
             </p>
         </div>
 
-        {/* Right Column - Login Form */}
-        <div className="flex-1 p-12 w-full md:w-1/2 flex flex-col justify-center">
-            <div className="flex flex-col items-center mb-10">
+        <div className="relative z-10 text-sm text-gray-600 font-medium">
+            &copy; {new Date().getFullYear()} Todos os direitos reservados.
+        </div>
+      </div>
+
+      {/* Right Column - Login Form */}
+      <div className="flex-1 flex flex-col justify-center items-center p-8 lg:p-16 bg-white relative">
+        {/* Mobile Header (Only visible on small screens) */}
+        <div className="lg:hidden absolute top-8 left-8 flex items-center gap-3">
+             <div className="h-10 w-10 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-lg">G</span>
+            </div>
+            <span className="text-lg font-bold text-gray-900">Financeiro</span>
+        </div>
+
+        <div className="w-full max-w-sm space-y-8 animate-fade-in">
+            <div className="text-center">
                 {profilePicture ? (
-                    <div className="relative group mb-6">
-                        <img src={profilePicture} alt="Foto de Perfil" className="h-28 w-28 rounded-full object-cover border-3 border-border transition-all duration-300 group-hover:border-primary group-hover:ring-2 ring-primary/20" />
-                    </div>
+                    <img 
+                        src={profilePicture} 
+                        alt="Perfil" 
+                        className="h-28 w-28 rounded-full mx-auto mb-6 object-cover border-[4px] border-gray-100 shadow-sm"
+                    />
                 ) : (
-                    <div className="h-28 w-28 rounded-full bg-secondary flex items-center justify-center mb-6 border-3 border-border">
-                        <UserIcon className="h-14 w-14 text-text-secondary" />
+                    <div className="h-24 w-24 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-orange-100">
+                        <UserIcon className="h-10 w-10 text-orange-600" />
                     </div>
                 )}
-                <h1 className="text-3xl font-bold text-text-primary mb-2">Bem-vindo de volta</h1>
-                <p className="text-base text-text-secondary font-medium">Faça login para acessar o sistema.</p>
+                <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Bem-vindo</h2>
+                <p className="text-gray-500 text-sm mt-2">Insira sua senha de acesso para continuar.</p>
             </div>
-            
-            <form className="space-y-6" onSubmit={handleSubmit}>
-              <div className="relative">
-                 <label htmlFor="password-input" className="block text-sm font-medium text-text-secondary mb-1 ml-1">Senha de Acesso</label>
-                 <KeyIcon className="absolute left-4 top-[calc(50%+0.5rem)] -translate-y-1/2 h-5 w-5 text-text-secondary pointer-events-none" />
-                 <input
-                    id="password-input"
-                    name="password"
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                    className={`appearance-none relative block w-full pl-12 pr-4 py-3 bg-background border placeholder-text-secondary/50 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition-all rounded-xl h-12 ${error ? 'border-danger animate-shake' : 'border-border'}`}
-                    placeholder="Digite sua senha"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={isLoading || isSuccess}
-                    autoFocus
-                  />
-              </div>
-              
-              {error && (
-                <p className="text-center text-sm text-danger mt-3" role="alert">
-                  {error}
-                </p>
-              )}
 
-              <div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-2">
+                    <label htmlFor="password" className="text-sm font-semibold text-gray-700 block ml-1">Senha de Acesso</label>
+                    <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <KeyIcon className="h-5 w-5 text-gray-400 group-focus-within:text-orange-600 transition-colors" />
+                        </div>
+                        <input
+                            id="password"
+                            type="password"
+                            required
+                            className={`block w-full pl-11 pr-4 py-3.5 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all font-medium ${error ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-gray-200 hover:border-gray-300'}`}
+                            placeholder="••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            disabled={isLoading || isSuccess}
+                            autoFocus
+                        />
+                    </div>
+                    {error && (
+                        <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-2 rounded-lg mt-2 animate-shake">
+                            <div className="w-1 h-1 bg-red-600 rounded-full ml-1"></div>
+                            {error}
+                        </div>
+                    )}
+                </div>
+
                 <button
-                  type="submit"
-                  disabled={isLoading || isSuccess}
-                  className={`group relative w-full flex justify-center py-3 px-6 h-12 text-base font-bold rounded-full text-white ${getButtonClass()} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg`}
+                    type="submit"
+                    disabled={isLoading || isSuccess}
+                    className={`w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl text-base font-bold text-white transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5
+                        ${isSuccess 
+                            ? 'bg-green-600 hover:bg-green-700 shadow-green-900/20' 
+                            : 'bg-orange-600 hover:bg-orange-700 shadow-orange-900/20'}
+                        ${isLoading ? 'opacity-90 cursor-not-allowed transform-none' : ''}
+                    `}
                 >
-                  {buttonContent()}
+                    {isLoading ? (
+                        <>
+                            <SpinnerIcon className="h-5 w-5 animate-spin mr-2" />
+                            <span>Verificando...</span>
+                        </>
+                    ) : isSuccess ? (
+                        <>
+                            <CheckIcon className="h-5 w-5 mr-2" />
+                            <span>Acesso Permitido</span>
+                        </>
+                    ) : (
+                        'Entrar no Sistema'
+                    )}
                 </button>
-              </div>
             </form>
-            <p className="text-xs text-center text-text-secondary mt-10">Sistema Protegido • Versão 1.0</p>
+            
+            <div className="pt-8 text-center border-t border-gray-100">
+                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Sistema Seguro v2.2</p>
+            </div>
         </div>
       </div>
     </div>

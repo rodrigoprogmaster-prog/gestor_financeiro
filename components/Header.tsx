@@ -18,34 +18,37 @@ const Header: React.FC<HeaderProps> = ({ setView, onToggleSidebar }) => {
   };
 
   return (
-    <header className="bg-card shadow-sm border-b border-border h-16 flex justify-between items-center px-4 sm:px-6 sticky top-0 z-40 shrink-0">
+    <header className="bg-white border-b border-gray-200 h-16 flex justify-between items-center px-4 sm:px-8 sticky top-0 z-40 shrink-0">
       <div className="flex items-center gap-4">
         <button
             onClick={onToggleSidebar}
-            className="lg:hidden flex items-center justify-center bg-secondary text-text-primary border border-border font-medium p-2 rounded-full hover:bg-border transition-colors h-9 w-9"
+            className="lg:hidden flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-100 p-2 rounded-lg transition-colors"
             aria-label="Abrir menu de navegação"
         >
-            <MenuIcon className="h-5 w-5" />
+            <MenuIcon className="h-6 w-6" />
         </button>
 
+        {/* Mobile Logo Title */}
         <div
-            className="flex items-center gap-3 cursor-pointer group"
+            className="flex items-center gap-3 cursor-pointer lg:hidden"
             onClick={handleLogoClick}
-            title="Voltar para o Início"
         >
-            <div className="p-1.5 rounded-xl bg-secondary border border-border group-hover:bg-primary group-hover:border-primary transition-colors">
-                <WalletIcon className="h-6 w-6 text-primary group-hover:text-white transition-colors" />
-            </div>
-            <h1 className="text-lg font-bold text-text-primary font-heading tracking-tight hidden sm:block">
-                Gerenciador Financeiro
+            <h1 className="text-lg font-bold text-gray-900 font-heading tracking-tight">
+                Financeiro
             </h1>
+        </div>
+        
+        {/* Breadcrumb Placeholder or Page Title could go here */}
+        <div className="hidden md:flex items-center text-sm text-gray-500">
+            <span className="font-medium text-orange-600">Bem-vindo</span>
         </div>
       </div>
       
-      <div className="flex items-center gap-3">
-        <div className="hidden md:block text-right mr-4">
+      <div className="flex items-center gap-6">
+        <div className="hidden md:block text-right">
           <Clock />
         </div>
+        <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-gray-200 to-gray-300 border border-white shadow-sm"></div>
       </div>
     </header>
   );
