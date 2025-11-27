@@ -503,7 +503,16 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         const worksheet = XLSX.utils.json_to_sheet(dataToExport);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Backup Cheques');
-        XLSX.writeFile(workbook, `backup_cheques_${new Date().toISOString().slice(0,10)}.xlsx`);
+        
+        const now = new Date();
+        const timestamp = now.getFullYear() + '-' +
+                          String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                          String(now.getDate()).padStart(2, '0') + '_' +
+                          String(now.getHours()).padStart(2, '0') + '-' +
+                          String(now.getMinutes()).padStart(2, '0') + '-' +
+                          String(now.getSeconds()).padStart(2, '0');
+
+        XLSX.writeFile(workbook, `backup_cheques_${timestamp}.xlsx`);
     };
 
     const handleExportDevolvidos = () => {

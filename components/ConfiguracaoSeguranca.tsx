@@ -228,8 +228,16 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            const dateStr = new Date().toISOString().slice(0, 10);
-            a.download = `backup_financeiro_v2_${dateStr}.json`;
+            
+            const now = new Date();
+            const timestamp = now.getFullYear() + '-' +
+                              String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                              String(now.getDate()).padStart(2, '0') + '_' +
+                              String(now.getHours()).padStart(2, '0') + '-' +
+                              String(now.getMinutes()).padStart(2, '0') + '-' +
+                              String(now.getSeconds()).padStart(2, '0');
+
+            a.download = `backup_financeiro_v2_${timestamp}.json`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
