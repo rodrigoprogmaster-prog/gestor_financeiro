@@ -2,7 +2,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import TransferenciasEmpresas from './TransferenciasEmpresas';
 import AutorizacaoPagamento from './AutorizacaoPagamento';
-import { CalendarClockIcon, TrashIcon, ReportIcon, ChevronDownIcon } from './icons';
+import { CalendarClockIcon, TrashIcon, ReportIcon, ChevronDownIcon, CalculatorIcon } from './icons';
+import Calculator from './Calculator';
 
 // Interface for a launch of payment
 interface Pagamento {
@@ -82,6 +83,9 @@ const PagamentosCristiano: React.FC = () => {
     const [confirmAction, setConfirmAction] = useState<{ action: (() => void) | null, message: string }>({ action: null, message: '' });
     const [activeTab, setActiveTab] = useState<Tab>('pagamentos');
     const [tempCurrencyInput, setTempCurrencyInput] = useState<Record<string, string>>({}); // New state for raw currency input
+    
+    // Calculator State
+    const [showCalculator, setShowCalculator] = useState<{ field: string | null }>({ field: null });
 
     useEffect(() => {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(pagamentos));
@@ -168,6 +172,7 @@ const PagamentosCristiano: React.FC = () => {
         setEditingPagamento(null);
         setErrors({});
         setTempCurrencyInput({}); // Clear temp state on close
+        setShowCalculator({ field: null });
     };
     
     const handleDeleteClick = (e: React.MouseEvent, idToDelete: string) => {
@@ -215,6 +220,20 @@ const PagamentosCristiano: React.FC = () => {
                 return newErrors;
             });
         }
+    };
+
+    const handleCalculatorUpdate = (result: number, field: string) => {
+        if (!editingPagamento) return;
+        
+        // Update the numeric value in editingPagamento
+        setEditingPagamento(prev => prev ? { ...prev, [field]: result } : null);
+        
+        // Update the temp input (raw digits)
+        // Convert result back to integer representation (e.g., 100.50 -> "10050")
+        const rawDigits = Math.round(result * 100).toString();
+        setTempCurrencyInput(prev => ({ ...prev, [field]: rawDigits }));
+        
+        setShowCalculator({ field: null });
     };
 
     const validate = (): boolean => {
@@ -440,7 +459,7 @@ const PagamentosCristiano: React.FC = () => {
               <h3 className="text-xl font-bold mb-2 text-text-primary">Editar Lançamento</h3>
               <p className="text-text-secondary mb-6">{editingPagamento.empresa} - {formatDateToBR(editingPagamento.data)}</p>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 relative">
                 <div className="sm:col-span-2">
                     <label htmlFor="empresa" className="block text-sm font-medium text-text-secondary mb-1">Empresa</label>
                     <input
@@ -469,52 +488,60 @@ const PagamentosCristiano: React.FC = () => {
                         <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
                     </div>
                 </div>
-                <div>
+                <div className="relative">
                   <label htmlFor="receitas" className="block text-sm font-medium text-text-secondary mb-1">Receitas (R$)</label>
                   <input 
                       id="receitas" 
-                      type="text" // Changed to text to handle custom currency input
+                      type="text" 
                       name="receitas" 
                       value={formatInputCurrency(tempCurrencyInput.receitas || '')} 
                       onChange={handleCurrencyInputChange} 
                       className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12 ${errors.receitas ? 'border-danger' : 'border-border'}`}
                   />
+                  <button onClick={() => setShowCalculator({ field: 'receitas' })} className="absolute right-3 top-9 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                  {showCalculator.field === 'receitas' && <Calculator initialValue={editingPagamento.receitas} onResult={(res) => handleCalculatorUpdate(res, 'receitas')} onClose={() => setShowCalculator({ field: null })} />}
                   {errors.receitas && <p className="text-danger text-xs mt-1">{errors.receitas}</p>}
                 </div>
-                <div>
+                <div className="relative">
                   <label htmlFor="despesas" className="block text-sm font-medium text-text-secondary mb-1">Despesas (R$)</label>
                   <input 
                       id="despesas" 
-                      type="text" // Changed to text to handle custom currency input
+                      type="text" 
                       name="despesas" 
                       value={formatInputCurrency(tempCurrencyInput.despesas || '')} 
                       onChange={handleCurrencyInputChange} 
                       className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12 ${errors.despesas ? 'border-danger' : 'border-border'}`}
                   />
+                   <button onClick={() => setShowCalculator({ field: 'despesas' })} className="absolute right-3 top-9 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                   {showCalculator.field === 'despesas' && <Calculator initialValue={editingPagamento.despesas} onResult={(res) => handleCalculatorUpdate(res, 'despesas')} onClose={() => setShowCalculator({ field: null })} />}
                    {errors.despesas && <p className="text-danger text-xs mt-1">{errors.despesas}</p>}
                 </div>
-                <div>
+                <div className="relative">
                   <label htmlFor="envia" className="block text-sm font-medium text-text-secondary mb-1">Envia (R$)</label>
                   <input 
                       id="envia" 
-                      type="text" // Changed to text to handle custom currency input
+                      type="text" 
                       name="envia" 
                       value={formatInputCurrency(tempCurrencyInput.envia || '')} 
                       onChange={handleCurrencyInputChange} 
                       className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12 ${errors.envia ? 'border-danger' : 'border-border'}`}
                   />
+                   <button onClick={() => setShowCalculator({ field: 'envia' })} className="absolute right-3 top-9 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                   {showCalculator.field === 'envia' && <Calculator initialValue={editingPagamento.envia} onResult={(res) => handleCalculatorUpdate(res, 'envia')} onClose={() => setShowCalculator({ field: null })} />}
                    {errors.envia && <p className="text-danger text-xs mt-1">{errors.envia}</p>}
                 </div>
-                 <div>
+                 <div className="relative">
                   <label htmlFor="recebe" className="block text-sm font-medium text-text-secondary mb-1">Recebe (R$)</label>
                   <input 
                       id="recebe" 
-                      type="text" // Changed to text to handle custom currency input
+                      type="text" 
                       name="recebe" 
                       value={formatInputCurrency(tempCurrencyInput.recebe || '')} 
                       onChange={handleCurrencyInputChange} 
                       className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12 ${errors.recebe ? 'border-danger' : 'border-border'}`}
                   />
+                  <button onClick={() => setShowCalculator({ field: 'recebe' })} className="absolute right-3 top-9 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                  {showCalculator.field === 'recebe' && <Calculator initialValue={editingPagamento.recebe} onResult={(res) => handleCalculatorUpdate(res, 'recebe')} onClose={() => setShowCalculator({ field: null })} />}
                   {errors.recebe && <p className="text-danger text-xs mt-1">{errors.recebe}</p>}
                 </div>
               </div>

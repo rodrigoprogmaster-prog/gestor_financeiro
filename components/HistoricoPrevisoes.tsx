@@ -1,8 +1,9 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, DatabaseIcon, 
-    ArrowLeftIcon, TrendingUpIcon, ReportIcon, BoletoIcon, SpinnerIcon, TransferIcon } from './icons';
+    ArrowLeftIcon, TrendingUpIcon, ReportIcon, BoletoIcon, SpinnerIcon, TransferIcon, CalculatorIcon } from './icons';
 import AutocompleteInput from './AutocompleteInput';
+import Calculator from './Calculator';
 
 // Data structure
 interface Previsao {
@@ -22,16 +23,15 @@ interface PrevisaoGerada {
     dataGeracao: string;
 }
 
-// Interface for a launch of payment (matching PagamentosFabrica/Cristiano)
 interface Pagamento {
-    id: string; // `data-empresa-index` for uniqueness
+    id: string; 
     data: string;
     empresa: string;
     tipo: string;
     receitas: number;
     despesas: number;
-    envia: number; // Default to 0 when transferring from Previsao
-    recebe: number; // Default to 0 when transferring from Previsao
+    envia: number; 
+    recebe: number; 
   }
 
 interface NavCardProps {
@@ -53,7 +53,6 @@ const NavCard: React.FC<NavCardProps> = ({ title, icon, onClick }) => (
     </div>
 );
 
-// Used only for autocomplete suggestions now, not auto-population
 const PREDEFINED_ENTRIES = [
     { empresa: 'Fiber Adm De Franquias', tipo: 'ITAU' },
     { empresa: 'World Wide Swimmingpools', tipo: 'ITAU' },
@@ -68,7 +67,6 @@ const PREDEFINED_ENTRIES = [
 
 const FIXED_BANKS = ['INTER', 'XP', 'ITAU', 'BB', 'SANTANDER'];
 
-// Helper Functions
 const formatCurrency = (value: number | undefined | null) => {
     if (value === undefined || value === null) return 'R$ 0,00';
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -98,7 +96,6 @@ export const PrevisaoCristiano: React.FC = () => {
     const [confirmAction, setConfirmAction] = useState<{ action: (() => void) | null, message: string }>({ action: null, message: '' });
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
-    // New Entry State
     const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState(false);
     const [newEntry, setNewEntry] = useState<Partial<Previsao>>({
         data: new Date().toISOString().split('T')[0],
@@ -131,8 +128,10 @@ export const PrevisaoCristiano: React.FC = () => {
     const [transferDate, setTransferDate] = useState('');
 
     const scrollRef = useRef<HTMLDivElement>(null);
+    
+    // Calculator State
+    const [showCalculator, setShowCalculator] = useState<{ field: string | null }>({ field: null });
 
-    // Combine predefined entries with historical entries for suggestions
     const uniqueEmpresas = useMemo(() => {
         const historical = previsoes.map(p => p.empresa).filter(Boolean);
         const predefined = PREDEFINED_ENTRIES.map(e => e.empresa).filter(Boolean);
@@ -272,8 +271,8 @@ export const PrevisaoCristiano: React.FC = () => {
             alert("Por favor, informe a semana.");
             return;
         }
-        setIsGerarPrevisaoModalOpen(false); // Close the input modal
-        setIsGerarPrevisaoConfirmOpen(true); // Open confirmation
+        setIsGerarPrevisaoModalOpen(false); 
+        setIsGerarPrevisaoConfirmOpen(true); 
     };
     
     const handleGerarPrevisao = () => {
@@ -303,7 +302,6 @@ export const PrevisaoCristiano: React.FC = () => {
             return { ...dia, resultado: resultadoDoDia, saldo: saldoAcumulado };
         });
 
-        // Consistent key naming for totals
         const totais = diasProcessados.reduce((acc, dia) => {
             acc.totalReceitas += dia.receitas;
             acc.totalDespesas += dia.despesas;
@@ -387,6 +385,7 @@ export const PrevisaoCristiano: React.FC = () => {
     const handleCloseModal = () => {
       setIsEditModalOpen(false);
       setEditingPrevisao(null);
+      setShowCalculator({ field: null });
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -401,6 +400,15 @@ export const PrevisaoCristiano: React.FC = () => {
                 setEditingPrevisao({ ...editingPrevisao, [name]: value });
             }
         }
+    };
+
+    const handleCalculatorUpdate = (result: number, field: 'receitas' | 'despesas', mode: 'edit' | 'add') => {
+        if (mode === 'edit' && editingPrevisao) {
+            setEditingPrevisao(prev => ({ ...prev, [field]: result }));
+        } else if (mode === 'add') {
+            setNewEntry(prev => ({ ...prev, [field]: result }));
+        }
+        setShowCalculator({ field: null });
     };
 
     const handleSaveChanges = () => {
@@ -547,7 +555,6 @@ export const PrevisaoCristiano: React.FC = () => {
           case 'previsao':
             return (
               <div className="animate-fade-in flex flex-col h-full">
-                {/* Compact Toolbar */}
                 <div className="flex flex-col lg:flex-row justify-end items-center mb-4 gap-2 bg-card p-3 rounded-2xl border border-border shadow-sm">
                     <div className="flex items-center bg-secondary rounded-full px-2 border border-border">
                         <span className="text-xs font-medium text-text-secondary mr-2">Data:</span>
@@ -723,15 +730,26 @@ export const PrevisaoCristiano: React.FC = () => {
               <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
                     <h3 className="text-2xl font-bold text-text-primary mb-6 text-center pt-8">Editar Previsão</h3>
-                    <div className="px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-6 relative">
                         <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Data</label><input type="date" name="data" value={editingPrevisao.data || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                         <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Semana</label><input type="text" name="semana" value={editingPrevisao.semana || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                         <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label>
                         <AutocompleteInput name="empresa" value={editingPrevisao.empresa || ''} onChange={handleInputChange} suggestions={uniqueEmpresas} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                         <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Banco</label>
                         <AutocompleteInput name="tipo" value={editingPrevisao.tipo || ''} onChange={handleInputChange} suggestions={uniqueBancos} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                        <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Receitas</label><input type="text" name="receitas" value={formatCurrency(editingPrevisao.receitas)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                        <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Despesas</label><input type="text" name="despesas" value={formatCurrency(editingPrevisao.despesas)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                        
+                        <div className="relative">
+                            <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Receitas</label>
+                            <input type="text" name="receitas" value={formatCurrency(editingPrevisao.receitas)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/>
+                            <button onClick={() => setShowCalculator({ field: 'receitas' })} className="absolute right-3 top-9 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                            {showCalculator.field === 'receitas' && <Calculator initialValue={editingPrevisao.receitas} onResult={(res) => handleCalculatorUpdate(res, 'receitas', 'edit')} onClose={() => setShowCalculator({ field: null })} />}
+                        </div>
+                        <div className="relative">
+                            <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Despesas</label>
+                            <input type="text" name="despesas" value={formatCurrency(editingPrevisao.despesas)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/>
+                            <button onClick={() => setShowCalculator({ field: 'despesas' })} className="absolute right-3 top-9 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                            {showCalculator.field === 'despesas' && <Calculator initialValue={editingPrevisao.despesas} onResult={(res) => handleCalculatorUpdate(res, 'despesas', 'edit')} onClose={() => setShowCalculator({ field: null })} />}
+                        </div>
                     </div>
                     <div className="px-8 pb-8 flex justify-center gap-3">
                         <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
@@ -745,15 +763,26 @@ export const PrevisaoCristiano: React.FC = () => {
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
                         <h3 className="text-2xl font-bold text-text-primary mb-6 text-center pt-8">Adicionar Lançamento</h3>
-                        <div className="px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-6 relative">
                             <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Data</label><input type="date" name="data" value={newEntry.data || ''} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                             <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Semana</label><input type="text" name="semana" value={newEntry.semana || ''} onChange={handleNewEntryChange} placeholder="Ex: Semana 32" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                             <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label>
                             <AutocompleteInput name="empresa" value={newEntry.empresa || ''} onChange={handleNewEntryChange} suggestions={uniqueEmpresas} placeholder="Digite a empresa" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                             <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Banco</label>
                             <AutocompleteInput name="tipo" value={newEntry.tipo || ''} onChange={handleNewEntryChange} suggestions={uniqueBancos} placeholder="Digite o banco" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                            <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Receitas</label><input type="text" name="receitas" value={formatCurrency(newEntry.receitas)} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                            <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Despesas</label><input type="text" name="despesas" value={formatCurrency(newEntry.despesas)} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                            
+                            <div className="relative">
+                                <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Receitas</label>
+                                <input type="text" name="receitas" value={formatCurrency(newEntry.receitas)} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/>
+                                <button onClick={() => setShowCalculator({ field: 'receitas' })} className="absolute right-3 top-9 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                                {showCalculator.field === 'receitas' && <Calculator initialValue={newEntry.receitas} onResult={(res) => handleCalculatorUpdate(res, 'receitas', 'add')} onClose={() => setShowCalculator({ field: null })} />}
+                            </div>
+                            <div className="relative">
+                                <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Despesas</label>
+                                <input type="text" name="despesas" value={formatCurrency(newEntry.despesas)} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/>
+                                <button onClick={() => setShowCalculator({ field: 'despesas' })} className="absolute right-3 top-9 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                                {showCalculator.field === 'despesas' && <Calculator initialValue={newEntry.despesas} onResult={(res) => handleCalculatorUpdate(res, 'despesas', 'add')} onClose={() => setShowCalculator({ field: null })} />}
+                            </div>
                         </div>
                         <div className="px-8 pb-8 flex justify-center gap-3">
                             <button onClick={() => setIsAddEntryModalOpen(false)} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
