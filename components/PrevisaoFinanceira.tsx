@@ -5,6 +5,8 @@ import { PlusIcon, TrashIcon, SearchIcon, DatabaseIcon,
 import AutocompleteInput from './AutocompleteInput';
 import Calculator from './Calculator';
 
+// ... (keep all imports and interfaces exactly as they were, no changes to logic logic, just the modal style and integration check)
+
 // Data structure
 interface Previsao {
   id: number;
@@ -740,7 +742,7 @@ export const PrevisaoFabrica: React.FC = () => {
           
           {isEditModalOpen && editingPrevisao && (
               <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-visible">
                     <h3 className="text-2xl font-bold text-text-primary mb-6 text-center pt-8">Editar Previsão</h3>
                     <div className="px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-6 relative">
                         <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Data</label><input type="date" name="data" value={editingPrevisao.data || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
@@ -773,7 +775,7 @@ export const PrevisaoFabrica: React.FC = () => {
               
               {isAddEntryModalOpen && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-visible">
                         <h3 className="text-2xl font-bold text-text-primary mb-6 text-center pt-8">Adicionar Lançamento</h3>
                         <div className="px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-6 relative">
                             <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Data</label><input type="date" name="data" value={newEntry.data || ''} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>

@@ -37,6 +37,8 @@ interface Tarefa {
   dataCriacao: string; // YYYY-MM-DD
 }
 
+type TarefaWithStatus = Tarefa & { dynamicStatus: StatusTarefa | 'Atrasada' };
+
 type TarefaErrors = Partial<Record<keyof Omit<Tarefa, 'id' | 'dataCriacao'>, string>>;
 
 // Helper functions
@@ -107,6 +109,10 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<{ action: (() => void) | null, message: string }>({ action: null, message: '' });
     const [errors, setErrors] = useState<TarefaErrors>({});
+    
+    // Recurring Delete State
+    const [isRecurringDeleteModalOpen, setIsRecurringDeleteModalOpen] = useState(false);
+    const [taskToDelete, setTaskToDelete] = useState<Tarefa | null>(null);
     
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<StatusTarefa | 'Atrasada' | 'Todas'>(StatusTarefa.PENDENTE);
@@ -189,7 +195,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         return vencimento < hoje ? 'Atrasada' : tarefa.status;
     };
     
-    const allTarefasWithStatus = useMemo(() => tarefas.map(t => ({ ...t, dynamicStatus: getDynamicStatus(t) })), [tarefas]);
+    const allTarefasWithStatus = useMemo(() => tarefas.map(t => ({ ...t, dynamicStatus: getDynamicStatus(t) })) as TarefaWithStatus[], [tarefas]);
 
     const filteredTarefas = useMemo(() => {
         // Determine if we are currently looking at the "Real Current Month"
@@ -267,10 +273,35 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         setIsModalOpen(true);
     };
 
-    const handleDeleteClick = (id: string) => {
-        const action = () => setTarefas(tarefas.filter(t => t.id !== id));
-        setConfirmAction({ action, message: 'Deseja realmente excluir esta tarefa?' });
-        setIsConfirmOpen(true);
+    const handleDeleteClick = (e: React.MouseEvent, tarefa: Tarefa) => {
+        e.stopPropagation();
+        
+        if (tarefa.seriesId) {
+            // It's a recurring task
+            setTaskToDelete(tarefa);
+            setIsRecurringDeleteModalOpen(true);
+        } else {
+            // Standard delete
+            const action = () => setTarefas(tarefas.filter(t => t.id !== tarefa.id));
+            setConfirmAction({ action, message: 'Deseja realmente excluir esta tarefa?' });
+            setIsConfirmOpen(true);
+        }
+    };
+
+    const handleDeleteSeries = () => {
+        if (taskToDelete && taskToDelete.seriesId) {
+            setTarefas(prev => prev.filter(t => t.seriesId !== taskToDelete.seriesId));
+        }
+        setIsRecurringDeleteModalOpen(false);
+        setTaskToDelete(null);
+    };
+
+    const handleDeleteOccurrence = () => {
+        if (taskToDelete) {
+            setTarefas(prev => prev.filter(t => t.id !== taskToDelete.id));
+        }
+        setIsRecurringDeleteModalOpen(false);
+        setTaskToDelete(null);
     };
 
     const handleMarkAsDone = (tarefa: Tarefa) => {
@@ -424,7 +455,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         return <span className={`px-3 py-1 text-[10px] font-bold uppercase rounded-full tracking-wide border ${styles[status]}`}>{status}</span>;
     };
 
-    const renderTaskCard = (tarefa: any) => {
+    const renderTaskCard = (tarefa: TarefaWithStatus) => {
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
         const vencimento = new Date(tarefa.dataVencimento + 'T00:00:00');
@@ -473,7 +504,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         <button onClick={(e) => { e.stopPropagation(); handleEditClick(tarefa); }} className="p-2 rounded-full bg-white text-primary shadow-sm border border-border hover:bg-primary hover:text-white transition-colors" title="Editar">
                             <EditIcon className="h-4 w-4" />
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(tarefa.id); }} className="p-2 rounded-full bg-white text-danger shadow-sm border border-border hover:bg-danger hover:text-white transition-colors" title="Excluir">
+                        <button onClick={(e) => { handleDeleteClick(e, tarefa); }} className="p-2 rounded-full bg-white text-danger shadow-sm border border-border hover:bg-danger hover:text-white transition-colors" title="Excluir">
                             <TrashIcon className="h-4 w-4" />
                         </button>
                     </div>
@@ -818,6 +849,30 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         <div className="flex justify-center gap-4">
                             <button onClick={() => setIsConfirmOpen(false)} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
                             <button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Recurring Task Delete Modal */}
+            {isRecurringDeleteModalOpen && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center">
+                        <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                            <TrashIcon className="h-6 w-6 text-red-600" />
+                        </div>
+                        <h3 className="text-xl font-bold mb-2 text-text-primary">Excluir Tarefa Recorrente</h3>
+                        <p className="text-text-secondary mb-6">Esta tarefa faz parte de uma série. O que você deseja fazer?</p>
+                        <div className="flex flex-col gap-3">
+                            <button onClick={handleDeleteSeries} className="w-full py-2.5 rounded-xl bg-danger text-white font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-500/20">
+                                Excluir Todas da Série
+                            </button>
+                            <button onClick={handleDeleteOccurrence} className="w-full py-2.5 rounded-xl bg-white border-2 border-danger text-danger font-bold hover:bg-red-50 transition-colors">
+                                Excluir Apenas Esta
+                            </button>
+                            <button onClick={() => setIsRecurringDeleteModalOpen(false)} className="w-full py-2 text-text-secondary font-medium hover:text-text-primary transition-colors">
+                                Cancelar
+                            </button>
                         </div>
                     </div>
                 </div>
