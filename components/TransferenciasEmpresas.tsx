@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { PlusIcon, TrashIcon, EditIcon, DownloadIcon, SearchIcon, CalculatorIcon } from './icons';
+import { PlusIcon, TrashIcon, EditIcon, DownloadIcon, SearchIcon, CalculatorIcon, BuildingIcon } from './icons';
 import DatePicker from './DatePicker';
 import AutocompleteInput from './AutocompleteInput';
 import Calculator from './Calculator';
@@ -290,100 +290,111 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
     const handleCancelConfirm = () => setIsConfirmOpen(false);
 
     return (
-        <div className="animate-fade-in">
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                <div className="flex items-center gap-2">
-                     <span className="font-semibold text-sm">Filtrar por Dia:</span>
-                     <DatePicker 
-                        value={reportDateFilter} 
-                        onChange={setReportDateFilter} 
-                        className="w-40"
-                    />
-                    <button onClick={() => setReportDateFilter('')} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">Limpar</button>
-                </div>
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={handleExportXLSX}
-                        className="flex items-center justify-center gap-2 bg-success text-white font-semibold py-2 px-4 rounded-full hover:bg-green-700 transition-colors duration-300 h-10"
-                    >
-                        <DownloadIcon className="h-5 w-5" />
-                        Relatório
-                    </button>
-                    <button
-                        onClick={handleOpenAddModal}
-                        className="flex items-center justify-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-full hover:bg-primary-hover transition-colors duration-300 h-10"
-                    >
-                        <PlusIcon className="h-5 w-5" />
-                        Adicionar
-                    </button>
-                </div>
-            </div>
-
-            <div className="mb-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {/* Grand Total Card */}
-                <div className="bg-card p-4 rounded-2xl shadow-md border border-border text-center flex flex-col justify-center">
-                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Total Geral</p>
-                    <p className="text-xl font-bold text-primary">{formatCurrency(totalValor)}</p>
-                    <p className="text-xs text-text-secondary mt-1">{filteredTransferencias.length} lançamentos</p>
-                </div>
-
-                {/* Individual Bank Cards */}
-                {totalsByBank.map(([bank, value]) => (
-                    <div key={bank} className="bg-card p-4 rounded-2xl shadow-sm border border-border text-center flex flex-col justify-center hover:border-primary/30 transition-colors">
-                        <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider truncate px-2" title={bank}>{bank}</p>
-                        <p className="text-lg font-bold text-text-primary">{formatCurrency(value)}</p>
+        <div className="animate-fade-in flex flex-col h-full">
+            {/* Header / Filter / Summary Cards Section */}
+            <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between mb-6 gap-6 shrink-0">
+                {/* Left Side: Filters and Buttons */}
+                <div className="flex flex-col sm:flex-row gap-4 w-full xl:w-auto">
+                    <div className="flex items-center gap-2 bg-white p-1.5 rounded-full border border-border shadow-sm">
+                         <span className="font-semibold text-xs text-text-secondary pl-2">Dia:</span>
+                         <DatePicker 
+                            value={reportDateFilter} 
+                            onChange={setReportDateFilter} 
+                            className="w-36"
+                        />
+                        <button onClick={() => setReportDateFilter('')} className="p-2 rounded-full hover:bg-secondary text-text-secondary transition-colors" title="Limpar Filtro">
+                            <TrashIcon className="h-4 w-4" />
+                        </button>
                     </div>
-                ))}
+                    
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleExportXLSX}
+                            className="flex items-center justify-center gap-2 bg-white border border-border text-text-primary font-medium py-2 px-4 rounded-full hover:bg-secondary transition-colors h-10 shadow-sm text-sm"
+                        >
+                            <DownloadIcon className="h-4 w-4" />
+                            Relatório
+                        </button>
+                        <button
+                            onClick={handleOpenAddModal}
+                            className="flex items-center justify-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-full hover:bg-primary-hover transition-colors h-10 shadow-sm text-sm"
+                        >
+                            <PlusIcon className="h-4 w-4" />
+                            Adicionar
+                        </button>
+                    </div>
+                </div>
+
+                {/* Right Side: Horizontal Scrollable Cards */}
+                <div className="w-full xl:flex-1 overflow-x-auto custom-scrollbar pb-2 xl:pb-0">
+                    <div className="flex gap-3 xl:justify-end min-w-max px-1">
+                        {/* Grand Total Card */}
+                        <div className="bg-primary/5 p-3 rounded-xl border border-primary/20 text-center min-w-[140px] shadow-sm">
+                            <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-0.5">Total Geral</p>
+                            <p className="text-lg font-bold text-primary">{formatCurrency(totalValor)}</p>
+                        </div>
+
+                        {/* Individual Bank Cards */}
+                        {totalsByBank.map(([bank, value]) => (
+                            <div key={bank} className="bg-white p-3 rounded-xl border border-border text-center min-w-[140px] shadow-sm">
+                                <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-0.5 truncate px-1" title={bank}>{bank}</p>
+                                <p className="text-lg font-bold text-text-primary">{formatCurrency(value)}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
             
-            <div className="bg-card shadow-md rounded-2xl overflow-x-auto">
-                <table className="w-full text-base text-left text-text-secondary">
-                    <thead className="text-sm text-text-primary uppercase bg-secondary">
-                        <tr>
-                            <th scope="col" className="px-6 py-3">Data</th>
-                            <th scope="col" className="px-6 py-3">Empresa Origem</th>
-                            <th scope="col" className="px-6 py-3">Banco Origem</th>
-                            <th scope="col" className="px-6 py-3">Empresa Destino</th>
-                            <th scope="col" className="px-6 py-3">Banco Destino</th>
-                            <th scope="col" className="px-6 py-3 text-right">Valor</th>
-                            <th scope="col" className="px-6 py-3 text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredTransferencias.length > 0 ? (
-                            filteredTransferencias.map(item => (
-                                <tr key={item.id} className="bg-card border-b border-border">
-                                    <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{formatDateToBR(item.data)}</td>
-                                    <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{item.empresaOrigem}</td>
-                                    <td className="px-6 py-4">{item.bancoOrigem}</td>
-                                    <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{item.empresaDestino}</td>
-                                    <td className="px-6 py-4">{item.bancoDestino}</td>
-                                    <td className="px-6 py-4 text-right font-semibold">{formatCurrency(item.valor)}</td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center justify-evenly w-full">
-                                            <button onClick={() => handleEditClick(item)} className="flex items-center justify-center text-primary hover:text-primary/80 p-2 rounded-full hover:bg-primary/10 transition-colors">
-                                                <EditIcon className="h-5 w-5" />
-                                            </button>
-                                            <button onClick={() => handleDeleteClick(item.id)} className="flex items-center justify-center text-danger hover:text-danger/80 p-2 rounded-full hover:bg-danger/10 transition-colors">
-                                                <TrashIcon className="h-5 w-5" />
-                                            </button>
+            <div className="bg-card shadow-md rounded-2xl overflow-hidden flex-grow flex flex-col border border-border">
+                <div className="overflow-x-auto overflow-y-auto flex-grow">
+                    <table className="w-full text-sm text-left text-text-secondary">
+                        <thead className="text-xs text-text-primary uppercase bg-secondary sticky top-0 z-10 shadow-sm">
+                            <tr>
+                                <th scope="col" className="px-6 py-3">Data</th>
+                                <th scope="col" className="px-6 py-3">Empresa Origem</th>
+                                <th scope="col" className="px-6 py-3">Banco Origem</th>
+                                <th scope="col" className="px-6 py-3">Empresa Destino</th>
+                                <th scope="col" className="px-6 py-3">Banco Destino</th>
+                                <th scope="col" className="px-6 py-3 text-right">Valor</th>
+                                <th scope="col" className="px-6 py-3 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                            {filteredTransferencias.length > 0 ? (
+                                filteredTransferencias.map(item => (
+                                    <tr key={item.id} className="bg-card hover:bg-secondary transition-colors duration-150">
+                                        <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{formatDateToBR(item.data)}</td>
+                                        <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{item.empresaOrigem}</td>
+                                        <td className="px-6 py-4">{item.bancoOrigem}</td>
+                                        <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{item.empresaDestino}</td>
+                                        <td className="px-6 py-4">{item.bancoDestino}</td>
+                                        <td className="px-6 py-4 text-right font-semibold text-text-primary">{formatCurrency(item.valor)}</td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <button onClick={() => handleEditClick(item)} className="text-primary hover:text-primary/80 p-1.5 rounded-full hover:bg-primary/10 transition-colors">
+                                                    <EditIcon className="h-4 w-4" />
+                                                </button>
+                                                <button onClick={() => handleDeleteClick(item.id)} className="text-danger hover:text-danger/80 p-1.5 rounded-full hover:bg-danger/10 transition-colors">
+                                                    <TrashIcon className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={7} className="text-center py-16">
+                                        <div className="flex flex-col items-center justify-center text-text-secondary">
+                                            <SearchIcon className="w-12 h-12 mb-4 text-gray-300" />
+                                            <h3 className="text-xl font-semibold text-text-primary">Nenhuma Transferência Encontrada</h3>
+                                            <p className="mt-1">{reportDateFilter ? 'Não há dados para a data selecionada.' : 'Adicione uma nova transferência para começar.'}</p>
                                         </div>
                                     </td>
                                 </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan={7} className="text-center py-16">
-                                    <div className="flex flex-col items-center justify-center text-text-secondary">
-                                        <SearchIcon className="w-12 h-12 mb-4 text-gray-300" />
-                                        <h3 className="text-xl font-semibold text-text-primary">Nenhuma Transferência Encontrada</h3>
-                                        <p className="mt-1">{reportDateFilter ? 'Não há dados para a data selecionada.' : 'Adicione uma nova transferência para começar.'}</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {isModalOpen && editingTransferencia && (

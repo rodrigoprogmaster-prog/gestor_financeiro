@@ -229,6 +229,16 @@ export const PrevisaoCristiano: React.FC = () => {
             });
     }, [filteredReportData]);
 
+    // NEW: Summary only by bank (ignoring company) for the cards next to filters
+    const bankSummaries = useMemo(() => {
+        const acc: Record<string, number> = {};
+        filteredReportData.forEach(item => {
+            const bank = item.tipo.trim().toUpperCase();
+            acc[bank] = (acc[bank] || 0) + item.receitas;
+        });
+        return Object.entries(acc).sort((a, b) => b[1] - a[1]); // Descending value
+    }, [filteredReportData]);
+
     const despesasPorEmpresa = useMemo(() => {
         const porEmpresa = filteredReportData.reduce<Record<string, { totalDespesas: number }>>((acc, item) => {
             if (!acc[item.empresa]) {
@@ -519,7 +529,7 @@ export const PrevisaoCristiano: React.FC = () => {
     const viewTitles: Record<View, string> = { menu: '', previsao: 'Previsão', dashboard: 'Dashboard', banco: 'Totais por Banco e Empresa', empresa: 'Despesas por Empresa' };
 
     const FilterBar = () => (
-        <div className="flex flex-col sm:flex-row items-end gap-4 mb-6 bg-white p-4 rounded-2xl border border-border shadow-sm">
+        <div className="flex flex-col sm:flex-row items-end gap-4 bg-white p-4 rounded-2xl border border-border shadow-sm flex-shrink-0">
             <div className="w-full sm:w-auto">
                 <DatePicker 
                     label="Data"
@@ -564,6 +574,7 @@ export const PrevisaoCristiano: React.FC = () => {
           case 'previsao':
             return (
               <div className="animate-fade-in flex flex-col h-full">
+                {/* ... (Previsao view remains unchanged) ... */}
                 <div className="flex flex-col lg:flex-row justify-end items-center mb-4 gap-2 bg-card p-3 rounded-2xl border border-border shadow-sm">
                     <div className="flex items-center bg-secondary rounded-full px-2 border border-border">
                         <span className="text-xs font-medium text-text-secondary mr-2">Data:</span>
@@ -633,6 +644,7 @@ export const PrevisaoCristiano: React.FC = () => {
           case 'dashboard':
             return (
               <div className="animate-fade-in">
+                {/* ... (Dashboard view remains unchanged) ... */}
                 {previsaoGeradaAtiva ? (
                     <div>
                       <div className="flex justify-between items-center mb-4">
@@ -660,7 +672,27 @@ export const PrevisaoCristiano: React.FC = () => {
                 return (
                   <div className="animate-fade-in">
                       <h3 className="text-lg font-bold text-text-primary mb-4">Totais por Banco</h3>
-                      <FilterBar />
+                      
+                      {/* Unified Filter + Cards Section */}
+                      <div className="flex flex-col xl:flex-row items-start xl:items-center gap-6 mb-6">
+                          <FilterBar />
+                          
+                          {/* Cards Scroll Container */}
+                          <div className="w-full xl:flex-1 overflow-x-auto custom-scrollbar pb-2 xl:pb-0">
+                              <div className="flex gap-3 xl:justify-end min-w-max px-1">
+                                  {bankSummaries.map(([bank, value]) => (
+                                      <div key={bank} className="bg-white p-3 rounded-xl border border-border text-center min-w-[140px] shadow-sm">
+                                          <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-0.5 truncate px-1" title={bank}>{bank}</p>
+                                          <p className="text-lg font-bold text-text-primary">{formatCurrency(value)}</p>
+                                      </div>
+                                  ))}
+                                  {bankSummaries.length === 0 && (
+                                       <div className="text-xs text-text-secondary italic self-center px-4">Sem dados para exibir.</div>
+                                  )}
+                              </div>
+                          </div>
+                      </div>
+
                       <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
                           <table className="min-w-full divide-y divide-border text-sm text-left">
                               <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider">
@@ -737,6 +769,7 @@ export const PrevisaoCristiano: React.FC = () => {
           
           {isEditModalOpen && editingPrevisao && (
               <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+                {/* ... (Modal code remains unchanged) ... */}
                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-visible">
                     <h3 className="text-2xl font-bold text-text-primary mb-6 text-center pt-8">Editar Previsão</h3>
                     <div className="px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-6 relative">
@@ -770,6 +803,7 @@ export const PrevisaoCristiano: React.FC = () => {
               
               {isAddEntryModalOpen && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+                    {/* ... (Add modal content remains unchanged) ... */}
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-visible">
                         <h3 className="text-2xl font-bold text-text-primary mb-6 text-center pt-8">Adicionar Lançamento</h3>
                         <div className="px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-6 relative">
@@ -820,6 +854,7 @@ export const PrevisaoCristiano: React.FC = () => {
               
               {isGerarPrevisaoModalOpen && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+                    {/* ... (Gerar Previsao modal content remains unchanged) ... */}
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center">
                         <h3 className="text-xl font-bold mb-4 text-text-primary">Gerar Previsão</h3>
                         <p className="text-text-secondary mb-4">Informe a semana para agrupar os lançamentos.</p>
