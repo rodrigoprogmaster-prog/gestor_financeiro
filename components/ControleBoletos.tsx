@@ -276,6 +276,23 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         ));
     };
 
+    const handleTogglePago = (boleto: Boleto) => {
+        const action = () => {
+            setBoletos(prev => prev.map(b => b.id === boleto.id ? { ...b, pago: !b.pago } : b));
+        };
+        setConfirmAction({ 
+            action, 
+            message: boleto.pago 
+                ? `Deseja desfazer o pagamento do boleto de ${boleto.fornecedor}?` 
+                : `Confirmar pagamento do boleto de ${boleto.fornecedor}?` 
+        });
+        setIsConfirmOpen(true);
+    };
+
+    const handleToggleSolinter = (boleto: Boleto) => {
+         setBoletos(prev => prev.map(b => b.id === boleto.id ? { ...b, lancadoSolinter: !b.lancadoSolinter } : b));
+    };
+
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setEditingBoleto(null);
@@ -474,6 +491,24 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                         <td className="px-6 py-4 text-right font-semibold text-text-primary">{formatCurrency(boleto.valor)}</td>
                                         <td className="px-6 py-4 text-center">
                                             <div className="flex justify-center gap-2">
+                                                {/* Toggle Solinter */}
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); handleToggleSolinter(boleto); }} 
+                                                    className={`p-1.5 rounded-full transition-colors ${boleto.lancadoSolinter ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'}`}
+                                                    title={boleto.lancadoSolinter ? "Remover do Solinter" : "Marcar como Lançado no Solinter"}
+                                                >
+                                                    <ClipboardCheckIcon className="h-4 w-4" />
+                                                </button>
+
+                                                {/* Toggle Pago */}
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); handleTogglePago(boleto); }} 
+                                                    className={`p-1.5 rounded-full transition-colors ${boleto.pago ? 'text-success bg-green-50 hover:bg-green-100' : 'text-gray-400 hover:text-success hover:bg-green-50'}`}
+                                                    title={boleto.pago ? "Marcar como Não Pago" : "Marcar como Pago"}
+                                                >
+                                                    <CheckIcon className="h-4 w-4" />
+                                                </button>
+
                                                 <button onClick={() => handleEditClick(boleto)} className="text-primary hover:bg-primary/10 p-1.5 rounded-full transition-colors"><EditIcon className="h-4 w-4" /></button>
                                                 <button onClick={() => handleDeleteClick(boleto.id)} className="text-danger hover:bg-danger/10 p-1.5 rounded-full transition-colors"><TrashIcon className="h-4 w-4" /></button>
                                             </div>
