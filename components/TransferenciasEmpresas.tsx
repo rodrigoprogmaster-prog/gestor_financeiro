@@ -336,11 +336,13 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
 
             {isModalOpen && editingTransferencia && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg">
-                        <h3 className="text-2xl font-bold mb-6 text-text-primary text-center">
-                            {editingTransferencia.id ? 'Editar Transferência' : 'Adicionar Transferência'}
-                        </h3>
-                        <div className="space-y-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
+                        <div className="shrink-0 p-6 pb-4 border-b border-gray-100">
+                            <h3 className="text-2xl font-bold text-text-primary text-center">
+                                {editingTransferencia.id ? 'Editar Transferência' : 'Adicionar Transferência'}
+                            </h3>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
                              <div>
                                 <DatePicker 
                                     label="Data"
@@ -352,31 +354,31 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Empresa de Origem</label>
-                                <input type="text" name="empresaOrigem" placeholder="Digite a empresa de origem" value={editingTransferencia.empresaOrigem || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.empresaOrigem ? 'border-danger' : ''}`} />
+                                <input type="text" name="empresaOrigem" placeholder="Digite a empresa de origem" value={editingTransferencia.empresaOrigem || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.empresaOrigem ? 'border-danger' : ''}`} />
                                 {errors.empresaOrigem && <p className="text-danger text-xs mt-1 ml-1">{errors.empresaOrigem}</p>}
                             </div>
                              <div>
                                 <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Banco Origem</label>
-                                <input type="text" name="bancoOrigem" placeholder="Ex: Itaú" value={editingTransferencia.bancoOrigem || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.bancoOrigem ? 'border-danger' : ''}`} />
+                                <input type="text" name="bancoOrigem" placeholder="Ex: Itaú" value={editingTransferencia.bancoOrigem || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.bancoOrigem ? 'border-danger' : ''}`} />
                                 {errors.bancoOrigem && <p className="text-danger text-xs mt-1 ml-1">{errors.bancoOrigem}</p>}
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Empresa Destino</label>
-                                <input type="text" name="empresaDestino" placeholder="Digite a empresa de destino" value={editingTransferencia.empresaDestino || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.empresaDestino ? 'border-danger' : ''}`} />
+                                <input type="text" name="empresaDestino" placeholder="Digite a empresa de destino" value={editingTransferencia.empresaDestino || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.empresaDestino ? 'border-danger' : ''}`} />
                                 {errors.empresaDestino && <p className="text-danger text-xs mt-1 ml-1">{errors.empresaDestino}</p>}
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Banco Destino</label>
-                                <input type="text" name="bancoDestino" placeholder="Ex: Inter" value={editingTransferencia.bancoDestino || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.bancoDestino ? 'border-danger' : ''}`} />
+                                <input type="text" name="bancoDestino" placeholder="Ex: Inter" value={editingTransferencia.bancoDestino || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.bancoDestino ? 'border-danger' : ''}`} />
                                 {errors.bancoDestino && <p className="text-danger text-xs mt-1 ml-1">{errors.bancoDestino}</p>}
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Valor</label>
-                                <input type="text" name="valor" value={formatCurrency(editingTransferencia.valor || 0)} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.valor ? 'border-danger' : ''}`} />
+                                <input type="text" name="valor" value={formatCurrency(editingTransferencia.valor || 0)} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.valor ? 'border-danger' : ''}`} />
                                 {errors.valor && <p className="text-danger text-xs mt-1 ml-1">{errors.valor}</p>}
                             </div>
                         </div>
-                        <div className="mt-8 flex justify-center gap-3">
+                        <div className="shrink-0 p-6 pt-4 border-t border-gray-100 flex justify-center gap-3 bg-gray-50">
                             <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
                             <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
                         </div>
