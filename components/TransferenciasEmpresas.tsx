@@ -95,6 +95,16 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
         return filteredTransferencias.reduce((acc, item) => acc + item.valor, 0);
     }, [filteredTransferencias]);
 
+    const totalsByBank = useMemo(() => {
+        const acc: Record<string, number> = {};
+        filteredTransferencias.forEach(t => {
+            const bank = (t.bancoOrigem || 'OUTROS').toUpperCase().trim();
+            acc[bank] = (acc[bank] || 0) + t.valor;
+        });
+        // Sort by value descending
+        return Object.entries(acc).sort((a, b) => b[1] - a[1]);
+    }, [filteredTransferencias]);
+
     const uniqueEmpresas = useMemo(() => {
         const origens = transferencias.map(t => t.empresaOrigem);
         const destinos = transferencias.map(t => t.empresaDestino);
@@ -309,15 +319,21 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
                 </div>
             </div>
 
-            <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-card p-4 rounded-2xl shadow-md border border-border text-center">
-                    <p className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Valor Total</p>
-                    <p className="text-2xl font-bold text-primary">{formatCurrency(totalValor)}</p>
+            <div className="mb-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {/* Grand Total Card */}
+                <div className="bg-card p-4 rounded-2xl shadow-md border border-border text-center flex flex-col justify-center">
+                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Total Geral</p>
+                    <p className="text-xl font-bold text-primary">{formatCurrency(totalValor)}</p>
+                    <p className="text-xs text-text-secondary mt-1">{filteredTransferencias.length} lançamentos</p>
                 </div>
-                <div className="bg-card p-4 rounded-2xl shadow-md border border-border text-center">
-                    <p className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Transferências</p>
-                    <p className="text-2xl font-bold text-primary">{filteredTransferencias.length}</p>
-                </div>
+
+                {/* Individual Bank Cards */}
+                {totalsByBank.map(([bank, value]) => (
+                    <div key={bank} className="bg-card p-4 rounded-2xl shadow-sm border border-border text-center flex flex-col justify-center hover:border-primary/30 transition-colors">
+                        <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider truncate px-2" title={bank}>{bank}</p>
+                        <p className="text-lg font-bold text-text-primary">{formatCurrency(value)}</p>
+                    </div>
+                ))}
             </div>
             
             <div className="bg-card shadow-md rounded-2xl overflow-x-auto">

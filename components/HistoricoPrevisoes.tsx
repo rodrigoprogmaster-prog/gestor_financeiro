@@ -4,8 +4,7 @@ import { PlusIcon, TrashIcon, SearchIcon, DatabaseIcon,
     ArrowLeftIcon, TrendingUpIcon, ReportIcon, BoletoIcon, SpinnerIcon, TransferIcon, CalculatorIcon } from './icons';
 import AutocompleteInput from './AutocompleteInput';
 import Calculator from './Calculator';
-
-// ... (keep all imports and interfaces exactly as they were)
+import DatePicker from './DatePicker';
 
 // Data structure
 interface Previsao {
@@ -206,9 +205,17 @@ export const PrevisaoCristiano: React.FC = () => {
 
     const totaisPorBanco = useMemo(() => {
         const porEmpresaBanco = filteredReportData.reduce((acc, item) => {
-            const key = `${item.empresa}-${item.tipo}`;
+            // Normalize keys to group effectively (Trim and UpperCase)
+            const empresaClean = item.empresa.trim().toUpperCase();
+            const bancoClean = item.tipo.trim().toUpperCase();
+            const key = `${empresaClean}-${bancoClean}`;
+
             if (!acc[key]) {
-                acc[key] = { empresa: item.empresa, banco: item.tipo, receitas: 0 };
+                acc[key] = { 
+                    empresa: item.empresa.trim(), 
+                    banco: item.tipo.trim(), 
+                    receitas: 0 
+                };
             }
             acc[key].receitas += item.receitas;
             return acc;
@@ -512,29 +519,29 @@ export const PrevisaoCristiano: React.FC = () => {
     const viewTitles: Record<View, string> = { menu: '', previsao: 'Previsão', dashboard: 'Dashboard', banco: 'Totais por Banco e Empresa', empresa: 'Despesas por Empresa' };
 
     const FilterBar = () => (
-        <div className="flex flex-wrap items-center gap-4 mb-4 bg-white p-3 rounded-2xl border border-border">
-            <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-text-secondary">Data:</span>
-                <input 
-                    type="date" 
+        <div className="flex flex-col sm:flex-row items-end gap-4 mb-6 bg-white p-4 rounded-2xl border border-border shadow-sm">
+            <div className="w-full sm:w-auto">
+                <DatePicker 
+                    label="Data"
                     value={reportDateFilter} 
-                    onChange={e => setReportDateFilter(e.target.value)} 
-                    className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    onChange={setReportDateFilter} 
+                    placeholder="Selecione"
+                    className="w-full sm:w-40"
                 />
             </div>
-            <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-text-secondary">Semana:</span>
+            <div className="w-full sm:w-auto">
+                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Semana</label>
                 <input 
                     type="text" 
                     placeholder="Ex: Semana 42" 
                     value={reportWeekFilter} 
                     onChange={e => setReportWeekFilter(e.target.value)} 
-                    className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary w-32"
+                    className="bg-white border border-border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary w-full sm:w-40 h-[48px] transition-all"
                 />
             </div>
             <button 
                 onClick={() => {setReportDateFilter(''); setReportWeekFilter('')}} 
-                className="px-3 py-1.5 rounded-full bg-secondary hover:bg-border text-text-primary font-medium text-sm transition-colors"
+                className="w-full sm:w-auto px-6 rounded-xl bg-secondary hover:bg-border text-text-primary font-bold text-sm transition-colors h-[48px]"
             >
                 Limpar
             </button>
