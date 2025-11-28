@@ -671,77 +671,83 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
-                        <h3 className="text-2xl font-bold text-text-primary mb-6 text-center">
-                            {editingBoleto?.id || editingDespesa?.id ? 'Editar' : 'Adicionar'}
-                        </h3>
-                        {activeView === 'boletos' && (
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Fornecedor</label>
-                                    <AutocompleteInput name="fornecedor" value={editingBoleto?.fornecedor || ''} onChange={handleInputChange} suggestions={uniqueFornecedores} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.fornecedor ? 'border-danger' : ''}`} />
-                                    {boletoErrors.fornecedor && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.fornecedor}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Pagador</label>
-                                    <AutocompleteInput name="pagador" value={editingBoleto?.pagador || ''} onChange={handleInputChange} suggestions={uniquePagadores} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.pagador ? 'border-danger' : ''}`} />
-                                    {boletoErrors.pagador && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.pagador}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Valor</label>
-                                    <input name="valor" value={formatCurrency(editingBoleto?.valor || 0)} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.valor ? 'border-danger' : ''}`} />
-                                    {boletoErrors.valor && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.valor}</p>}
-                                </div>
-                                <div>
-                                    <DatePicker 
-                                        label="Vencimento"
-                                        value={editingBoleto?.vencimento || ''} 
-                                        onChange={(val) => setEditingBoleto(prev => ({...prev!, vencimento: val}))} 
-                                        placeholder="Selecione"
-                                    />
-                                    {boletoErrors.vencimento && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.vencimento}</p>}
-                                </div>
-                            </div>
-                        )}
-                        {activeView === 'recorrentes' && (
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Empresa</label>
-                                    <AutocompleteInput name="empresa" value={editingDespesa?.empresa || ''} onChange={handleInputChange} suggestions={uniqueEmpresasRecorrentes} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.empresa ? 'border-danger' : ''}`} />
-                                    {despesaErrors.empresa && <p className="text-danger text-xs mt-1 ml-1">{despesaErrors.empresa}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Descrição</label>
-                                    <AutocompleteInput name="descricao" value={editingDespesa?.descricao || ''} onChange={handleInputChange} suggestions={uniqueDescricoesRecorrentes} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.descricao ? 'border-danger' : ''}`} />
-                                    {despesaErrors.descricao && <p className="text-danger text-xs mt-1 ml-1">{despesaErrors.descricao}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Dia Vencimento</label>
-                                    <input 
-                                        name="diaVencimento" 
-                                        type="text" 
-                                        placeholder="DD ou DD/MM"
-                                        value={editingDespesa?.diaVencimento || ''} 
-                                        onChange={handleInputChange} 
-                                        className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.diaVencimento ? 'border-danger' : ''}`} 
-                                    />
-                                    {despesaErrors.diaVencimento && <p className="text-danger text-xs mt-1 ml-1">{despesaErrors.diaVencimento}</p>}
-                                </div>
-                                <div>
-                                    <CustomSelect
-                                        label="Recorrência"
-                                        options={[
-                                            { label: 'Semanal', value: 'Semanal' },
-                                            { label: 'Mensal', value: 'Mensal' },
-                                            { label: 'Anual', value: 'Anual' },
-                                        ]}
-                                        value={editingDespesa?.recorrencia || 'Mensal'}
-                                        onChange={(val) => handleInputChange({ target: { name: 'recorrencia', value: val } } as any)}
-                                    />
-                                </div>
-                            </div>
-                        )}
-                        <div className="flex justify-center gap-3 mt-8">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
+                        <div className="shrink-0 p-6 pb-4 border-b border-gray-100">
+                            <h3 className="text-2xl font-bold text-text-primary text-center">
+                                {editingBoleto?.id || editingDespesa?.id ? 'Editar' : 'Adicionar'}
+                            </h3>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                            {activeView === 'boletos' && (
+                                <>
+                                    <div>
+                                        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Fornecedor</label>
+                                        <AutocompleteInput name="fornecedor" value={editingBoleto?.fornecedor || ''} onChange={handleInputChange} suggestions={uniqueFornecedores} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.fornecedor ? 'border-danger' : ''}`} />
+                                        {boletoErrors.fornecedor && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.fornecedor}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Pagador</label>
+                                        <AutocompleteInput name="pagador" value={editingBoleto?.pagador || ''} onChange={handleInputChange} suggestions={uniquePagadores} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.pagador ? 'border-danger' : ''}`} />
+                                        {boletoErrors.pagador && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.pagador}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Valor</label>
+                                        <input name="valor" value={formatCurrency(editingBoleto?.valor || 0)} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${boletoErrors.valor ? 'border-danger' : ''}`} />
+                                        {boletoErrors.valor && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.valor}</p>}
+                                    </div>
+                                    <div>
+                                        <DatePicker 
+                                            label="Vencimento"
+                                            value={editingBoleto?.vencimento || ''} 
+                                            onChange={(val) => setEditingBoleto(prev => ({...prev!, vencimento: val}))} 
+                                            placeholder="Selecione"
+                                        />
+                                        {boletoErrors.vencimento && <p className="text-danger text-xs mt-1 ml-1">{boletoErrors.vencimento}</p>}
+                                    </div>
+                                </>
+                            )}
+                            {activeView === 'recorrentes' && (
+                                <>
+                                    <div>
+                                        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Empresa</label>
+                                        <AutocompleteInput name="empresa" value={editingDespesa?.empresa || ''} onChange={handleInputChange} suggestions={uniqueEmpresasRecorrentes} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.empresa ? 'border-danger' : ''}`} />
+                                        {despesaErrors.empresa && <p className="text-danger text-xs mt-1 ml-1">{despesaErrors.empresa}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Descrição</label>
+                                        <AutocompleteInput name="descricao" value={editingDespesa?.descricao || ''} onChange={handleInputChange} suggestions={uniqueDescricoesRecorrentes} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.descricao ? 'border-danger' : ''}`} />
+                                        {despesaErrors.descricao && <p className="text-danger text-xs mt-1 ml-1">{despesaErrors.descricao}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Dia Vencimento</label>
+                                        <input 
+                                            name="diaVencimento" 
+                                            type="text" 
+                                            placeholder="DD ou DD/MM"
+                                            value={editingDespesa?.diaVencimento || ''} 
+                                            onChange={handleInputChange} 
+                                            className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${despesaErrors.diaVencimento ? 'border-danger' : ''}`} 
+                                        />
+                                        {despesaErrors.diaVencimento && <p className="text-danger text-xs mt-1 ml-1">{despesaErrors.diaVencimento}</p>}
+                                    </div>
+                                    <div>
+                                        <CustomSelect
+                                            label="Recorrência"
+                                            options={[
+                                                { label: 'Semanal', value: 'Semanal' },
+                                                { label: 'Mensal', value: 'Mensal' },
+                                                { label: 'Anual', value: 'Anual' },
+                                            ]}
+                                            value={editingDespesa?.recorrencia || 'Mensal'}
+                                            onChange={(val) => handleInputChange({ target: { name: 'recorrencia', value: val } } as any)}
+                                        />
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        <div className="shrink-0 p-6 pt-4 border-t border-gray-100 flex justify-center gap-3 bg-gray-50">
                             <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
                             <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
                         </div>

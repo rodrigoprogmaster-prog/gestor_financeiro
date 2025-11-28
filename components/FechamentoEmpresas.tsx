@@ -86,7 +86,7 @@ interface FechamentoEmpresasProps {
     onBack: () => void;
 }
 
-const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageKey, title, onBack }) => {
+export const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageKey, title, onBack }) => {
     const [fechamentos, setFechamentos] = useState<Fechamento[]>(() => {
         const saved = localStorage.getItem(storageKey);
         return saved ? JSON.parse(saved) : [];
@@ -481,51 +481,55 @@ const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageKey, tit
             {/* Edit Modal */}
             {isModalOpen && editingFechamento && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-2xl overflow-visible">
-                        <h3 className="text-xl font-bold mb-6 text-text-primary text-center">{editingFechamento.id ? 'Editar Lançamento' : 'Adicionar Lançamento'}</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Mês Ref. <span className="text-danger">*</span></label>
-                                <input type="text" name="mesReferencia" placeholder="MM/AAAA" maxLength={7} value={editingFechamento.mesReferencia || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.mesReferencia ? 'border-danger' : ''}`} />
-                                {errors.mesReferencia && <p className="text-danger text-xs mt-1 ml-1">{errors.mesReferencia}</p>}
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Empresa <span className="text-danger">*</span></label>
-                                <input type="text" value={editingFechamento.empresa || ''} disabled={isFabrica || isCristiano} className={`w-full rounded-xl px-4 py-3 h-12 ${isFabrica || isCristiano ? 'bg-gray-100 border-gray-200 text-text-secondary cursor-not-allowed' : `bg-secondary border-transparent text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none ${errors.empresa ? 'border-danger' : ''}`}`} />
-                                {!(isFabrica || isCristiano) && errors.empresa && <p className="text-danger text-xs mt-1 ml-1">{errors.empresa}</p>}
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Contabilidade <span className="text-danger">*</span></label>
-                                <input type="text" name="contabilidade" value={editingFechamento.contabilidade || ''} onChange={handleInputChange} disabled={isCristiano || isFabrica} className={`w-full rounded-xl px-4 py-3 h-12 ${isCristiano || isFabrica ? 'bg-gray-100 border-gray-200 text-text-secondary cursor-not-allowed' : `bg-secondary border-transparent text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none ${errors.contabilidade ? 'border-danger' : ''}`}`} />
-                                {!(isCristiano || isFabrica) && errors.contabilidade && <p className="text-danger text-xs mt-1 ml-1">{errors.contabilidade}</p>}
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Portador <span className="text-danger">*</span></label>
-                                 <input type="text" value={editingFechamento.portador || ''} disabled={isFabrica || isCristiano} className={`w-full rounded-xl px-4 py-3 h-12 ${isFabrica || isCristiano ? 'bg-gray-100 border-gray-200 text-text-secondary cursor-not-allowed' : `bg-secondary border-transparent text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none ${errors.portador ? 'border-danger' : ''}`}`} />
-                                {!(isFabrica || isCristiano) && errors.portador && <p className="text-danger text-xs mt-1 ml-1">{errors.portador}</p>}
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Valor Banco</label>
-                                <input type="text" name="valorBanco" value={formatCurrency(editingFechamento.valorBanco || 0)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Valor Solinter</label>
-                                <input type="text" name="valorSolinter" value={formatCurrency(editingFechamento.valorSolinter || 0)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12" />
-                            </div>
-                             <div className="md:col-span-2">
-                                <DatePicker 
-                                    label="Data de Envio"
-                                    value={editingFechamento.dataEnvio || ''} 
-                                    onChange={(val) => setEditingFechamento(prev => ({...prev, dataEnvio: val}))} 
-                                    placeholder="Selecione"
-                                />
-                            </div>
-                            <div className="md:col-span-2">
-                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Anotações</label>
-                                <textarea name="anotacoes" value={editingFechamento.anotacoes || ''} onChange={handleInputChange} rows={3} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none resize-none" placeholder="Observações..." />
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+                        <div className="shrink-0 p-6 pb-4 border-b border-gray-100">
+                            <h3 className="text-xl font-bold mb-1 text-text-primary text-center">{editingFechamento.id ? 'Editar Lançamento' : 'Adicionar Lançamento'}</h3>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Mês Ref. <span className="text-danger">*</span></label>
+                                    <input type="text" name="mesReferencia" placeholder="MM/AAAA" maxLength={7} value={editingFechamento.mesReferencia || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.mesReferencia ? 'border-danger' : ''}`} />
+                                    {errors.mesReferencia && <p className="text-danger text-xs mt-1 ml-1">{errors.mesReferencia}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Empresa <span className="text-danger">*</span></label>
+                                    <input type="text" value={editingFechamento.empresa || ''} disabled={isFabrica || isCristiano} className={`w-full rounded-xl px-4 py-3 h-12 ${isFabrica || isCristiano ? 'bg-gray-100 border-gray-200 text-text-secondary cursor-not-allowed' : `bg-secondary border-transparent text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none ${errors.empresa ? 'border-danger' : ''}`}`} />
+                                    {!(isFabrica || isCristiano) && errors.empresa && <p className="text-danger text-xs mt-1 ml-1">{errors.empresa}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Contabilidade <span className="text-danger">*</span></label>
+                                    <input type="text" name="contabilidade" value={editingFechamento.contabilidade || ''} onChange={handleInputChange} disabled={isCristiano || isFabrica} className={`w-full rounded-xl px-4 py-3 h-12 ${isCristiano || isFabrica ? 'bg-gray-100 border-gray-200 text-text-secondary cursor-not-allowed' : `bg-secondary border-transparent text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none ${errors.contabilidade ? 'border-danger' : ''}`}`} />
+                                    {!(isCristiano || isFabrica) && errors.contabilidade && <p className="text-danger text-xs mt-1 ml-1">{errors.contabilidade}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Portador <span className="text-danger">*</span></label>
+                                     <input type="text" value={editingFechamento.portador || ''} disabled={isFabrica || isCristiano} className={`w-full rounded-xl px-4 py-3 h-12 ${isFabrica || isCristiano ? 'bg-gray-100 border-gray-200 text-text-secondary cursor-not-allowed' : `bg-secondary border-transparent text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none ${errors.portador ? 'border-danger' : ''}`}`} />
+                                    {!(isFabrica || isCristiano) && errors.portador && <p className="text-danger text-xs mt-1 ml-1">{errors.portador}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Valor Banco</label>
+                                    <input type="text" name="valorBanco" value={formatCurrency(editingFechamento.valorBanco || 0)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Valor Solinter</label>
+                                    <input type="text" name="valorSolinter" value={formatCurrency(editingFechamento.valorSolinter || 0)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12" />
+                                </div>
+                                 <div className="md:col-span-2">
+                                    <DatePicker 
+                                        label="Data de Envio"
+                                        value={editingFechamento.dataEnvio || ''} 
+                                        onChange={(val) => setEditingFechamento(prev => ({...prev!, dataEnvio: val}))} 
+                                        placeholder="Selecione"
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Anotações</label>
+                                    <textarea name="anotacoes" value={editingFechamento.anotacoes || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none min-h-[100px] resize-none" placeholder="Observações adicionais..." />
+                                </div>
                             </div>
                         </div>
-                        <div className="mt-8 flex justify-center gap-3">
+                        <div className="shrink-0 p-6 pt-4 border-t border-gray-100 flex justify-center gap-3 bg-gray-50">
                             <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
                             <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
                         </div>
@@ -533,33 +537,28 @@ const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageKey, tit
                 </div>
             )}
 
-            {/* Date Envio Modal */}
             {isDateModalOpen && dateEditingFechamento && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm overflow-visible">
-                        <h3 className="text-xl font-bold mb-4 text-text-primary text-center">Data de Envio</h3>
-                        <p className="text-text-secondary text-sm mb-6 text-center">Defina a data para <span className="font-semibold text-text-primary block mt-1">{dateEditingFechamento.empresa}</span></p>
-                        <div className="mb-8">
-                            <DatePicker 
-                                label="Selecione a Data"
-                                value={tempDateEnvio || ''} 
-                                onChange={setTempDateEnvio} 
-                                placeholder="DD/MM/AAAA"
-                            />
-                        </div>
-                        <div className="flex justify-center gap-3">
-                            <button onClick={handleCloseDateModal} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                            <button onClick={() => handleSaveDateEnvio(tempDateEnvio)} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
+                    <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm">
+                        <h3 className="text-xl font-bold mb-4 text-text-primary">Data de Envio</h3>
+                        <p className="text-text-secondary mb-4 text-sm">Defina quando este fechamento foi enviado.</p>
+                        <DatePicker 
+                            value={tempDateEnvio} 
+                            onChange={setTempDateEnvio} 
+                            placeholder="Selecione a data"
+                        />
+                        <div className="flex justify-end gap-3 mt-6">
+                            <button onClick={handleCloseDateModal} className="px-4 py-2 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors text-sm">Cancelar</button>
+                            <button onClick={() => handleSaveDateEnvio(tempDateEnvio)} className="px-4 py-2 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors text-sm">Salvar</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Confirmation Modal */}
             {isConfirmOpen && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
                     <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
-                        <h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar</h3>
+                        <h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar Ação</h3>
                         <p className="text-text-secondary mb-8">{confirmAction.message}</p>
                         <div className="flex justify-center gap-4">
                             <button onClick={handleCancelConfirm} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
@@ -571,5 +570,3 @@ const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageKey, tit
         </div>
     );
 };
-
-export default FechamentoEmpresas;

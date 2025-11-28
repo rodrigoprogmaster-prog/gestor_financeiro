@@ -590,8 +590,8 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
       {isModalOpen && editingTitle && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 overflow-visible">
-            <div className="flex justify-between items-center mb-6">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="shrink-0 p-6 pb-4 border-b border-gray-100 flex justify-between items-center">
                 <h3 className="text-2xl font-bold text-text-primary">{editingTitle.id ? 'Editar Título' : 'Novo Título'}</h3>
                 {editingTitle.id && (
                     <button 
@@ -604,7 +604,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 )}
             </div>
             
-            <div className="space-y-4">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
                 <div>
                     <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Fornecedor</label>
                     <input name="fornecedor" value={editingTitle.fornecedor || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.fornecedor ? 'border-danger' : ''}`} />
@@ -664,7 +664,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 </div>
             </div>
 
-            <div className="flex justify-center gap-3 mt-8">
+            <div className="shrink-0 p-6 pt-4 border-t border-gray-100 flex justify-center gap-3 bg-gray-50">
               <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
               <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
             </div>

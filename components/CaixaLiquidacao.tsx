@@ -46,7 +46,7 @@ interface CaixaLiquidacaoProps {
     onBack: () => void;
 }
 
-const CaixaLiquidacao: React.FC<CaixaLiquidacaoProps> = ({ storageKey, title, onBack }) => {
+export const CaixaLiquidacao: React.FC<CaixaLiquidacaoProps> = ({ storageKey, title, onBack }) => {
     const isCristiano = storageKey.includes('cristiano');
     const empresaList = isCristiano ? EMPRESAS_CRISTIANO : EMPRESAS_FABRICA;
 
@@ -303,5 +303,3 @@ const CaixaLiquidacao: React.FC<CaixaLiquidacaoProps> = ({ storageKey, title, on
         </div>
     );
 };
-
-export default CaixaLiquidacao;

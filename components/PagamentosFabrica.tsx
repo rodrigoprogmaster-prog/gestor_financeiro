@@ -452,114 +452,121 @@ const PagamentosFabrica: React.FC = () => {
         </div>
 
         {activeTab === 'pagamentos' && isEditModalOpen && editingPagamento && (
-          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-            <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-2xl">
-              <h3 className="text-xl font-bold mb-2 text-text-primary">Editar Lançamento</h3>
-              <p className="text-text-secondary mb-6">{editingPagamento.empresa} - {formatDateToBR(editingPagamento.data)}</p>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+              {/* Header */}
+              <div className="shrink-0 p-6 pb-4 border-b border-gray-100">
+                  <h3 className="text-2xl font-bold text-text-primary text-center">Editar Lançamento</h3>
+                  <p className="text-text-secondary text-sm text-center mt-1">{editingPagamento.empresa} - {formatDateToBR(editingPagamento.data)}</p>
+              </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 relative">
-                <div className="sm:col-span-2">
-                    <label htmlFor="empresa" className="block text-sm font-medium text-text-secondary mb-1">Empresa</label>
-                    <input
-                        id="empresa"
-                        type="text"
-                        name="empresa"
-                        value={editingPagamento.empresa}
-                        onChange={handleInputChange}
-                        className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12"
-                    />
-                </div>
-                <div className="sm:col-span-2">
-                    <label htmlFor="tipo" className="block text-sm font-medium text-text-secondary mb-1">Banco</label>
-                    <div className="relative">
-                        <select
-                            id="tipo"
-                            name="tipo"
-                            value={editingPagamento.tipo}
+              {/* Scrollable Body */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 relative">
+                    <div className="sm:col-span-2">
+                        <label htmlFor="empresa" className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Empresa</label>
+                        <input
+                            id="empresa"
+                            type="text"
+                            name="empresa"
+                            value={editingPagamento.empresa}
                             onChange={handleInputChange}
-                            className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary appearance-none h-12"
-                        >
-                            {BANK_OPTIONS.map(banco => (
-                                <option key={banco} value={banco}>{banco}</option>
-                            ))}
-                        </select>
-                        <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
+                            className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"
+                        />
                     </div>
-                </div>
-                <div className="relative">
-                  <label htmlFor="receitas" className="block text-sm font-medium text-text-secondary mb-1">Receitas (R$)</label>
-                  <input 
-                      id="receitas" 
-                      type="text" 
-                      name="receitas" 
-                      value={formatInputCurrency(tempCurrencyInput.receitas || '')} 
-                      onChange={handleCurrencyInputChange} 
-                      className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12 ${errors.receitas ? 'border-danger' : 'border-border'}`}
-                  />
-                  <button onClick={() => setShowCalculator({ field: 'receitas' })} className="absolute right-3 top-9 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
-                  {showCalculator.field === 'receitas' && <Calculator initialValue={editingPagamento.receitas} onResult={(res) => handleCalculatorUpdate(res, 'receitas')} onClose={() => setShowCalculator({ field: null })} />}
-                  {errors.receitas && <p className="text-danger text-xs mt-1">{errors.receitas}</p>}
-                </div>
-                <div className="relative">
-                  <label htmlFor="despesas" className="block text-sm font-medium text-text-secondary mb-1">Despesas (R$)</label>
-                  <input 
-                      id="despesas" 
-                      type="text" 
-                      name="despesas" 
-                      value={formatInputCurrency(tempCurrencyInput.despesas || '')} 
-                      onChange={handleCurrencyInputChange} 
-                      className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12 ${errors.despesas ? 'border-danger' : 'border-border'}`}
-                  />
-                   <button onClick={() => setShowCalculator({ field: 'despesas' })} className="absolute right-3 top-9 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
-                   {showCalculator.field === 'despesas' && <Calculator initialValue={editingPagamento.despesas} onResult={(res) => handleCalculatorUpdate(res, 'despesas')} onClose={() => setShowCalculator({ field: null })} />}
-                   {errors.despesas && <p className="text-danger text-xs mt-1">{errors.despesas}</p>}
-                </div>
-                <div className="relative">
-                  <label htmlFor="envia" className="block text-sm font-medium text-text-secondary mb-1">Envia (R$)</label>
-                  <input 
-                      id="envia" 
-                      type="text" 
-                      name="envia" 
-                      value={formatInputCurrency(tempCurrencyInput.envia || '')} 
-                      onChange={handleCurrencyInputChange} 
-                      className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12 ${errors.envia ? 'border-danger' : 'border-border'}`}
-                  />
-                   <button onClick={() => setShowCalculator({ field: 'envia' })} className="absolute right-3 top-9 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
-                   {showCalculator.field === 'envia' && <Calculator initialValue={editingPagamento.envia} onResult={(res) => handleCalculatorUpdate(res, 'envia')} onClose={() => setShowCalculator({ field: null })} />}
-                   {errors.envia && <p className="text-danger text-xs mt-1">{errors.envia}</p>}
-                </div>
-                 <div className="relative">
-                  <label htmlFor="recebe" className="block text-sm font-medium text-text-secondary mb-1">Recebe (R$)</label>
-                  <input 
-                      id="recebe" 
-                      type="text" 
-                      name="recebe" 
-                      value={formatInputCurrency(tempCurrencyInput.recebe || '')} 
-                      onChange={handleCurrencyInputChange} 
-                      className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12 ${errors.recebe ? 'border-danger' : 'border-border'}`}
-                  />
-                  <button onClick={() => setShowCalculator({ field: 'recebe' })} className="absolute right-3 top-9 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
-                  {showCalculator.field === 'recebe' && <Calculator initialValue={editingPagamento.recebe} onResult={(res) => handleCalculatorUpdate(res, 'recebe')} onClose={() => setShowCalculator({ field: null })} />}
-                  {errors.recebe && <p className="text-danger text-xs mt-1">{errors.recebe}</p>}
-                </div>
+                    <div className="sm:col-span-2">
+                        <label htmlFor="tipo" className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Banco</label>
+                        <div className="relative">
+                            <select
+                                id="tipo"
+                                name="tipo"
+                                value={editingPagamento.tipo}
+                                onChange={handleInputChange}
+                                className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 appearance-none"
+                            >
+                                {BANK_OPTIONS.map(banco => (
+                                    <option key={banco} value={banco}>{banco}</option>
+                                ))}
+                            </select>
+                            <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
+                        </div>
+                    </div>
+                    <div className="relative">
+                      <label htmlFor="receitas" className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Receitas (R$)</label>
+                      <input 
+                          id="receitas" 
+                          type="text" 
+                          name="receitas" 
+                          value={formatInputCurrency(tempCurrencyInput.receitas || '')} 
+                          onChange={handleCurrencyInputChange} 
+                          className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.receitas ? 'border-danger' : ''}`}
+                      />
+                      <button onClick={() => setShowCalculator({ field: 'receitas' })} className="absolute right-3 top-9 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                      {showCalculator.field === 'receitas' && <Calculator initialValue={editingPagamento.receitas} onResult={(res) => handleCalculatorUpdate(res, 'receitas')} onClose={() => setShowCalculator({ field: null })} />}
+                      {errors.receitas && <p className="text-danger text-xs mt-1">{errors.receitas}</p>}
+                    </div>
+                    <div className="relative">
+                      <label htmlFor="despesas" className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Despesas (R$)</label>
+                      <input 
+                          id="despesas" 
+                          type="text" 
+                          name="despesas" 
+                          value={formatInputCurrency(tempCurrencyInput.despesas || '')} 
+                          onChange={handleCurrencyInputChange} 
+                          className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.despesas ? 'border-danger' : ''}`}
+                      />
+                       <button onClick={() => setShowCalculator({ field: 'despesas' })} className="absolute right-3 top-9 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                       {showCalculator.field === 'despesas' && <Calculator initialValue={editingPagamento.despesas} onResult={(res) => handleCalculatorUpdate(res, 'despesas')} onClose={() => setShowCalculator({ field: null })} />}
+                       {errors.despesas && <p className="text-danger text-xs mt-1">{errors.despesas}</p>}
+                    </div>
+                    <div className="relative">
+                      <label htmlFor="envia" className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Envia (R$)</label>
+                      <input 
+                          id="envia" 
+                          type="text" 
+                          name="envia" 
+                          value={formatInputCurrency(tempCurrencyInput.envia || '')} 
+                          onChange={handleCurrencyInputChange} 
+                          className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.envia ? 'border-danger' : ''}`}
+                      />
+                       <button onClick={() => setShowCalculator({ field: 'envia' })} className="absolute right-3 top-9 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                       {showCalculator.field === 'envia' && <Calculator initialValue={editingPagamento.envia} onResult={(res) => handleCalculatorUpdate(res, 'envia')} onClose={() => setShowCalculator({ field: null })} />}
+                       {errors.envia && <p className="text-danger text-xs mt-1">{errors.envia}</p>}
+                    </div>
+                     <div className="relative">
+                      <label htmlFor="recebe" className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Recebe (R$)</label>
+                      <input 
+                          id="recebe" 
+                          type="text" 
+                          name="recebe" 
+                          value={formatInputCurrency(tempCurrencyInput.recebe || '')} 
+                          onChange={handleCurrencyInputChange} 
+                          className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.recebe ? 'border-danger' : ''}`}
+                      />
+                      <button onClick={() => setShowCalculator({ field: 'recebe' })} className="absolute right-3 top-9 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                      {showCalculator.field === 'recebe' && <Calculator initialValue={editingPagamento.recebe} onResult={(res) => handleCalculatorUpdate(res, 'recebe')} onClose={() => setShowCalculator({ field: null })} />}
+                      {errors.recebe && <p className="text-danger text-xs mt-1">{errors.recebe}</p>}
+                    </div>
+                  </div>
               </div>
 
-              <div className="mt-8 flex justify-end gap-4">
-                <button onClick={handleCloseModal} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                <button onClick={handleSaveChanges} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Salvar</button>
+              {/* Fixed Footer */}
+              <div className="shrink-0 p-6 pt-4 border-t border-gray-100 flex justify-center gap-3 bg-gray-50">
+                <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
+                <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
               </div>
             </div>
           </div>
         )}
 
         {activeTab === 'pagamentos' && isConfirmOpen && (
-            <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-sm">
-                    <h3 className="text-lg font-bold mb-4 text-text-primary">Confirmar Ação</h3>
-                    <p className="text-text-secondary mb-6">{confirmAction.message}</p>
-                     <div className="flex justify-end gap-4">
-                        <button onClick={handleCancelConfirm} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                        <button onClick={handleConfirm} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Confirmar</button>
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+                <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
+                    <h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar Ação</h3>
+                    <p className="text-text-secondary mb-8">{confirmAction.message}</p>
+                     <div className="flex justify-center gap-4">
+                        <button onClick={handleCancelConfirm} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
+                        <button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button>
                      </div>
                 </div>
             </div>

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import FechamentoEmpresas from './FechamentoEmpresas';
-import CaixaLiquidacao from './CaixaLiquidacao';
+import { FechamentoEmpresas } from './FechamentoEmpresas';
+import { CaixaLiquidacao } from './CaixaLiquidacao';
 import { ClipboardCheckIcon, DatabaseIcon, ArrowLeftIcon } from './icons';
 
 type FechamentoView = 'cristiano' | 'fabrica' | 'caixa_cristiano' | 'caixa_fabrica';
