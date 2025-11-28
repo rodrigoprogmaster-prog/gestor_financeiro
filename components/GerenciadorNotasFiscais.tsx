@@ -260,7 +260,7 @@ const GerenciadorNotasFiscais: React.FC<{ onBack?: () => void }> = ({ onBack }) 
                     </div>
 
                     {/* Document Content - A4 Proportions Simulation */}
-                    <div className="p-8 bg-white text-[10px] leading-tight print:p-0 print:m-0">
+                    <div className="p-8 bg-white text-[10px] leading-tight print:p-0 print:m-0 font-sans">
                         
                         {/* Header Area */}
                         <div className="border-2 border-black p-1 mb-1 grid grid-cols-12 gap-1 min-h-[140px]">
@@ -427,7 +427,7 @@ const GerenciadorNotasFiscais: React.FC<{ onBack?: () => void }> = ({ onBack }) 
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 shrink-0">
                 <div className="flex items-center gap-4">
                     {onBack && (
-                        <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">
+                        <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-12 text-sm shadow-sm">
                             <ArrowLeftIcon className="h-5 w-5" />
                             Voltar
                         </button>
@@ -437,7 +437,7 @@ const GerenciadorNotasFiscais: React.FC<{ onBack?: () => void }> = ({ onBack }) 
                 <div className="flex items-center gap-2">
                     <button 
                         onClick={() => fileInputRef.current?.click()} 
-                        className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-6 rounded-full hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all duration-300 h-10"
+                        className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-6 rounded-full hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all duration-300 h-12"
                     >
                         <UploadIcon className="h-5 w-5" /> Importar XML
                     </button>
@@ -452,7 +452,7 @@ const GerenciadorNotasFiscais: React.FC<{ onBack?: () => void }> = ({ onBack }) 
                         placeholder="Buscar por número, emitente ou destinatário..." 
                         value={searchTerm} 
                         onChange={e => setSearchTerm(e.target.value)} 
-                        className="w-full pl-10 pr-4 py-2 bg-secondary border-transparent rounded-xl text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-10"
+                        className="w-full pl-10 pr-4 py-2 bg-secondary border-transparent rounded-xl text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"
                     />
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <SearchIcon className="h-5 w-5 text-text-secondary"/>
@@ -484,7 +484,7 @@ const GerenciadorNotasFiscais: React.FC<{ onBack?: () => void }> = ({ onBack }) 
                                         <td className="px-6 py-4 font-medium text-text-primary">
                                             {nota.numero} <span className="text-text-secondary text-xs opacity-70">/ {nota.serie}</span>
                                         </td>
-                                        <td className="px-6 py-4 text-text-secondary font-mono text-xs">{formatDateToBR(nota.dataEmissao)}</td>
+                                        <td className="px-6 py-4 text-text-secondary text-sm">{formatDateToBR(nota.dataEmissao)}</td>
                                         <td className="px-6 py-4 max-w-xs">
                                             <div className="truncate font-medium" title={nota.emitente.nome}>{nota.emitente.nome}</div>
                                             <div className="text-xs text-text-secondary">{nota.emitente.cnpj}</div>

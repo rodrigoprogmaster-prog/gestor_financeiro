@@ -101,7 +101,8 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [errors, setErrors] = useState<BoletoErrors>({});
     
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState<StatusBoletoReceber | 'Todos'>(StatusBoletoReceber.VENCIDO);
+    // CHANGE: Default status to 'Todos' to show data immediately
+    const [statusFilter, setStatusFilter] = useState<StatusBoletoReceber | 'Todos'>('Todos');
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
     const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
     
@@ -452,16 +453,16 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     <h2 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Boletos a Receber</h2>
                 </div>
                 <div className="flex items-center flex-wrap gap-2">
-                    <button onClick={handleResetTable} className="flex items-center gap-2 bg-white border border-border text-danger font-medium py-2 px-4 rounded-full hover:bg-red-50 text-sm h-9 transition-colors" title="Apagar todos os registros">
+                    <button onClick={handleResetTable} className="flex items-center gap-2 bg-white border border-border text-danger font-medium py-2 px-4 rounded-full hover:bg-red-50 text-sm h-10 transition-colors shadow-sm" title="Apagar todos os registros">
                         <TrashIcon className="h-4 w-4" /> Resetar Tabela
                     </button>
-                    <button onClick={handleExportXLSX} className="flex items-center gap-2 bg-white border border-border text-text-primary font-medium py-2 px-4 rounded-full hover:bg-secondary text-sm h-9 transition-colors">
+                    <button onClick={handleExportXLSX} className="flex items-center gap-2 bg-white border border-border text-text-primary font-medium py-2 px-4 rounded-full hover:bg-secondary text-sm h-10 transition-colors shadow-sm">
                         <DownloadIcon className="h-4 w-4" /> Exportar
                     </button>
-                    <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 bg-white border border-border text-text-primary font-medium py-2 px-4 rounded-full hover:bg-secondary text-sm h-9 transition-colors">
+                    <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 bg-white border border-border text-text-primary font-medium py-2 px-4 rounded-full hover:bg-secondary text-sm h-10 transition-colors shadow-sm">
                         <UploadIcon className="h-4 w-4" /> Importar
                     </button>
-                    <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-primary text-white font-medium py-2 px-4 rounded-full hover:bg-primary-hover text-sm h-9 shadow-sm transition-colors">
+                    <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-primary text-white font-medium py-2 px-4 rounded-full hover:bg-primary-hover text-sm h-10 shadow-sm transition-colors">
                         <PlusIcon className="h-4 w-4" /> Novo Boleto
                     </button>
                 </div>
@@ -486,16 +487,16 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 })}
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 bg-white p-3 rounded-2xl border border-border">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 bg-white p-3 rounded-2xl border border-border shadow-sm">
                 <div className="relative w-full sm:w-auto flex-grow sm:flex-grow-0">
                     <input 
                         type="text" 
                         placeholder="Buscar Credor ou Cliente..." 
                         value={searchTerm} 
                         onChange={e => setSearchTerm(e.target.value)} 
-                        className="w-full sm:w-80 pl-10 pr-3 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 transition-colors"
+                        className="w-full sm:w-80 pl-10 pr-3 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-12 transition-colors"
                     />
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon className="h-4 w-4 text-text-secondary"/></div>
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon className="h-5 w-5 text-text-secondary"/></div>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
                     <div className="flex items-center gap-2">
@@ -503,17 +504,17 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             value={dateRange.start} 
                             onChange={(val) => setDateRange(prev => ({ ...prev, start: val }))} 
                             placeholder="Início"
-                            className="w-32"
+                            className="w-32 h-12"
                         />
                         <span className="text-xs text-text-secondary">até</span>
                         <DatePicker 
                             value={dateRange.end} 
                             onChange={(val) => setDateRange(prev => ({ ...prev, end: val }))} 
                             placeholder="Fim"
-                            className="w-32"
+                            className="w-32 h-12"
                         />
                     </div>
-                    <button onClick={() => { setSearchTerm(''); setStatusFilter('Todos'); setDateRange({start: '', end: ''}); setSortConfig(null); }} className="px-3 py-1.5 rounded-full bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-10 transition-colors">Limpar</button>
+                    <button onClick={() => { setSearchTerm(''); setStatusFilter('Todos'); setDateRange({start: '', end: ''}); setSortConfig(null); }} className="px-4 py-2 rounded-xl bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-12 transition-colors">Limpar</button>
                 </div>
             </div>
 

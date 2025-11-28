@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronLeftIcon, ChevronRightIcon, CalendarClockIcon } from './icons';
@@ -245,7 +246,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
       <div 
         onClick={() => !disabled && setIsOpen(!isOpen)}
         className={`
-          w-full bg-white border rounded-xl px-3 py-2 text-text-primary flex items-center justify-between cursor-pointer transition-all h-10
+          w-full bg-white border rounded-xl px-3 py-2 text-text-primary flex items-center justify-between cursor-pointer transition-all h-full min-h-[48px]
           ${isOpen ? 'border-primary ring-2 ring-primary/10' : 'border-border hover:border-gray-300'}
           ${disabled ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''}
         `}
