@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { AppView } from '../types';
 import {
@@ -143,7 +144,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
           {/* Global Search Button */}
           <button
               onClick={handleOpenSearch}
-              className="w-full flex items-center gap-3 px-3 py-2.5 mb-6 rounded-lg text-sm font-medium text-gray-500 bg-gray-50 border border-gray-200 hover:border-orange-300 hover:text-gray-900 hover:bg-white transition-all group shadow-sm"
+              className="w-full flex items-center gap-3 px-3 py-2.5 mb-6 rounded-xl text-sm font-medium text-gray-500 bg-gray-50 border border-gray-200 hover:border-orange-300 hover:text-gray-900 hover:bg-white transition-all group shadow-sm"
           >
               <SearchIcon className="h-4 w-4 text-gray-400 group-hover:text-orange-600 transition-colors" />
               <span>Buscar...</span>
@@ -158,7 +159,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
                   <div key={module.name} className="mb-1">
                     <button
                       onClick={() => toggleSubMenu(module.name)}
-                      className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                      className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
                         ${isActive 
                             ? 'text-gray-900 bg-gray-50' 
                             : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
@@ -181,7 +182,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
                               <li key={child.view}>
                                 <button
                                   onClick={() => handleNavigation(child.view)}
-                                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all border-l-2
+                                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all border-l-2
                                     ${isChildActive 
                                       ? 'border-orange-600 text-orange-700 bg-orange-50 font-medium' 
                                       : 'border-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'}
@@ -202,7 +203,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
                   <div key={module.view} className="mb-1">
                     <button
                       onClick={() => handleNavigation(module.view)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all relative overflow-hidden group
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all relative overflow-hidden group
                         ${isSelected 
                           ? 'text-orange-700 bg-orange-50' 
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
@@ -225,7 +226,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
         <div className="p-4 border-t border-gray-100 bg-gray-50/50 shrink-0">
             <button 
                 onClick={onLogout}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors group"
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors group"
             >
                 <LogoutIcon className="h-5 w-5 text-gray-400 group-hover:text-red-500 transition-colors" />
                 <span>Sair do Sistema</span>

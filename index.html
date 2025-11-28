@@ -80,14 +80,14 @@
         font-family: var(--font-heading);
       }
       
-      /* Input Standardization */
+      /* Input Standardization - Premium 48px Height */
       input, select, textarea {
         background-color: var(--color-card);
         border: 1px solid var(--color-border);
         color: var(--color-text-primary);
-        height: 2.5rem; /* 40px standard height */
-        padding: 0.5rem 0.75rem;
-        border-radius: 0.5rem; /* 8px rounded */
+        height: 3rem; /* 48px standard height */
+        padding: 0.5rem 1rem;
+        border-radius: 0.75rem; /* 12px rounded-xl */
         font-size: 0.875rem; /* 14px */
         line-height: 1.25rem;
         transition: all 0.2s ease-in-out;
@@ -103,7 +103,7 @@
 
       textarea {
         height: auto;
-        min-height: 2.5rem;
+        min-height: 3rem;
       }
 
       /* Custom scrollbar */
@@ -149,12 +149,23 @@
             boxShadow: {
               'sm': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
               'md': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+              'xl': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              'inner': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
             },
             animation: {
               'fade-in': 'fadeIn 0.4s ease-out forwards',
+              'fade-in-down': 'fadeInDown 0.4s ease-out forwards',
+              'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
             },
             keyframes: {
               fadeIn: { '0%': { opacity: 0, transform: 'translateY(4px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+              fadeInDown: { '0%': { opacity: 0, transform: 'translateY(-10px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+              shake: {
+                '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+                '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+                '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+                '40%, 60%': { transform: 'translate3d(4px, 0, 0)' }
+              }
             }
           },
         },
@@ -165,6 +176,7 @@
 {
   "imports": {
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0"
   }

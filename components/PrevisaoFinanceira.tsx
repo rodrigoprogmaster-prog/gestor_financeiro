@@ -4,8 +4,7 @@ import { PlusIcon, TrashIcon, SearchIcon, DatabaseIcon,
     ArrowLeftIcon, TrendingUpIcon, ReportIcon, BoletoIcon, SpinnerIcon, TransferIcon, CalculatorIcon } from './icons';
 import AutocompleteInput from './AutocompleteInput';
 import Calculator from './Calculator';
-
-// ... (keep all imports and interfaces exactly as they were, no changes to logic logic, just the modal style and integration check)
+import DatePicker from './DatePicker';
 
 // Data structure
 interface Previsao {
@@ -526,12 +525,12 @@ export const PrevisaoFabrica: React.FC = () => {
     const FilterBar = () => (
         <div className="flex flex-wrap items-center gap-4 mb-4 bg-white p-3 rounded-2xl border border-border">
             <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-text-secondary">Data:</span>
-                <input 
-                    type="date" 
+                <DatePicker 
+                    label="Data"
                     value={reportDateFilter} 
-                    onChange={e => setReportDateFilter(e.target.value)} 
-                    className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    onChange={setReportDateFilter} 
+                    placeholder="Selecione"
+                    className="w-32"
                 />
             </div>
             <div className="flex items-center gap-2">
@@ -541,12 +540,12 @@ export const PrevisaoFabrica: React.FC = () => {
                     placeholder="Ex: Semana 42" 
                     value={reportWeekFilter} 
                     onChange={e => setReportWeekFilter(e.target.value)} 
-                    className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary w-32"
+                    className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary w-32 h-10"
                 />
             </div>
             <button 
                 onClick={() => {setReportDateFilter(''); setReportWeekFilter('')}} 
-                className="px-3 py-1.5 rounded-full bg-secondary hover:bg-border text-text-primary font-medium text-sm transition-colors"
+                className="px-3 py-1.5 rounded-full bg-secondary hover:bg-border text-text-primary font-medium text-sm transition-colors h-10"
             >
                 Limpar
             </button>
@@ -570,19 +569,24 @@ export const PrevisaoFabrica: React.FC = () => {
             return (
               <div className="animate-fade-in flex flex-col h-full">
                 <div className="flex flex-col lg:flex-row justify-end items-center mb-4 gap-2 bg-card p-3 rounded-2xl border border-border shadow-sm">
-                    <div className="flex items-center bg-secondary rounded-full px-2 border border-border">
-                        <span className="text-xs font-medium text-text-secondary mr-2">Data:</span>
-                        <input type="date" value={dateFilter} onChange={e => setDateFilter(e.target.value)} className="bg-transparent border-none text-sm text-text-primary focus:ring-0 h-9"/>
+                    <div className="flex items-center rounded-full px-2">
+                        <DatePicker 
+                            label="Data"
+                            value={dateFilter} 
+                            onChange={setDateFilter} 
+                            placeholder="Selecione"
+                            className="w-40"
+                        />
                     </div>
-                    <button onClick={() => setDateFilter('')} className="px-3 py-1.5 rounded-full bg-white border border-border hover:bg-secondary font-medium text-xs text-text-primary transition-colors h-9 shadow-sm">Limpar</button>
-                    <div className="h-6 w-px bg-border mx-2 hidden lg:block"></div>
-                    <button onClick={handleFecharDia} disabled={isCurrentDayClosed || !dateFilter} className="px-3 py-1.5 rounded-full bg-warning hover:bg-warning/90 text-white font-medium text-xs h-9 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed shadow-sm">
+                    <button onClick={() => setDateFilter('')} className="px-3 py-1.5 rounded-full bg-white border border-border hover:bg-secondary font-medium text-xs text-text-primary transition-colors h-9 shadow-sm mt-5">Limpar</button>
+                    <div className="h-6 w-px bg-border mx-2 hidden lg:block mt-5"></div>
+                    <button onClick={handleFecharDia} disabled={isCurrentDayClosed || !dateFilter} className="px-3 py-1.5 rounded-full bg-warning hover:bg-warning/90 text-white font-medium text-xs h-9 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed shadow-sm mt-5">
                             {isCurrentDayClosed ? 'Dia Fechado' : 'Fechar Dia'}
                     </button>
-                    <button onClick={handleOpenAddEntryModal} className="flex items-center justify-center gap-2 bg-primary text-white font-medium py-1.5 px-3 rounded-full hover:bg-primary-hover transition-colors duration-300 h-9 text-xs shadow-sm">
+                    <button onClick={handleOpenAddEntryModal} className="flex items-center justify-center gap-2 bg-primary text-white font-medium py-1.5 px-3 rounded-full hover:bg-primary-hover transition-colors duration-300 h-9 text-xs shadow-sm mt-5">
                         <PlusIcon className="h-4 w-4" /> <span>Adicionar</span>
                     </button>
-                    <button onClick={handleTransferToPagamentos} disabled={!dateFilter || filteredPrevisoes.length === 0} className="flex items-center justify-center gap-2 bg-success text-white font-medium py-1.5 px-3 rounded-full hover:bg-success/90 transition-colors duration-300 h-9 text-xs shadow-sm disabled:bg-gray-300 disabled:cursor-not-allowed">
+                    <button onClick={handleTransferToPagamentos} disabled={!dateFilter || filteredPrevisoes.length === 0} className="flex items-center justify-center gap-2 bg-success text-white font-medium py-1.5 px-3 rounded-full hover:bg-success/90 transition-colors duration-300 h-9 text-xs shadow-sm disabled:bg-gray-300 disabled:cursor-not-allowed mt-5">
                         <TransferIcon className="h-4 w-4" /> <span>Transferir</span>
                     </button>
                 </div>
@@ -745,7 +749,14 @@ export const PrevisaoFabrica: React.FC = () => {
                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-visible">
                     <h3 className="text-2xl font-bold text-text-primary mb-6 text-center pt-8">Editar Previsão</h3>
                     <div className="px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-                        <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Data</label><input type="date" name="data" value={editingPrevisao.data || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                        <div>
+                            <DatePicker 
+                                label="Data"
+                                value={editingPrevisao.data || ''} 
+                                onChange={(val) => setEditingPrevisao(prev => ({...prev, data: val}))} 
+                                placeholder="Selecione"
+                            />
+                        </div>
                         <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Semana</label><input type="text" name="semana" value={editingPrevisao.semana || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                         <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label>
                         <AutocompleteInput name="empresa" value={editingPrevisao.empresa || ''} onChange={handleInputChange} suggestions={uniqueEmpresas} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
@@ -778,7 +789,14 @@ export const PrevisaoFabrica: React.FC = () => {
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-visible">
                         <h3 className="text-2xl font-bold text-text-primary mb-6 text-center pt-8">Adicionar Lançamento</h3>
                         <div className="px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-                            <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Data</label><input type="date" name="data" value={newEntry.data || ''} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                            <div>
+                                <DatePicker 
+                                    label="Data"
+                                    value={newEntry.data || ''} 
+                                    onChange={(val) => setNewEntry(prev => ({...prev, data: val}))} 
+                                    placeholder="Selecione"
+                                />
+                            </div>
                             <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Semana</label><input type="text" name="semana" value={newEntry.semana || ''} onChange={handleNewEntryChange} placeholder="Ex: Semana 32" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
                             <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label>
                             <AutocompleteInput name="empresa" value={newEntry.empresa || ''} onChange={handleNewEntryChange} suggestions={uniqueEmpresas} placeholder="Digite a empresa" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>

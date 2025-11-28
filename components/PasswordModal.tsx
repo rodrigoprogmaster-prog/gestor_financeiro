@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 
 interface PasswordModalProps {
@@ -39,7 +40,7 @@ const PasswordModal: React.FC<PasswordModalProps> = ({ onSuccess, onClose, isIni
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${error ? 'border-danger animate-shake' : 'border-border'}`}
+                            className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12 ${error ? 'border-danger animate-shake' : 'border-border'}`}
                             placeholder="Senha"
                             autoFocus
                         />
@@ -47,11 +48,11 @@ const PasswordModal: React.FC<PasswordModalProps> = ({ onSuccess, onClose, isIni
                     </div>
                     <div className="flex justify-end gap-4">
                         {!isInitialUnlock && (
-                            <button type="button" onClick={onClose} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">
+                            <button type="button" onClick={onClose} className="h-12 px-6 rounded-xl bg-secondary hover:bg-border font-semibold transition-colors">
                                 Cancelar
                             </button>
                         )}
-                        <button type="submit" className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">
+                        <button type="submit" className="h-12 px-6 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">
                             Confirmar
                         </button>
                     </div>

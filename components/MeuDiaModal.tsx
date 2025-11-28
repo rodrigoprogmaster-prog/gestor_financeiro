@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { CheckIcon, CalendarClockIcon, SparklesIcon } from './icons';
 
@@ -160,8 +161,8 @@ const MeuDiaModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     <p className="text-sm text-text-secondary">{details}</p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                    <button onClick={() => handleConcluir(item)} title="Concluir" className="p-2 rounded-lg text-success hover:bg-success/10 transition-colors"><CheckIcon className="h-5 w-5"/></button>
-                    <button onClick={() => handleAdiar(item)} title="Adiar para amanhã" className="p-2 rounded-lg text-yellow-500 hover:bg-yellow-500/10 transition-colors"><CalendarClockIcon className="h-5 w-5"/></button>
+                    <button onClick={() => handleConcluir(item)} title="Concluir" className="p-2 rounded-full text-success hover:bg-success/10 transition-colors"><CheckIcon className="h-5 w-5"/></button>
+                    <button onClick={() => handleAdiar(item)} title="Adiar para amanhã" className="p-2 rounded-full text-yellow-500 hover:bg-yellow-500/10 transition-colors"><CalendarClockIcon className="h-5 w-5"/></button>
                 </div>
             </div>
         );
@@ -210,7 +211,7 @@ const MeuDiaModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     )}
                 </div>
                 <div className="p-6 border-t border-border mt-auto">
-                    <button onClick={onClose} className="w-full py-3 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Encerrar o Dia</button>
+                    <button onClick={onClose} className="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Encerrar o Dia</button>
                 </div>
             </div>
         </div>

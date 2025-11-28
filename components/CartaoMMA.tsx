@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { UploadIcon, SearchIcon, DownloadIcon, ArrowLeftIcon } from './icons';
+import CustomSelect from './CustomSelect';
 
 // Data structure
 interface MmaTransaction {
@@ -313,8 +314,8 @@ const CartaoMMA: React.FC<CartaoMmaProps> = ({ onBack }) => {
     };
 
     return (
-        <div className="animate-fade-in">
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
+        <div className="animate-fade-in flex flex-col h-full">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4 shrink-0">
                 <div className="flex items-center gap-4">
                     <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">
                         <ArrowLeftIcon className="h-5 w-5" />
@@ -323,16 +324,17 @@ const CartaoMMA: React.FC<CartaoMmaProps> = ({ onBack }) => {
                     <h3 className="text-xl md:text-2xl font-bold text-text-primary">Cartão MMA</h3>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                    <select
-                        value={monthFilter}
-                        onChange={(e) => setMonthFilter(e.target.value)}
-                        className="bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10"
-                    >
-                        <option value="">Todos os Meses</option>
-                        {uniqueMonths.map(month => (
-                            <option key={month} value={month}>{month}</option>
-                        ))}
-                    </select>
+                    <div className="w-48">
+                        <CustomSelect
+                            options={[
+                                { label: 'Todos os Meses', value: '' },
+                                ...uniqueMonths.map(month => ({ label: month, value: month }))
+                            ]}
+                            value={monthFilter}
+                            onChange={(val) => setMonthFilter(val)}
+                            placeholder="Filtrar Mês"
+                        />
+                    </div>
                      <button
                         onClick={() => setMonthFilter('')}
                         className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10"
@@ -356,51 +358,58 @@ const CartaoMMA: React.FC<CartaoMmaProps> = ({ onBack }) => {
             </div>
             <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept=".csv" />
             
-            <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-card p-4 rounded-2xl border border-border shadow-sm text-center">
-                    <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Valor Total</p>
+            {/* Unified Summary Strip */}
+            <div className="bg-white p-3 rounded-2xl border border-border shadow-sm mb-4 flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-border shrink-0">
+                <div className="px-6 py-2 flex-1 flex flex-col items-center justify-center">
+                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Valor Total</p>
                     <p className="text-xl font-bold text-primary">{totals.totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                 </div>
-                <div className="bg-card p-4 rounded-2xl border border-border shadow-sm text-center">
-                    <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Lançamentos</p>
-                    <p className="text-xl font-bold text-primary">{totals.transactionCount}</p>
+                <div className="px-6 py-2 flex-1 flex flex-col items-center justify-center">
+                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Lançamentos</p>
+                    <p className="text-xl font-bold text-text-primary">{totals.transactionCount}</p>
                 </div>
             </div>
 
-            <div className="bg-card shadow-md rounded-2xl overflow-x-auto">
-                <table className="w-full text-sm text-left text-text-secondary">
-                    <thead className="text-sm text-text-primary uppercase bg-secondary">
-                        <tr>
-                            {['Data da Transação', 'Extrato da conta', 'Transação', 'Valor original', 'Categoria da Compra', 'Status'].map(header => (
-                                <th key={header} scope="col" className="px-6 py-3">{header}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredData.length > 0 ? (
-                            filteredData.map(item => (
-                                <tr key={item.id} onClick={() => handleStatusToggle(item.id)} className="bg-card border-b border-border hover:bg-secondary cursor-pointer transition-colors duration-200">
-                                    <td className="px-6 py-4">{formatDateToBR(item['Data da Transação'])}</td>
-                                    <td className="px-6 py-4">{item['Extrato da conta']}</td>
-                                    <td className="px-6 py-4">{item['Transação']}</td>
-                                    <td className="px-6 py-4 text-right">{item['Valor original'].toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                                    <td className="px-6 py-4">{item['Categoria da Compra']}</td>
-                                    <td className={`px-6 py-4 font-semibold ${item.Status === 'Lançado' ? 'text-success' : 'text-text-secondary'}`}>{item.Status}</td>
-                                </tr>
-                            ))
-                        ) : (
+            <div className="bg-card shadow-md rounded-2xl overflow-hidden flex flex-col flex-grow border border-border">
+                <div className="overflow-x-auto overflow-y-auto flex-grow">
+                    <table className="min-w-full divide-y divide-border text-sm text-left">
+                        <thead className="bg-secondary text-text-primary uppercase text-xs font-semibold sticky top-0 z-10 shadow-sm">
                             <tr>
-                                <td colSpan={6} className="text-center py-16">
-                                     <div className="flex flex-col items-center justify-center text-text-secondary">
-                                        <SearchIcon className="w-12 h-12 mb-4 text-gray-300" />
-                                        <h3 className="text-xl font-semibold text-text-primary">Nenhuma Transação Encontrada</h3>
-                                        <p className="mt-1">{monthFilter ? 'Nenhum dado para o mês selecionado.' : 'Use o botão "Subir Arquivo CSV" para começar.'}</p>
-                                    </div>
-                                </td>
+                                {['Data da Transação', 'Extrato da conta', 'Transação', 'Valor original', 'Categoria da Compra', 'Status'].map(header => (
+                                    <th key={header} scope="col" className="px-6 py-3 whitespace-nowrap">{header}</th>
+                                ))}
                             </tr>
-                        )}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y divide-border bg-white">
+                            {filteredData.length > 0 ? (
+                                filteredData.map(item => (
+                                    <tr key={item.id} onClick={() => handleStatusToggle(item.id)} className="bg-card border-b border-border hover:bg-secondary cursor-pointer transition-colors duration-200">
+                                        <td className="px-6 py-2.5 whitespace-nowrap text-text-secondary">{formatDateToBR(item['Data da Transação'])}</td>
+                                        <td className="px-6 py-2.5 whitespace-nowrap text-text-primary font-medium">{item['Extrato da conta']}</td>
+                                        <td className="px-6 py-2.5 whitespace-nowrap text-text-secondary">{item['Transação']}</td>
+                                        <td className="px-6 py-2.5 text-right whitespace-nowrap font-semibold text-text-primary">{item['Valor original'].toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                                        <td className="px-6 py-2.5 whitespace-nowrap text-text-secondary">{item['Categoria da Compra']}</td>
+                                        <td className="px-6 py-2.5 whitespace-nowrap">
+                                            <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${item.Status === 'Lançado' ? 'bg-success/10 text-success border border-success/20' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>
+                                                {item.Status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={6} className="text-center py-12">
+                                         <div className="flex flex-col items-center justify-center text-text-secondary opacity-60">
+                                            <SearchIcon className="w-10 h-10 mb-3 text-gray-300" />
+                                            <h3 className="text-base font-semibold text-text-primary">Nenhuma Transação</h3>
+                                            <p className="text-sm mt-1">{monthFilter ? 'Nenhum dado para o mês selecionado.' : 'Use o botão "Subir Arquivo CSV" para começar.'}</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

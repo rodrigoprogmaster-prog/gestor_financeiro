@@ -2,6 +2,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, CalendarClockIcon, SpinnerIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
 import AutocompleteInput from './AutocompleteInput';
+import DatePicker from './DatePicker';
 
 // Enum for status
 enum StatusBoletoReceber {
@@ -39,14 +40,6 @@ const formatDateToISO = (brDate: string): string => {
     if (!brDate || !/^\d{2}\/\d{2}\/\d{4}$/.test(brDate)) return '';
     const [day, month, year] = brDate.split('/');
     return `${year}-${month}-${day}`;
-};
-
-const applyDateMask = (value: string): string => {
-    return value
-        .replace(/\D/g, '')
-        .replace(/(\d{2})(\d)/, '$1/$2')
-        .replace(/(\d{2})\/(\d{2})(\d)/, '$1/$2/$3')
-        .replace(/(\/\d{4})\d+?$/, '$1');
 };
 
 const isValidBRDate = (dateString: string): boolean => {
@@ -102,7 +95,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     });
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingBoleto, setEditingBoleto] = useState<Partial<BoletoReceber> & { vencimento_br?: string } | null>(null);
+    const [editingBoleto, setEditingBoleto] = useState<Partial<BoletoReceber> | null>(null);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<{ action: (() => void) | null, message: string }>({ action: null, message: '' });
     const [errors, setErrors] = useState<BoletoErrors>({});
@@ -201,7 +194,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
     const handleOpenAddModal = () => {
         setErrors({});
-        setEditingBoleto({ vencimento_br: '', recebido: false, credor: '' });
+        setEditingBoleto({ vencimento: '', recebido: false, credor: '' });
         setIsModalOpen(true);
     };
 
@@ -218,7 +211,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
     const handleEditClick = (boleto: BoletoReceber) => {
         setErrors({});
-        setEditingBoleto({ ...boleto, vencimento_br: formatDateToBR(boleto.vencimento) });
+        setEditingBoleto({ ...boleto });
         setIsModalOpen(true);
     };
 
@@ -261,8 +254,6 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             let numericValue = value.replace(/\D/g, '');
             if (numericValue === '') numericValue = '0';
             finalValue = Number(numericValue) / 100;
-        } else if (name === 'vencimento_br') {
-            finalValue = applyDateMask(value);
         }
 
         setEditingBoleto(prev => ({ ...prev, [name]: finalValue }));
@@ -280,7 +271,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         const newErrors: BoletoErrors = {};
         if (!editingBoleto.credor?.trim()) newErrors.credor = "Credor é obrigatório.";
         if (!editingBoleto.cliente?.trim()) newErrors.cliente = "Cliente é obrigatório.";
-        if (!editingBoleto.vencimento_br || !isValidBRDate(editingBoleto.vencimento_br)) newErrors.vencimento = "Vencimento inválido.";
+        if (!editingBoleto.vencimento) newErrors.vencimento = "Vencimento inválido.";
         if (!editingBoleto.valor || editingBoleto.valor <= 0) newErrors.valor = "Valor deve ser maior que zero.";
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -290,7 +281,6 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         if (!validate() || !editingBoleto) return;
         const boletoToSave = {
             ...editingBoleto,
-            vencimento: formatDateToISO(editingBoleto.vencimento_br!),
         };
         const action = () => {
             if (boletoToSave.id) {
@@ -509,12 +499,21 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 </div>
                 <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
                     <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-text-secondary">Vencimento:</span>
-                        <input type="date" value={dateRange.start} onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))} className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/>
+                        <DatePicker 
+                            value={dateRange.start} 
+                            onChange={(val) => setDateRange(prev => ({ ...prev, start: val }))} 
+                            placeholder="Início"
+                            className="w-32"
+                        />
                         <span className="text-xs text-text-secondary">até</span>
-                        <input type="date" value={dateRange.end} onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))} className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/>
+                        <DatePicker 
+                            value={dateRange.end} 
+                            onChange={(val) => setDateRange(prev => ({ ...prev, end: val }))} 
+                            placeholder="Fim"
+                            className="w-32"
+                        />
                     </div>
-                    <button onClick={() => { setSearchTerm(''); setStatusFilter('Todos'); setDateRange({start: '', end: ''}); setSortConfig(null); }} className="px-3 py-1.5 rounded-full bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-9 transition-colors">Limpar</button>
+                    <button onClick={() => { setSearchTerm(''); setStatusFilter('Todos'); setDateRange({start: '', end: ''}); setSortConfig(null); }} className="px-3 py-1.5 rounded-full bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-10 transition-colors">Limpar</button>
                 </div>
             </div>
 
@@ -586,7 +585,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         <button
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
-                            className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="p-2 rounded-full hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             title="Página Anterior"
                         >
                             <ChevronLeftIcon className="h-5 w-5 text-text-primary" />
@@ -595,7 +594,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         <button
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages || totalPages === 0}
-                            className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="p-2 rounded-full hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             title="Próxima Página"
                         >
                             <ChevronRightIcon className="h-5 w-5 text-text-primary" />
@@ -635,8 +634,12 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Vencimento</label>
-                                    <input name="vencimento_br" value={editingBoleto.vencimento_br || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.vencimento ? 'border-danger' : ''}`} placeholder="DD/MM/AAAA" />
+                                    <DatePicker 
+                                        label="Vencimento"
+                                        value={editingBoleto.vencimento || ''} 
+                                        onChange={(val) => setEditingBoleto(prev => ({...prev, vencimento: val}))} 
+                                        placeholder="Selecione"
+                                    />
                                     {errors.vencimento && <p className="text-danger text-xs mt-1 ml-1">{errors.vencimento}</p>}
                                 </div>
                                 <div>

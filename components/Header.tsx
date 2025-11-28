@@ -49,7 +49,7 @@ const Header: React.FC<HeaderProps> = ({ setView, onToggleSidebar }) => {
       <div className="flex items-center gap-4">
         <button
             onClick={onToggleSidebar}
-            className="lg:hidden flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-100 p-2 rounded-lg transition-colors"
+            className="lg:hidden flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-100 p-2 rounded-xl transition-colors"
             aria-label="Abrir menu de navegação"
         >
             <MenuIcon className="h-6 w-6" />

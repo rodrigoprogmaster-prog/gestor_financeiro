@@ -3,6 +3,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, ArrowLeftIcon, SpinnerIcon, ChevronDownIcon, CalendarClockIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
 import { ArrowDownCircleIcon, ArrowUpCircleIcon } from './icons'; 
 import AutocompleteInput from './AutocompleteInput';
+import DatePicker from './DatePicker';
 
 // Enum for status
 enum StatusCheque {
@@ -31,7 +32,6 @@ const statusOrder: Record<string, number> = {
     [StatusCheque.COMPENSADO]: 4,
 };
 
-// ... Helper functions (formatDateToBR, formatDateToISO, applyDateMask, isValidBRDate, formatCurrency, parseStatus, parseImportedDate) remain the same ...
 const formatDateToBR = (isoDate: string): string => {
     if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return '';
     const [year, month, day] = isoDate.split('-');
@@ -42,27 +42,6 @@ const formatDateToBR = (isoDate: string): string => {
         month: '2-digit',
         year: 'numeric',
     });
-};
-
-const formatDateToISO = (brDate: string): string => {
-    if (!brDate || !/^\d{2}\/\d{2}\/\d{4}$/.test(brDate)) return '';
-    const [day, month, year] = brDate.split('/');
-    return `${year}-${month}-${day}`;
-};
-
-const applyDateMask = (value: string): string => {
-    return value
-        .replace(/\D/g, '')
-        .replace(/(\d{2})(\d)/, '$1/$2')
-        .replace(/(\d{2})\/(\d{2})(\d)/, '$1/$2/$3')
-        .replace(/(\/\d{4})\d+?$/, '$1');
-};
-
-const isValidBRDate = (dateString: string): boolean => {
-    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) return false;
-    const [day, month, year] = dateString.split('/').map(Number);
-    const date = new Date(year, month - 1, day);
-    return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
 };
 
 const formatCurrency = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -131,7 +110,7 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCheque, setEditingCheque] = useState<Partial<Cheque> & { dataVencimento_br?: string; dataDeposito_br?: string } | null>(null);
+  const [editingCheque, setEditingCheque] = useState<Partial<Cheque> | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{ action: (() => void) | null, message: string }>({ action: null, message: '' });
   const [errors, setErrors] = useState<ChequeErrors>({});
@@ -144,7 +123,6 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [isLembreteModalOpen, setIsLembreteModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   
-  // Sorting state
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
 
   const uniqueEmitentes = useMemo(() => [...new Set(cheques.map(c => c.emitente).filter(Boolean))].sort(), [cheques]);
@@ -217,7 +195,6 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             return 0;
         });
     } else {
-        // Default sort logic
         filtered.sort((a, b) => {
             const statusA = statusOrder[a.dynamicStatus] || 99;
             const statusB = statusOrder[b.dynamicStatus] || 99;
@@ -273,17 +250,42 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     return null;
   };
 
-  // ... (Other handlers like handleOpenAddModal, handleEditClick, etc. remain the same) ...
-  const handleOpenAddModal = () => { setErrors({}); setEditingCheque({ ...newChequeTemplate, dataDeposito_br: formatDateToBR(newChequeTemplate.dataDeposito), dataVencimento_br: '' }); setIsModalOpen(true); };
-  const handleEditClick = (cheque: Cheque) => { setErrors({}); setEditingCheque({ ...cheque, dataVencimento_br: formatDateToBR(cheque.dataVencimento), dataDeposito_br: formatDateToBR(cheque.dataDeposito) }); setIsModalOpen(true); };
+  const handleOpenAddModal = () => { setErrors({}); setEditingCheque({ ...newChequeTemplate }); setIsModalOpen(true); };
+  const handleEditClick = (cheque: Cheque) => { setErrors({}); setEditingCheque({ ...cheque }); setIsModalOpen(true); };
   const handleDeleteClick = (id: string) => { const action = () => setCheques(prev => prev.filter(c => c.id !== id)); setConfirmAction({ action, message: "Tem certeza que deseja excluir este cheque?" }); setIsConfirmOpen(true); };
   const handleDoubleClickRow = (cheque: Cheque) => { if (getDynamicStatus(cheque) === StatusCheque.COMPENSADO) return; setChequeParaAcao(cheque); };
   const handleUpdateStatus = (newStatus: StatusCheque) => { if (!chequeParaAcao) return; const chequeSelecionado = chequeParaAcao; setChequeParaAcao(null); const action = () => { setCheques(prev => prev.map(c => c.id === chequeSelecionado.id ? { ...c, status: newStatus } : c)); }; setConfirmAction({ action, message: `Deseja marcar o cheque Nº ${chequeSelecionado.numero} como '${newStatus}'?` }); setIsConfirmOpen(true); };
   const handleCloseModal = () => { setIsModalOpen(false); setEditingCheque(null); setErrors({}); };
   const handleConfirm = () => { confirmAction.action?.(); setIsConfirmOpen(false); };
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { if (!editingCheque) return; const { name, value } = e.target; let finalValue: string | number = value; if (name === 'valor') { let numericValue = value.replace(/\D/g, ''); if (numericValue === '') numericValue = '0'; finalValue = Number(numericValue) / 100; } else if (name.startsWith('data')) { finalValue = applyDateMask(value); } setEditingCheque(prev => ({ ...prev, [name]: finalValue })); if (errors[name as keyof ChequeErrors]) { setErrors(prev => { const newErrors = { ...prev }; delete newErrors[name as keyof ChequeErrors]; return newErrors; }); } };
-  const validate = (): boolean => { if (!editingCheque) return false; const newErrors: ChequeErrors = {}; if (!editingCheque.emitente?.trim()) newErrors.emitente = "Emitente é obrigatório."; if (!editingCheque.numero?.trim()) newErrors.numero = "Número do cheque é obrigatório."; if (!editingCheque.loja?.trim()) newErrors.loja = "Loja é obrigatória."; if (!editingCheque.contaDeposito?.trim()) newErrors.contaDeposito = "Conta de Depósito é obrigatória."; if (!editingCheque.valor || editingCheque.valor <= 0) newErrors.valor = "Valor deve ser maior que zero."; if (!editingCheque.dataVencimento_br || !isValidBRDate(editingCheque.dataVencimento_br)) newErrors.dataVencimento = "Data de vencimento inválida."; if (!editingCheque.dataDeposito_br || !isValidBRDate(editingCheque.dataDeposito_br)) newErrors.dataDeposito = "Data de depósito inválida."; setErrors(newErrors); return Object.keys(newErrors).length === 0; };
-  const handleSaveChanges = () => { if (!validate() || !editingCheque) return; const chequeToSave = { ...editingCheque, dataVencimento: formatDateToISO(editingCheque.dataVencimento_br!), dataDeposito: formatDateToISO(editingCheque.dataDeposito_br!) }; const action = () => { if (chequeToSave.id) { setCheques(prev => prev.map(c => c.id === chequeToSave.id ? (chequeToSave as Cheque) : c)); } else { setCheques(prev => [...prev, { ...newChequeTemplate, ...chequeToSave, id: `cheque-${Date.now()}` }]); } handleCloseModal(); }; setConfirmAction({ action, message: `Deseja ${chequeToSave.id ? 'salvar as alterações' : 'adicionar este cheque'}?`}); setIsConfirmOpen(true); };
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { 
+      if (!editingCheque) return; 
+      const { name, value } = e.target; 
+      let finalValue: string | number = value; 
+      if (name === 'valor') { 
+          let numericValue = value.replace(/\D/g, ''); 
+          if (numericValue === '') numericValue = '0'; 
+          finalValue = Number(numericValue) / 100; 
+      }
+      setEditingCheque(prev => ({ ...prev, [name]: finalValue })); 
+      if (errors[name as keyof ChequeErrors]) { setErrors(prev => { const newErrors = { ...prev }; delete newErrors[name as keyof ChequeErrors]; return newErrors; }); } 
+  };
+
+  const validate = (): boolean => { if (!editingCheque) return false; const newErrors: ChequeErrors = {}; if (!editingCheque.emitente?.trim()) newErrors.emitente = "Emitente é obrigatório."; if (!editingCheque.numero?.trim()) newErrors.numero = "Número do cheque é obrigatório."; if (!editingCheque.loja?.trim()) newErrors.loja = "Loja é obrigatória."; if (!editingCheque.contaDeposito?.trim()) newErrors.contaDeposito = "Conta de Depósito é obrigatória."; if (!editingCheque.valor || editingCheque.valor <= 0) newErrors.valor = "Valor deve ser maior que zero."; if (!editingCheque.dataVencimento) newErrors.dataVencimento = "Data de vencimento inválida."; if (!editingCheque.dataDeposito) newErrors.dataDeposito = "Data de depósito inválida."; setErrors(newErrors); return Object.keys(newErrors).length === 0; };
+  const handleSaveChanges = () => { 
+      if (!validate() || !editingCheque) return; 
+      const chequeToSave = { ...editingCheque }; 
+      const action = () => { 
+          if (chequeToSave.id) { 
+              setCheques(prev => prev.map(c => c.id === chequeToSave.id ? (chequeToSave as Cheque) : c)); 
+          } else { 
+              setCheques(prev => [...prev, { ...newChequeTemplate, ...chequeToSave, id: `cheque-${Date.now()}` } as Cheque]); 
+          } 
+          handleCloseModal(); 
+      }; 
+      setConfirmAction({ action, message: `Deseja ${chequeToSave.id ? 'salvar as alterações' : 'adicionar este cheque'}?`}); setIsConfirmOpen(true); 
+  };
+  
   const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const data = e.target?.result; const workbook = (window as any).XLSX.read(data, { type: 'array' }); const sheetName = workbook.SheetNames[0]; const worksheet = workbook.Sheets[sheetName]; const json: any[] = (window as any).XLSX.utils.sheet_to_json(worksheet, { raw: true }); const existingKeys = new Set(cheques.map(c => `${c.numero}-${c.contaDeposito}`)); const newCheques: Cheque[] = json.map((row, index) => { const numero = row['Número'] || row['Numero']; const contaDeposito = row['Conta Depósito'] || row['Conta Deposito']; if (!numero || !contaDeposito || existingKeys.has(`${numero}-${contaDeposito}`)) return null; const status = row['Status']; const vencimento = row['Vencimento']; const emitente = row['Emitente']; const valor = row['Valor']; const loja = row['Loja']; const dataDeposito = row['Data Depósito'] || row['Data Deposito']; const dataVencimentoISO = parseImportedDate(vencimento); if (!dataVencimentoISO) return null; const dataDepositoISO = parseImportedDate(dataDeposito); return { id: `cheque-${Date.now()}-${index}`, emitente: String(emitente || ''), numero: String(numero), valor: Number(valor || 0), dataVencimento: dataVencimentoISO, loja: String(loja || ''), contaDeposito: String(contaDeposito), dataDeposito: dataDepositoISO || new Date().toISOString().split('T')[0], status: parseStatus(String(status || '')) }; }).filter((c): c is Cheque => c !== null); if (newCheques.length > 0) { setCheques(prev => [...prev, ...newCheques]); alert(`${newCheques.length} novos cheques importados com sucesso!`); } else { alert('Nenhum cheque novo encontrado para importar.'); } } catch (error) { alert('Ocorreu um erro ao ler o arquivo.'); } finally { if (event.target) event.target.value = ''; } }; reader.readAsArrayBuffer(file); };
   const handleBackup = () => { const XLSX = (window as any).XLSX; const dataToExport = cheques.map(c => ({ 'Status': getDynamicStatus(c), 'Vencimento': formatDateToBR(c.dataVencimento), 'Emitente': c.emitente, 'Número': c.numero, 'Valor': c.valor, 'Loja': c.loja, 'Conta Depósito': c.contaDeposito, 'Data Depósito': formatDateToBR(c.dataDeposito) })); const worksheet = XLSX.utils.json_to_sheet(dataToExport); const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, worksheet, 'Backup Cheques'); XLSX.writeFile(workbook, `backup_cheques_${new Date().toISOString().slice(0,10)}.xlsx`); };
   const handleExportDevolvidos = () => { /* ... existing export logic ... */ const devolvidos = cheques.filter(c => getDynamicStatus(c) === StatusCheque.DEVOLVIDO); if (devolvidos.length === 0) { alert('Nenhum cheque devolvido para exportar.'); return; } const sortedDevolvidos = [...devolvidos].sort((a, b) => { const dateA = new Date(a.dataVencimento).getTime(); const dateB = new Date(b.dataVencimento).getTime(); if (dateA !== dateB) return dateB - dateA; if (a.loja !== b.loja) return a.loja.localeCompare(b.loja); return a.emitente.localeCompare(b.emitente); }); const aoaData: any[][] = []; aoaData.push(['Relatório de Cheques Devolvidos', null, null]); aoaData.push([]); let currentVencimento: string | null = null; let currentLoja: string | null = null; let currentEmitente: string | null = null; let totalGeral = 0; let totalVencimentoGroup = 0; let totalLojaGroup = 0; let totalEmitenteGroup = 0; sortedDevolvidos.forEach((cheque, index) => { if (cheque.dataVencimento !== currentVencimento) { if (currentVencimento !== null) { if (currentLoja !== null) { if (currentEmitente !== null) { aoaData.push(['    Subtotal Emitente:', null, totalEmitenteGroup]); aoaData.push([]); totalEmitenteGroup = 0; } aoaData.push([`  Total da Loja ${currentLoja}:`, null, totalLojaGroup]); aoaData.push([]); totalLojaGroup = 0; } aoaData.push([`TOTAL PARA VENCIMENTO ${formatDateToBR(currentVencimento)}:`, null, totalVencimentoGroup]); aoaData.push([]); } currentVencimento = cheque.dataVencimento; currentLoja = null; currentEmitente = null; totalVencimentoGroup = 0; aoaData.push([`VENCIMENTO: ${formatDateToBR(currentVencimento)}`, null, null]); aoaData.push([]); } if (cheque.loja !== currentLoja) { if (currentLoja !== null) { if (currentEmitente !== null) { aoaData.push(['    Subtotal Emitente:', null, totalEmitenteGroup]); aoaData.push([]); totalEmitenteGroup = 0; } aoaData.push([`  Total da Loja ${currentLoja}:`, null, totalLojaGroup]); aoaData.push([]); } currentLoja = cheque.loja; currentEmitente = null; totalLojaGroup = 0; aoaData.push([`  LOJA: ${currentLoja}`, null, null]); } if (cheque.emitente !== currentEmitente) { if (currentEmitente !== null) { aoaData.push(['    Subtotal Emitente:', null, totalEmitenteGroup]); aoaData.push([]); } currentEmitente = cheque.emitente; totalEmitenteGroup = 0; aoaData.push([`    EMITENTE: ${currentEmitente}`, null, null]); aoaData.push(['      Número do Cheque', 'Valor']); } aoaData.push([`      ${cheque.numero}`, cheque.valor]); totalEmitenteGroup += cheque.valor; totalLojaGroup += cheque.valor; totalVencimentoGroup += cheque.valor; totalGeral += cheque.valor; if (index === sortedDevolvidos.length - 1) { aoaData.push(['    Subtotal Emitente:', null, totalEmitenteGroup]); aoaData.push([]); aoaData.push([`  Total da Loja ${currentLoja}:`, null, totalLojaGroup]); aoaData.push([]); aoaData.push([`TOTAL PARA VENCIMENTO ${formatDateToBR(currentVencimento)}:`, null, totalVencimentoGroup]); aoaData.push([]); } }); aoaData.push([]); aoaData.push(['TOTAL GERAL DEVOLVIDO:', null, totalGeral]); const XLSX = (window as any).XLSX; const worksheet = XLSX.utils.aoa_to_sheet(aoaData); worksheet['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }]; const range = XLSX.utils.decode_range(worksheet['!ref'] as string); for(let R = 0; R <= range.e.r; ++R) { const cellRefC = XLSX.utils.encode_cell({c: 2, r: R}); if (worksheet[cellRefC] && typeof worksheet[cellRefC].v === 'number') { worksheet[cellRefC].t = 'n'; worksheet[cellRefC].z = 'R$ #,##0.00'; } const cellRefB = XLSX.utils.encode_cell({c: 1, r: R}); if (worksheet[cellRefB] && typeof worksheet[cellRefB].v === 'number') { worksheet[cellRefB].t = 'n'; worksheet[cellRefB].z = 'R$ #,##0.00'; } } worksheet['!cols'] = [{ wch: 45 }, { wch: 15 }, { wch: 20 }]; const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, worksheet, 'Cheques Devolvidos'); XLSX.writeFile(workbook, `devolvidos_por_vencimento_${new Date().toISOString().slice(0,10)}.xlsx`); };
@@ -327,15 +329,24 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         </div>
 
         <div className="flex flex-col sm:flex-row justify-end items-center mb-4 gap-2 bg-white p-3 rounded-2xl border border-border">
-            <div className="relative w-full sm:w-auto"><input type="text" placeholder="Buscar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-white border border-border rounded-xl px-3 py-2 pl-10 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9 w-full sm:w-64"/><div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon className="h-4 w-4 text-text-secondary" /></div></div>
+            <div className="relative w-full sm:w-auto"><input type="text" placeholder="Buscar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-white border border-border rounded-xl px-3 py-2 pl-10 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-10 w-full sm:w-64"/><div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon className="h-4 w-4 text-text-secondary" /></div></div>
             <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
                 <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-text-secondary">Vencimento:</span>
-                    <input type="date" value={dateRange.start} onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))} className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/>
+                    <DatePicker 
+                        value={dateRange.start} 
+                        onChange={(val) => setDateRange(prev => ({ ...prev, start: val }))} 
+                        placeholder="Início"
+                        className="w-32"
+                    />
                     <span className="text-xs text-text-secondary">até</span>
-                    <input type="date" value={dateRange.end} onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))} className="bg-white border border-border rounded-xl px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/>
+                    <DatePicker 
+                        value={dateRange.end} 
+                        onChange={(val) => setDateRange(prev => ({ ...prev, end: val }))} 
+                        placeholder="Fim"
+                        className="w-32"
+                    />
                 </div>
-                <button onClick={() => { setSearchTerm(''); setStatusFilter('Todos'); setDateRange({start: '', end: ''}); setSortConfig(null); }} className="py-2 px-4 rounded-full bg-secondary hover:bg-border text-text-primary font-medium text-sm h-9 transition-colors">Limpar</button>
+                <button onClick={() => { setSearchTerm(''); setStatusFilter('Todos'); setDateRange({start: '', end: ''}); setSortConfig(null); }} className="py-2 px-4 rounded-full bg-secondary hover:bg-border text-text-primary font-medium text-sm h-10 transition-colors">Limpar</button>
             </div>
         </div>
 
@@ -401,7 +412,7 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     <button
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
-                        className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="p-2 rounded-full hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         title="Página Anterior"
                     >
                         <ChevronLeftIcon className="h-5 w-5 text-text-primary" />
@@ -410,7 +421,7 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     <button
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages || totalPages === 0}
-                        className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="p-2 rounded-full hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         title="Próxima Página"
                     >
                         <ChevronRightIcon className="h-5 w-5 text-text-primary" />
@@ -440,8 +451,24 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         {errors.contaDeposito && <p className="text-danger text-xs mt-1 ml-1">{errors.contaDeposito}</p>}</div>
                         <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Valor</label><input name="valor" value={formatCurrency(editingCheque.valor || 0)} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.valor ? 'border-danger' : ''}`} />{errors.valor && <p className="text-danger text-xs mt-1 ml-1">{errors.valor}</p>}</div>
                         <div className="grid grid-cols-2 gap-4">
-                             <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Vencimento</label><input name="dataVencimento_br" value={editingCheque.dataVencimento_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.dataVencimento ? 'border-danger' : ''}`} />{errors.dataVencimento && <p className="text-danger text-xs mt-1 ml-1">{errors.dataVencimento}</p>}</div>
-                             <div><label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Data Depósito</label><input name="dataDeposito_br" value={editingCheque.dataDeposito_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.dataDeposito ? 'border-danger' : ''}`} />{errors.dataDeposito && <p className="text-danger text-xs mt-1 ml-1">{errors.dataDeposito}</p>}</div>
+                             <div>
+                                <DatePicker 
+                                    label="Vencimento"
+                                    value={editingCheque.dataVencimento || ''} 
+                                    onChange={(val) => setEditingCheque(prev => ({...prev, dataVencimento: val}))}
+                                    placeholder="Selecione"
+                                />
+                                {errors.dataVencimento && <p className="text-danger text-xs mt-1 ml-1">{errors.dataVencimento}</p>}
+                             </div>
+                             <div>
+                                <DatePicker 
+                                    label="Data Depósito"
+                                    value={editingCheque.dataDeposito || ''} 
+                                    onChange={(val) => setEditingCheque(prev => ({...prev, dataDeposito: val}))}
+                                    placeholder="Selecione"
+                                />
+                                {errors.dataDeposito && <p className="text-danger text-xs mt-1 ml-1">{errors.dataDeposito}</p>}
+                             </div>
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Status</label>

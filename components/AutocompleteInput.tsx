@@ -77,12 +77,12 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
         }}
       />
       {showSuggestions && filteredSuggestions.length > 0 && (
-        <ul className="absolute z-50 w-full bg-white border border-border rounded-xl mt-1 shadow-lg max-h-48 overflow-y-auto animate-fade-in text-left">
+        <ul className="absolute z-50 w-full bg-white border border-gray-100 rounded-xl mt-1 shadow-xl max-h-48 overflow-y-auto animate-fade-in text-left origin-top">
           {filteredSuggestions.map((suggestion, index) => (
             <li
               key={index}
               onClick={() => handleSelect(suggestion)}
-              className="px-4 py-2 hover:bg-secondary cursor-pointer text-sm text-text-primary transition-colors border-b border-border/30 last:border-none"
+              className="px-4 py-2.5 hover:bg-secondary cursor-pointer text-sm text-text-primary transition-colors border-b border-border/30 last:border-none"
             >
               {suggestion}
             </li>

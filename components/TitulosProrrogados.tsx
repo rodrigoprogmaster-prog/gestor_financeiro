@@ -3,6 +3,8 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, 
     // Add ArrowLeftIcon here
     ArrowLeftIcon, SpinnerIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
+import DatePicker from './DatePicker';
+import CustomSelect from './CustomSelect';
 
 // Enum for status
 enum StatusTitulo {
@@ -36,32 +38,6 @@ const formatDateToBR = (isoDate: string): string => {
     });
 };
 
-
-const formatDateToISO = (brDate: string): string => {
-    if (!brDate || !/^\d{2}\/\d{2}\/\d{4}$/.test(brDate)) return '';
-    const [day, month, year] = brDate.split('/');
-    return `${year}-${month}-${day}`;
-};
-
-const applyDateMask = (value: string): string => {
-    return value
-        .replace(/\D/g, '')
-        .replace(/(\d{2})(\d)/, '$1/$2')
-        .replace(/(\d{2})\/(\d{2})(\d)/, '$1/$2/$3')
-        .replace(/(\/\d{4})\d+?$/, '$1');
-};
-
-const isValidBRDate = (dateString: string): boolean => {
-    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) return false;
-    const [day, month, year] = dateString.split('/').map(Number);
-    const date = new Date(year, month - 1, day);
-    return (
-        date.getFullYear() === year &&
-        date.getMonth() === month - 1 &&
-        date.getDate() === day
-    );
-};
-
 const formatCurrency = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 // Mock Data
@@ -73,21 +49,7 @@ const initialTitles: Title[] = [
   { id: 5, fornecedor: 'Empresa E', numeroTitulo: 'REC-034', vencimentoOriginal: '2024-09-10', devedor: 'Cliente V', novoVencimento: '2024-10-10', valor: 5000.00, status: StatusTitulo.A_PRORROGAR },
 ];
 
-type TitleForm = Omit<Title, 'id' | 'valor' | 'status' | 'vencimentoOriginal' | 'novoVencimento'> & {
-    valor: number | string;
-    status: StatusTitulo;
-    vencimentoOriginal: string; // DD/MM/YYYY
-    novoVencimento: string; // DD/MM/YYYY
-};
-
 type TitleErrors = Partial<Record<keyof Omit<Title, 'id' | 'status'>, string>>;
-
-// The editing state will hold dates in BR format for the input fields
-type EditingTitleState = Omit<Partial<Title>, 'vencimentoOriginal' | 'novoVencimento'> & {
-    vencimentoOriginal?: string; // DD/MM/YYYY
-    novoVencimento?: string; // DD/MM/YYYY
-};
-
 
 const newTitleTemplate: Omit<Title, 'id'> = {
   fornecedor: '',
@@ -123,7 +85,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   }, [titles]);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTitle, setEditingTitle] = useState<EditingTitleState | null>(null);
+  const [editingTitle, setEditingTitle] = useState<Partial<Title> | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
     action: (() => void) | null,
@@ -227,12 +189,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
   const handleRowClick = (title: Title) => {
     setErrors({});
-    // Convert dates to BR format for editing
-    setEditingTitle({ 
-        ...title,
-        vencimentoOriginal: formatDateToBR(title.vencimentoOriginal),
-        novoVencimento: formatDateToBR(title.novoVencimento),
-    });
+    setEditingTitle({ ...title });
     setIsModalOpen(true);
   };
 
@@ -314,13 +271,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           ...editingTitle,
           valor: numberValue,
         });
-      } else if (name === 'vencimentoOriginal' || name === 'novoVencimento') {
-          setEditingTitle({
-              ...editingTitle,
-              [name]: applyDateMask(value),
-          });
-      }
-      else {
+      } else {
          setEditingTitle({
            ...editingTitle,
            [name]: value,
@@ -346,7 +297,6 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         case 'vencimentoOriginal':
         case 'novoVencimento':
             if (!value) return 'Data é obrigatória.';
-            if (!isValidBRDate(value)) return 'Data inválida. Use DD/MM/AAAA.';
             return undefined;
         case 'valor':
             return !value || value <= 0 ? 'O Valor deve ser maior que zero.' : undefined;
@@ -373,16 +323,14 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const fieldsToValidate: (keyof TitleErrors)[] = ['fornecedor', 'numeroTitulo', 'devedor', 'vencimentoOriginal', 'novoVencimento', 'valor'];
     
     fieldsToValidate.forEach(field => {
-        const error = validateField(field, editingTitle[field as keyof EditingTitleState]);
+        const error = validateField(field, editingTitle[field as keyof Partial<Title>]);
         if (error) {
             newErrors[field] = error;
         }
     });
 
     if (!newErrors.novoVencimento && !newErrors.vencimentoOriginal && editingTitle.vencimentoOriginal && editingTitle.novoVencimento) {
-        const originalDate = new Date(formatDateToISO(editingTitle.vencimentoOriginal));
-        const newDate = new Date(formatDateToISO(editingTitle.novoVencimento));
-        if (newDate <= originalDate) {
+        if (editingTitle.novoVencimento <= editingTitle.vencimentoOriginal) {
             newErrors.novoVencimento = 'Novo Vencimento deve ser após o Vencimento Original.';
         }
     }
@@ -398,11 +346,8 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
     if (!editingTitle || !editingTitle.vencimentoOriginal || !editingTitle.novoVencimento) return;
     
-    // Convert dates back to ISO before saving
     const titleToSave = {
         ...editingTitle,
-        vencimentoOriginal: formatDateToISO(editingTitle.vencimentoOriginal),
-        novoVencimento: formatDateToISO(editingTitle.novoVencimento),
     };
 
     if (editingTitle.id) { // Editing existing title
@@ -417,7 +362,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     } else { // Adding new title
         const action = () => {
             const newId = Date.now();
-            const newCompleteTitle: Title = { ...newTitleTemplate, ...titleToSave, id: newId };
+            const newCompleteTitle: Title = { ...newTitleTemplate, ...titleToSave, id: newId } as Title;
             setTitles([...titles, newCompleteTitle]);
             handleCloseModal();
         };
@@ -512,26 +457,33 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
-            <div className="relative">
-                <select 
-                    value={statusFilter} 
-                    onChange={(e) => setStatusFilter(e.target.value as StatusTitulo | 'Todos')}
-                    className="bg-white border border-border rounded-xl px-3 py-1.5 pr-8 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary appearance-none h-9"
-                >
-                    <option value="Todos">Todos os Status</option>
-                    <option value={StatusTitulo.A_PRORROGAR}>{StatusTitulo.A_PRORROGAR}</option>
-                    <option value={StatusTitulo.PRORROGADO}>{StatusTitulo.PRORROGADO}</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-text-secondary">
-                    <ChevronDownIcon className="h-4 w-4" />
-                </div>
+            <div className="w-40">
+                <CustomSelect
+                    options={[
+                        { label: 'Todos os Status', value: 'Todos' },
+                        { label: StatusTitulo.A_PRORROGAR, value: StatusTitulo.A_PRORROGAR },
+                        { label: StatusTitulo.PRORROGADO, value: StatusTitulo.PRORROGADO },
+                    ]}
+                    value={statusFilter}
+                    onChange={(val) => setStatusFilter(val)}
+                />
             </div>
 
             <div className="flex items-center gap-2 bg-secondary rounded-xl px-2 border border-border h-9">
                 <span className="text-xs font-medium text-text-secondary whitespace-nowrap">Novo Venc.:</span>
-                <input type="date" value={dateRange.start} onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))} className="bg-transparent border-none p-0 text-sm text-text-primary focus:ring-0 w-24"/>
+                <DatePicker 
+                    value={dateRange.start} 
+                    onChange={(val) => setDateRange(prev => ({ ...prev, start: val }))} 
+                    className="w-24"
+                    placeholder="Início"
+                />
                 <span className="text-xs text-text-secondary">-</span>
-                <input type="date" value={dateRange.end} onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))} className="bg-transparent border-none p-0 text-sm text-text-primary focus:ring-0 w-24"/>
+                <DatePicker 
+                    value={dateRange.end} 
+                    onChange={(val) => setDateRange(prev => ({ ...prev, end: val }))} 
+                    className="w-24"
+                    placeholder="Fim"
+                />
             </div>
 
             <button onClick={handleClearFilters} className="px-3 py-1.5 rounded-full bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-9 transition-colors">Limpar</button>
@@ -680,26 +632,35 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Venc. Original</label>
-                        <input name="vencimentoOriginal" value={editingTitle.vencimentoOriginal || ''} onChange={handleInputChange} onBlur={handleBlur} placeholder="DD/MM/AAAA" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.vencimentoOriginal ? 'border-danger' : ''}`} />
+                        <DatePicker 
+                            label="Venc. Original"
+                            value={editingTitle.vencimentoOriginal || ''} 
+                            onChange={(val) => setEditingTitle(prev => ({...prev, vencimentoOriginal: val}))} 
+                            placeholder="Selecione"
+                        />
                         {errors.vencimentoOriginal && <p className="text-danger text-xs mt-1 ml-1">{errors.vencimentoOriginal}</p>}
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Novo Vencimento</label>
-                        <input name="novoVencimento" value={editingTitle.novoVencimento || ''} onChange={handleInputChange} onBlur={handleBlur} placeholder="DD/MM/AAAA" className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.novoVencimento ? 'border-danger' : ''}`} />
+                        <DatePicker 
+                            label="Novo Vencimento"
+                            value={editingTitle.novoVencimento || ''} 
+                            onChange={(val) => setEditingTitle(prev => ({...prev, novoVencimento: val}))} 
+                            placeholder="Selecione"
+                        />
                         {errors.novoVencimento && <p className="text-danger text-xs mt-1 ml-1">{errors.novoVencimento}</p>}
                     </div>
                 </div>
 
                 <div>
-                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Status</label>
-                    <div className="relative">
-                        <select name="status" value={editingTitle.status || StatusTitulo.A_PRORROGAR} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 appearance-none">
-                            <option value={StatusTitulo.A_PRORROGAR}>{StatusTitulo.A_PRORROGAR}</option>
-                            <option value={StatusTitulo.PRORROGADO}>{StatusTitulo.PRORROGADO}</option>
-                        </select>
-                        <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
-                    </div>
+                    <CustomSelect
+                        label="Status"
+                        options={[
+                            { label: StatusTitulo.A_PRORROGAR, value: StatusTitulo.A_PRORROGAR },
+                            { label: StatusTitulo.PRORROGADO, value: StatusTitulo.PRORROGADO },
+                        ]}
+                        value={editingTitle.status || StatusTitulo.A_PRORROGAR}
+                        onChange={(val) => handleInputChange({ target: { name: 'status', value: val } } as any)}
+                    />
                 </div>
             </div>
 

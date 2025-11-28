@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { PlusIcon, TrashIcon, EditIcon, SearchIcon, ArrowLeftIcon } from './icons';
+import { PlusIcon, TrashIcon, SearchIcon, ArrowLeftIcon, CalendarClockIcon, RefreshIcon } from './icons';
+import DatePicker from './DatePicker';
 
 // Data structure
 interface Fechamento {
@@ -9,8 +10,8 @@ interface Fechamento {
   empresa: string;
   contabilidade: string;
   portador: string;
-  valorBanco: number; // Renamed from valorReceitas
-  valorSolinter: number; // Renamed from valorDespesas
+  valorBanco: number; 
+  valorSolinter: number;
   dataEnvio: string; // YYYY-MM-DD
   anotacoes: string;
 }
@@ -298,11 +299,11 @@ const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageKey, tit
 
     const handleGenerateMonth = () => {
         if (!newMonth.trim()) {
-            setNewMonthError('Por favor, insira o Mês/Ano.');
+            setNewMonthError('Mês/Ano obrigatório.');
             return;
         }
         if (!isValidMonthYear(newMonth.trim())) {
-            setNewMonthError('Formato inválido. Use MM/AAAA (ex: 08/2024).');
+            setNewMonthError('Use MM/AAAA');
             return;
         }
         
@@ -335,203 +336,234 @@ const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageKey, tit
     };
 
     return (
-        <div className="animate-fade-in p-4 sm:p-6 lg:p-8 w-full">
-            <div className="flex items-center gap-4 mb-6">
-                <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">
-                    <ArrowLeftIcon className="h-5 w-5" />
-                    Voltar
-                </button>
-                <h3 className="text-xl md:text-2xl font-bold text-text-primary">{title}</h3>
-            </div>
-             <div className="flex flex-col sm:flex-row justify-end items-center mb-6 gap-4">
-                 {(isFabrica || isCristiano) && (
-                    <div className="flex flex-col w-full sm:w-auto">
-                        <div className="flex items-center gap-2">
-                            <input
-                                ref={newMonthInputRef}
-                                type="text"
-                                value={newMonth}
-                                onChange={handleNewMonthChange}
-                                placeholder="MM/AAAA"
-                                maxLength={7}
-                                className={`bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 h-10 w-full ${newMonthError ? 'border-danger focus:ring-danger' : 'border-border focus:ring-primary'}`}
-                            />
-                            <button
-                                onClick={handleGenerateMonth}
-                                className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-full hover:bg-primary-hover transition-colors duration-300 h-10 whitespace-nowrap"
-                            >
-                                <PlusIcon className="h-5 w-5" />
-                                Gerar Lançamentos
-                            </button>
+        <div className="flex flex-col h-full p-4 sm:p-6 lg:p-8 animate-fade-in w-full">
+            
+            {/* Header Section: Title & Actions */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 shrink-0">
+                <div className="flex items-center gap-4">
+                    <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10 text-sm shadow-sm">
+                        <ArrowLeftIcon className="h-4 w-4" />
+                        Voltar
+                    </button>
+                    <h3 className="text-xl md:text-2xl font-bold text-text-primary tracking-tight">{title}</h3>
+                </div>
+
+                {(isFabrica || isCristiano) && (
+                    <div className="flex items-start gap-2 w-full md:w-auto">
+                        <div className="flex flex-col">
+                            <div className="flex items-center gap-2 bg-white p-1 rounded-2xl border border-border shadow-sm">
+                                <input
+                                    ref={newMonthInputRef}
+                                    type="text"
+                                    value={newMonth}
+                                    onChange={handleNewMonthChange}
+                                    placeholder="MM/AAAA"
+                                    maxLength={7}
+                                    className={`bg-transparent px-3 py-1.5 text-text-primary focus:outline-none w-24 text-center font-medium ${newMonthError ? 'text-danger placeholder-danger/50' : ''}`}
+                                />
+                                <button
+                                    onClick={handleGenerateMonth}
+                                    className="flex items-center gap-2 bg-primary text-white font-semibold py-1.5 px-4 rounded-full hover:bg-primary-hover transition-colors duration-200 text-sm whitespace-nowrap shadow-sm h-8"
+                                >
+                                    <PlusIcon className="h-4 w-4" />
+                                    Gerar Lançamentos
+                                </button>
+                            </div>
+                            {newMonthError && <p className="text-danger text-[10px] mt-1 ml-2 font-medium">{newMonthError}</p>}
                         </div>
-                        {newMonthError && <p className="text-danger text-xs mt-1">{newMonthError}</p>}
                     </div>
                 )}
             </div>
-            <div className="flex flex-wrap items-center gap-4 mb-4 p-4 bg-secondary/50 rounded-lg">
-                <h4 className="font-semibold text-text-primary mr-2">Filtros:</h4>
-                <input name="mesReferencia" value={filters.mesReferencia} onChange={handleFilterChange} placeholder="Filtrar por Mês Referência..." className="bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10 flex-grow sm:flex-grow-0" />
-                <input name="empresa" value={filters.empresa} onChange={handleFilterChange} placeholder="Filtrar por Empresa..." className="bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10 flex-grow sm:flex-grow-0" />
-                <input name="contabilidade" value={filters.contabilidade} onChange={handleFilterChange} placeholder="Filtrar por Contabilidade..." className="bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10 flex-grow sm:flex-grow-0" />
-                <input name="portador" value={filters.portador} onChange={handleFilterChange} placeholder="Filtrar por Portador..." className="bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10 flex-grow sm:flex-grow-0" />
-                <button onClick={handleClearFilters} className="py-2 px-4 rounded-full bg-gray-300 hover:bg-gray-400 font-semibold transition-colors h-10">Limpar Filtros</button>
-            </div>
-            <div className="bg-card shadow-md rounded-lg overflow-x-auto">
-                <table className="w-full text-base text-left text-text-secondary">
-                    <thead className="text-sm text-text-primary uppercase bg-secondary">
-                        <tr>
-                            <th scope="col" className="px-6 py-3">Mês Referência</th>
-                            <th scope="col" className="px-6 py-3">Empresa</th>
-                            <th scope="col" className="px-6 py-3">Contabilidade</th>
-                            <th scope="col" className="px-6 py-3">Portador</th>
-                            <th scope="col" className="px-6 py-3 text-right">Banco</th>
-                            <th scope="col" className="px-6 py-3 text-right">Solinter</th>
-                            <th scope="col" className="px-6 py-3 text-right">Saldo</th>
-                            <th scope="col" className="px-6 py-3 text-center">Status Conciliação</th>
-                            <th scope="col" className="px-6 py-3">Data Envio</th>
-                             <th scope="col" className="px-6 py-3 text-center">Status Envio</th>
-                            <th scope="col" className="px-6 py-3">Anotações</th>
-                            <th scope="col" className="px-6 py-3 text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredFechamentos.length > 0 ? (
-                            filteredFechamentos.map(item => {
-                                const saldo = (item.valorBanco || 0) - (item.valorSolinter || 0);
-                                const statusConciliacao = saldo === 0 ? 'Conciliado' : 'Pendente';
-                                const statusEnvio = item.dataEnvio ? 'Enviado' : 'Pendente';
 
-                                return (
-                                    <tr 
-                                      key={item.id} 
-                                      onClick={() => handleRowClick(item)}
-                                      onDoubleClick={() => handleRowDoubleClick(item)} 
-                                      className="bg-card border-b border-border hover:bg-secondary transition-colors cursor-pointer"
-                                    >
-                                        <td className="px-6 py-4 font-medium">{item.mesReferencia}</td>
-                                        <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{item.empresa}</td>
-                                        <td className="px-6 py-4">{item.contabilidade}</td>
-                                        <td className="px-6 py-4">{item.portador}</td>
-                                        <td className="px-6 py-4 text-right text-success font-semibold">{formatCurrency(item.valorBanco)}</td>
-                                        <td className="px-6 py-4 text-right text-danger font-semibold">{formatCurrency(item.valorSolinter)}</td>
-                                        <td className={`px-6 py-4 text-right font-bold ${saldo === 0 ? 'text-text-primary' : (saldo > 0 ? 'text-success' : 'text-danger')}`}>{formatCurrency(saldo)}</td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusConciliacao === 'Conciliado' ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'}`}>
-                                                {statusConciliacao}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">{formatDateToBR(item.dataEnvio)}</td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusEnvio === 'Enviado' ? 'bg-blue-500/20 text-blue-600' : 'bg-gray-400/20 text-gray-600'}`}>
-                                                {statusEnvio}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 max-w-xs truncate" title={item.anotacoes}>{item.anotacoes}</td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center justify-center gap-2">
-                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(item.id); }} className="text-danger hover:text-danger/80 p-2 rounded-full hover:bg-danger/10 transition-colors" aria-label="Excluir lançamento">
-                                                    <TrashIcon className="h-5 w-5" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })
-                        ) : (
-                             <tr>
-                                <td colSpan={12} className="text-center py-16">
-                                     <div className="flex flex-col items-center justify-center text-text-secondary">
-                                        <SearchIcon className="w-12 h-12 mb-4 text-gray-300" />
-                                        <h3 className="text-xl font-semibold text-text-primary">Nenhum Lançamento Encontrado</h3>
-                                        <p className="mt-1">{Object.values(filters).some(f => f) ? 'Tente ajustar sua busca.' : 'Gere um novo mês de lançamentos para começar.'}</p>
-                                    </div>
-                                </td>
+            {/* Filters Section */}
+            <div className="bg-white p-3 rounded-2xl border border-border shadow-sm mb-4 shrink-0">
+                <div className="flex flex-col lg:flex-row gap-3 items-center">
+                    <div className="flex items-center gap-2 text-text-secondary">
+                        <SearchIcon className="h-4 w-4" />
+                        <span className="text-sm font-semibold">Filtros:</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
+                        <input name="mesReferencia" value={filters.mesReferencia} onChange={handleFilterChange} placeholder="Mês Ref..." className="bg-secondary border-transparent rounded-xl px-3 py-1.5 text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary h-9 w-full outline-none transition-all" />
+                        <input name="empresa" value={filters.empresa} onChange={handleFilterChange} placeholder="Empresa..." className="bg-secondary border-transparent rounded-xl px-3 py-1.5 text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary h-9 w-full outline-none transition-all" />
+                        <input name="contabilidade" value={filters.contabilidade} onChange={handleFilterChange} placeholder="Contabilidade..." className="bg-secondary border-transparent rounded-xl px-3 py-1.5 text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary h-9 w-full outline-none transition-all" />
+                        <div className="flex gap-2">
+                            <input name="portador" value={filters.portador} onChange={handleFilterChange} placeholder="Portador..." className="bg-secondary border-transparent rounded-xl px-3 py-1.5 text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary h-9 w-full outline-none transition-all" />
+                            <button onClick={handleClearFilters} className="px-3 py-1.5 rounded-full bg-gray-200 hover:bg-gray-300 text-text-secondary hover:text-text-primary font-medium transition-colors h-9" title="Limpar Filtros">
+                                <RefreshIcon className="h-4 w-4" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Table Section - Optimized for space */}
+            <div className="flex-grow overflow-hidden bg-card border border-border rounded-2xl shadow-sm flex flex-col">
+                <div className="overflow-auto flex-grow">
+                    <table className="min-w-full divide-y divide-border text-sm text-left">
+                        <thead className="bg-gray-50 text-text-secondary font-semibold uppercase text-xs tracking-wider sticky top-0 z-10 shadow-sm">
+                            <tr>
+                                <th scope="col" className="px-4 py-3 whitespace-nowrap">Mês Ref.</th>
+                                <th scope="col" className="px-4 py-3">Empresa</th>
+                                <th scope="col" className="px-4 py-3 whitespace-nowrap">Contabilidade</th>
+                                <th scope="col" className="px-4 py-3 whitespace-nowrap">Portador</th>
+                                <th scope="col" className="px-4 py-3 text-right whitespace-nowrap">Banco</th>
+                                <th scope="col" className="px-4 py-3 text-right whitespace-nowrap">Solinter</th>
+                                <th scope="col" className="px-4 py-3 text-right whitespace-nowrap">Saldo</th>
+                                <th scope="col" className="px-4 py-3 text-center whitespace-nowrap">Conciliação</th>
+                                <th scope="col" className="px-4 py-3 whitespace-nowrap">Data Envio</th>
+                                <th scope="col" className="px-4 py-3 text-center whitespace-nowrap">Envio</th>
+                                <th scope="col" className="px-4 py-3 min-w-[150px]">Anotações</th>
+                                <th scope="col" className="px-4 py-3 text-center">Ações</th>
                             </tr>
-                        )}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y divide-border bg-white">
+                            {filteredFechamentos.length > 0 ? (
+                                filteredFechamentos.map(item => {
+                                    const saldo = (item.valorBanco || 0) - (item.valorSolinter || 0);
+                                    const statusConciliacao = saldo === 0 ? 'Conciliado' : 'Pendente';
+                                    const statusEnvio = item.dataEnvio ? 'Enviado' : 'Pendente';
+
+                                    return (
+                                        <tr 
+                                          key={item.id} 
+                                          onClick={() => handleRowClick(item)}
+                                          onDoubleClick={() => handleRowDoubleClick(item)} 
+                                          className="hover:bg-gray-50 transition-colors cursor-pointer group"
+                                        >
+                                            <td className="px-4 py-3 font-medium whitespace-nowrap">{item.mesReferencia}</td>
+                                            <td className="px-4 py-3 max-w-[200px] truncate font-medium text-text-primary" title={item.empresa}>{item.empresa}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-text-secondary">{item.contabilidade}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-text-secondary">{item.portador}</td>
+                                            <td className="px-4 py-3 text-right text-success font-semibold whitespace-nowrap">{formatCurrency(item.valorBanco)}</td>
+                                            <td className="px-4 py-3 text-right text-danger font-semibold whitespace-nowrap">{formatCurrency(item.valorSolinter)}</td>
+                                            <td className={`px-4 py-3 text-right font-bold whitespace-nowrap ${saldo === 0 ? 'text-gray-400' : (saldo > 0 ? 'text-success' : 'text-danger')}`}>{formatCurrency(saldo)}</td>
+                                            <td className="px-4 py-3 text-center whitespace-nowrap">
+                                                <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-full border ${statusConciliacao === 'Conciliado' ? 'bg-success/10 text-success border-success/20' : 'bg-warning/10 text-warning border-warning/20'}`}>
+                                                    {statusConciliacao}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-text-secondary text-xs">{formatDateToBR(item.dataEnvio)}</td>
+                                            <td className="px-4 py-3 text-center whitespace-nowrap">
+                                                <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-full border ${statusEnvio === 'Enviado' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                                                    {statusEnvio}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 max-w-[200px] truncate text-text-secondary text-xs" title={item.anotacoes}>{item.anotacoes}</td>
+                                            <td className="px-4 py-3 text-center whitespace-nowrap">
+                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(item.id); }} className="text-gray-400 hover:text-danger p-1.5 rounded-full hover:bg-danger/10 transition-colors opacity-0 group-hover:opacity-100" aria-label="Excluir">
+                                                    <TrashIcon className="h-4 w-4" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            ) : (
+                                 <tr>
+                                    <td colSpan={12} className="text-center py-20">
+                                         <div className="flex flex-col items-center justify-center text-text-secondary opacity-60">
+                                            <SearchIcon className="w-10 h-10 mb-3" />
+                                            <h3 className="text-base font-medium">Nenhum Lançamento Encontrado</h3>
+                                            <p className="text-sm mt-1">{Object.values(filters).some(f => f) ? 'Tente ajustar os filtros.' : 'Gere um novo mês para começar.'}</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+                {/* Footer Summary - Always Visible */}
+                <div className="border-t border-border bg-gray-50 p-3 flex justify-between items-center text-xs text-text-secondary px-6 shrink-0">
+                    <span>Total de registros: <strong>{filteredFechamentos.length}</strong></span>
+                    <span className="italic">Dica: Duplo clique na linha para definir data de envio.</span>
+                </div>
             </div>
             
+            {/* Edit Modal */}
             {isModalOpen && editingFechamento && (
-                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-2xl">
-                        <h3 className="text-xl font-bold mb-6 text-text-primary">{editingFechamento.id ? 'Editar Lançamento' : 'Adicionar Lançamento'}</h3>
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-2xl overflow-visible">
+                        <h3 className="text-xl font-bold mb-6 text-text-primary text-center">{editingFechamento.id ? 'Editar Lançamento' : 'Adicionar Lançamento'}</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-1">Mês Referência <span className="text-danger">*</span></label>
-                                <input type="text" name="mesReferencia" placeholder="MM/AAAA" maxLength={7} value={editingFechamento.mesReferencia || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 ${errors.mesReferencia ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border focus:ring-primary'}`} />
-                                {errors.mesReferencia && <p className="text-danger text-xs mt-1">{errors.mesReferencia}</p>}
+                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Mês Ref. <span className="text-danger">*</span></label>
+                                <input type="text" name="mesReferencia" placeholder="MM/AAAA" maxLength={7} value={editingFechamento.mesReferencia || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.mesReferencia ? 'border-danger' : ''}`} />
+                                {errors.mesReferencia && <p className="text-danger text-xs mt-1 ml-1">{errors.mesReferencia}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-1">Empresa <span className="text-danger">*</span></label>
-                                <input type="text" value={editingFechamento.empresa || ''} disabled={isFabrica || isCristiano} className={`w-full rounded-xl px-3 py-2 ${isFabrica || isCristiano ? 'bg-gray-100 border-gray-300 text-text-secondary cursor-not-allowed' : `bg-background border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.empresa ? 'border-danger' : 'border-border'}`}`} />
-                                {!(isFabrica || isCristiano) && errors.empresa && <p className="text-danger text-xs mt-1">{errors.empresa}</p>}
+                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Empresa <span className="text-danger">*</span></label>
+                                <input type="text" value={editingFechamento.empresa || ''} disabled={isFabrica || isCristiano} className={`w-full rounded-xl px-4 py-3 h-12 ${isFabrica || isCristiano ? 'bg-gray-100 border-gray-200 text-text-secondary cursor-not-allowed' : `bg-secondary border-transparent text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none ${errors.empresa ? 'border-danger' : ''}`}`} />
+                                {!(isFabrica || isCristiano) && errors.empresa && <p className="text-danger text-xs mt-1 ml-1">{errors.empresa}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-1">Contabilidade <span className="text-danger">*</span></label>
-                                <input type="text" name="contabilidade" value={editingFechamento.contabilidade || ''} onChange={handleInputChange} disabled={isCristiano || isFabrica} className={`w-full rounded-xl px-3 py-2 ${isCristiano || isFabrica ? 'bg-gray-100 border-gray-300 text-text-secondary cursor-not-allowed' : `bg-background border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.contabilidade ? 'border-danger' : 'border-border'}`}`} />
-                                {!(isCristiano || isFabrica) && errors.contabilidade && <p className="text-danger text-xs mt-1">{errors.contabilidade}</p>}
+                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Contabilidade <span className="text-danger">*</span></label>
+                                <input type="text" name="contabilidade" value={editingFechamento.contabilidade || ''} onChange={handleInputChange} disabled={isCristiano || isFabrica} className={`w-full rounded-xl px-4 py-3 h-12 ${isCristiano || isFabrica ? 'bg-gray-100 border-gray-200 text-text-secondary cursor-not-allowed' : `bg-secondary border-transparent text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none ${errors.contabilidade ? 'border-danger' : ''}`}`} />
+                                {!(isCristiano || isFabrica) && errors.contabilidade && <p className="text-danger text-xs mt-1 ml-1">{errors.contabilidade}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-1">Portador <span className="text-danger">*</span></label>
-                                 <input type="text" value={editingFechamento.portador || ''} disabled={isFabrica || isCristiano} className={`w-full rounded-xl px-3 py-2 ${isFabrica || isCristiano ? 'bg-gray-100 border-gray-300 text-text-secondary cursor-not-allowed' : `bg-background border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-primary ${errors.portador ? 'border-danger' : 'border-border'}`}`} />
-                                {!(isFabrica || isCristiano) && errors.portador && <p className="text-danger text-xs mt-1">{errors.portador}</p>}
+                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Portador <span className="text-danger">*</span></label>
+                                 <input type="text" value={editingFechamento.portador || ''} disabled={isFabrica || isCristiano} className={`w-full rounded-xl px-4 py-3 h-12 ${isFabrica || isCristiano ? 'bg-gray-100 border-gray-200 text-text-secondary cursor-not-allowed' : `bg-secondary border-transparent text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none ${errors.portador ? 'border-danger' : ''}`}`} />
+                                {!(isFabrica || isCristiano) && errors.portador && <p className="text-danger text-xs mt-1 ml-1">{errors.portador}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-1">Valor Banco</label>
-                                <input type="text" name="valorBanco" value={formatCurrency(editingFechamento.valorBanco || 0)} onChange={handleInputChange} className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
+                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Valor Banco</label>
+                                <input type="text" name="valorBanco" value={formatCurrency(editingFechamento.valorBanco || 0)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12" />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-1">Valor Solinter</label>
-                                <input type="text" name="valorSolinter" value={formatCurrency(editingFechamento.valorSolinter || 0)} onChange={handleInputChange} className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
+                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Valor Solinter</label>
+                                <input type="text" name="valorSolinter" value={formatCurrency(editingFechamento.valorSolinter || 0)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12" />
                             </div>
                              <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-text-secondary mb-1">Data de Envio</label>
-                                <input type="date" name="dataEnvio" value={editingFechamento.dataEnvio || ''} onChange={handleInputChange} className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
+                                <DatePicker 
+                                    label="Data de Envio"
+                                    value={editingFechamento.dataEnvio || ''} 
+                                    onChange={(val) => setEditingFechamento(prev => ({...prev, dataEnvio: val}))} 
+                                    placeholder="Selecione"
+                                />
                             </div>
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-text-secondary mb-1">Anotações</label>
-                                <textarea name="anotacoes" value={editingFechamento.anotacoes || ''} onChange={handleInputChange} rows={3} className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" />
+                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Anotações</label>
+                                <textarea name="anotacoes" value={editingFechamento.anotacoes || ''} onChange={handleInputChange} rows={3} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none resize-none" placeholder="Observações..." />
                             </div>
                         </div>
-                        <div className="mt-8 flex justify-end gap-4">
-                            <button onClick={handleCloseModal} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                            <button onClick={handleSaveChanges} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Salvar</button>
+                        <div className="mt-8 flex justify-center gap-3">
+                            <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
+                            <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
                         </div>
                     </div>
                 </div>
             )}
 
+            {/* Date Envio Modal */}
             {isDateModalOpen && dateEditingFechamento && (
-                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-sm">
-                        <h3 className="text-lg font-bold mb-4 text-text-primary">Definir Data de Envio</h3>
-                        <p className="text-text-secondary mb-4">Empresa: <span className="font-semibold">{dateEditingFechamento.empresa}</span></p>
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-text-secondary mb-1">Data de Envio</label>
-                            <input 
-                                type="date" 
-                                value={tempDateEnvio} 
-                                onChange={(e) => setTempDateEnvio(e.target.value)} 
-                                className="w-full bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary" 
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm overflow-visible">
+                        <h3 className="text-xl font-bold mb-4 text-text-primary text-center">Data de Envio</h3>
+                        <p className="text-text-secondary text-sm mb-6 text-center">Defina a data para <span className="font-semibold text-text-primary block mt-1">{dateEditingFechamento.empresa}</span></p>
+                        <div className="mb-8">
+                            <DatePicker 
+                                label="Selecione a Data"
+                                value={tempDateEnvio || ''} 
+                                onChange={setTempDateEnvio} 
+                                placeholder="DD/MM/AAAA"
                             />
                         </div>
-                        <div className="flex justify-end gap-4">
-                            <button onClick={handleCloseDateModal} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                            <button onClick={() => handleSaveDateEnvio(tempDateEnvio)} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Salvar</button>
+                        <div className="flex justify-center gap-3">
+                            <button onClick={handleCloseDateModal} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
+                            <button onClick={() => handleSaveDateEnvio(tempDateEnvio)} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
                         </div>
                     </div>
                 </div>
             )}
 
+            {/* Confirmation Modal */}
             {isConfirmOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-sm">
-                        <h3 className="text-lg font-bold mb-4 text-text-primary">Confirmar Ação</h3>
-                        <p className="text-text-secondary mb-6">{confirmAction.message}</p>
-                        <div className="flex justify-end gap-4">
-                            <button onClick={handleCancelConfirm} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                            <button onClick={handleConfirm} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Confirmar</button>
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
+                        <h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar</h3>
+                        <p className="text-text-secondary mb-8">{confirmAction.message}</p>
+                        <div className="flex justify-center gap-4">
+                            <button onClick={handleCancelConfirm} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
+                            <button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button>
                         </div>
                     </div>
                 </div>

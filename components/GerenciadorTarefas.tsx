@@ -1,6 +1,8 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, EditIcon, CheckIcon, CalendarClockIcon, ArrowLeftIcon, ListIcon, KanbanIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, RefreshIcon } from './icons';
+import DatePicker from './DatePicker';
+import CustomSelect from './CustomSelect';
 
 // Enums
 enum StatusTarefa {
@@ -49,21 +51,6 @@ const formatDateToBR = (isoDate: string): string => {
     return date.toLocaleDateString('pt-BR', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
-const formatDateToISO = (brDate: string): string => {
-    if (!brDate || !/^\d{2}\/\d{2}\/\d{4}$/.test(brDate)) return '';
-    const [day, month, year] = brDate.split('/');
-    return `${year}-${month}-${day}`;
-};
-
-const applyDateMask = (value: string): string => value.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})\/(\d{2})(\d)/, '$1/$2/$3').replace(/(\/\d{4})\d+?$/, '$1');
-
-const isValidBRDate = (dateString: string): boolean => {
-    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) return false;
-    const [day, month, year] = dateString.split('/').map(Number);
-    const date = new Date(year, month - 1, day);
-    return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
-};
-
 const calculateNextDueDate = (currentDateStr: string, recurrence: RecorrenciaTarefa): string => {
     const date = new Date(currentDateStr + 'T00:00:00'); // Ensure UTC midnight to avoid timezone shifts
     
@@ -105,7 +92,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     });
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingTarefa, setEditingTarefa] = useState<Partial<Tarefa> & { dataVencimento_br?: string } | null>(null);
+    const [editingTarefa, setEditingTarefa] = useState<Partial<Tarefa> | null>(null);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<{ action: (() => void) | null, message: string }>({ action: null, message: '' });
     const [errors, setErrors] = useState<TarefaErrors>({});
@@ -120,8 +107,6 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     // Current Month View State
     const [currentViewDate, setCurrentViewDate] = useState(new Date());
 
-    const [lembretes, setLembretes] = useState<Tarefa[]>([]);
-    const [isLembreteOpen, setIsLembreteOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'tarefas' | 'analise'>('tarefas');
     const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
     const [currentPage, setCurrentPage] = useState(1);
@@ -135,27 +120,10 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         setCurrentPage(1);
     }, [searchTerm, statusFilter, currentViewDate]);
 
-    useEffect(() => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayISO = today.toISOString().split('T')[0];
-
-        const lembretesDoDia = tarefas.filter(t => {
-            if (t.status === StatusTarefa.CONCLUIDA) return false;
-            const vencimento = new Date(t.dataVencimento + 'T00:00:00');
-            return t.dataVencimento === todayISO || vencimento < today;
-        });
-
-        if (lembretesDoDia.length > 0) {
-            setLembretes(lembretesDoDia);
-            setIsLembreteOpen(true);
-        }
-    }, []);
-
     const handleOpenAddModal = () => {
         setErrors({});
         setEditingTarefa({ 
-            dataVencimento_br: '', 
+            dataVencimento: '', 
             status: StatusTarefa.PENDENTE,
             prioridade: PrioridadeTarefa.MEDIA,
             recorrencia: RecorrenciaTarefa.NENHUMA,
@@ -268,7 +236,6 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         setEditingTarefa({ 
             ...tarefa, 
             recorrencia: tarefa.recorrencia || RecorrenciaTarefa.NENHUMA, // Handle legacy data
-            dataVencimento_br: formatDateToBR(tarefa.dataVencimento) 
         });
         setIsModalOpen(true);
     };
@@ -363,8 +330,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         if (!editingTarefa) return;
         const { name, value } = e.target;
-        const finalValue = name === 'dataVencimento_br' ? applyDateMask(value) : value;
-        setEditingTarefa(prev => ({ ...prev, [name]: finalValue }));
+        setEditingTarefa(prev => ({ ...prev, [name]: value }));
     };
 
     const validate = (): boolean => {
@@ -372,7 +338,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         const newErrors: TarefaErrors = {};
         if (!editingTarefa.titulo?.trim()) newErrors.titulo = "O título é obrigatório.";
         if (!editingTarefa.categoria?.trim()) newErrors.categoria = "A categoria é obrigatória.";
-        if (!editingTarefa.dataVencimento_br || !isValidBRDate(editingTarefa.dataVencimento_br)) newErrors.dataVencimento = "Data de vencimento inválida.";
+        if (!editingTarefa.dataVencimento) newErrors.dataVencimento = "Data de vencimento inválida.";
         if (!editingTarefa.prioridade) newErrors.prioridade = "A prioridade é obrigatória.";
         if (!editingTarefa.status) newErrors.status = "O status é obrigatório.";
         setErrors(newErrors);
@@ -381,7 +347,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
     const handleSaveChanges = () => {
         if (!validate() || !editingTarefa) return;
-        const tarefaToSave = { ...editingTarefa, dataVencimento: formatDateToISO(editingTarefa.dataVencimento_br!) };
+        const tarefaToSave = { ...editingTarefa } as Tarefa;
         
         const action = () => {
             if (tarefaToSave.id) {
@@ -618,7 +584,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                 <button
                                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                     disabled={currentPage === 1}
-                                    className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    className="p-2 rounded-full hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     title="Página Anterior"
                                 >
                                     <ChevronLeftIcon className="h-5 w-5 text-text-primary" />
@@ -627,7 +593,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                 <button
                                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                     disabled={currentPage === totalPages || totalPages === 0}
-                                    className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    className="p-2 rounded-full hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     title="Próxima Página"
                                 >
                                     <ChevronRightIcon className="h-5 w-5 text-text-primary" />
@@ -785,51 +751,58 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                     {errors.categoria && <p className="text-danger text-xs mt-1 ml-1">{errors.categoria}</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Vencimento</label>
-                                    <input name="dataVencimento_br" value={editingTarefa.dataVencimento_br || ''} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.dataVencimento ? 'border-danger' : ''}`} placeholder="DD/MM/AAAA" />
+                                    <DatePicker 
+                                        label="Vencimento"
+                                        value={editingTarefa.dataVencimento || ''} 
+                                        onChange={(val) => setEditingTarefa(prev => ({...prev, dataVencimento: val}))} 
+                                        placeholder="Selecione"
+                                    />
                                     {errors.dataVencimento && <p className="text-danger text-xs mt-1 ml-1">{errors.dataVencimento}</p>}
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Prioridade</label>
-                                    <div className="relative">
-                                        <select name="prioridade" value={editingTarefa.prioridade || PrioridadeTarefa.MEDIA} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 appearance-none ${errors.prioridade ? 'border-danger' : ''}`}>
-                                            <option value={PrioridadeTarefa.ALTA}>Alta</option>
-                                            <option value={PrioridadeTarefa.MEDIA}>Média</option>
-                                            <option value={PrioridadeTarefa.BAIXA}>Baixa</option>
-                                        </select>
-                                        <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
-                                    </div>
+                                    <CustomSelect
+                                        label="Prioridade"
+                                        options={[
+                                            { label: 'Alta', value: PrioridadeTarefa.ALTA },
+                                            { label: 'Média', value: PrioridadeTarefa.MEDIA },
+                                            { label: 'Baixa', value: PrioridadeTarefa.BAIXA },
+                                        ]}
+                                        value={editingTarefa.prioridade || PrioridadeTarefa.MEDIA}
+                                        onChange={(val) => handleInputChange({ target: { name: 'prioridade', value: val } } as any)}
+                                    />
                                     {errors.prioridade && <p className="text-danger text-xs mt-1 ml-1">{errors.prioridade}</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Status</label>
-                                    <div className="relative">
-                                        <select name="status" value={editingTarefa.status || StatusTarefa.PENDENTE} onChange={handleInputChange} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 appearance-none ${errors.status ? 'border-danger' : ''}`}>
-                                            <option value={StatusTarefa.PENDENTE}>Pendente</option>
-                                            <option value={StatusTarefa.EM_ANDAMENTO}>Em Andamento</option>
-                                            <option value={StatusTarefa.CONCLUIDA}>Concluída</option>
-                                        </select>
-                                        <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
-                                    </div>
+                                    <CustomSelect
+                                        label="Status"
+                                        options={[
+                                            { label: 'Pendente', value: StatusTarefa.PENDENTE },
+                                            { label: 'Em Andamento', value: StatusTarefa.EM_ANDAMENTO },
+                                            { label: 'Concluída', value: StatusTarefa.CONCLUIDA },
+                                        ]}
+                                        value={editingTarefa.status || StatusTarefa.PENDENTE}
+                                        onChange={(val) => handleInputChange({ target: { name: 'status', value: val } } as any)}
+                                    />
                                     {errors.status && <p className="text-danger text-xs mt-1 ml-1">{errors.status}</p>}
                                 </div>
                             </div>
                             
                             <div>
-                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Recorrência</label>
-                                <div className="relative">
-                                    <select name="recorrencia" value={editingTarefa.recorrencia || RecorrenciaTarefa.NENHUMA} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 appearance-none">
-                                        <option value={RecorrenciaTarefa.NENHUMA}>Nenhuma (Apenas uma vez)</option>
-                                        <option value={RecorrenciaTarefa.DIARIA}>Diária (Todos os dias)</option>
-                                        <option value={RecorrenciaTarefa.SEMANAL}>Semanal (Toda semana)</option>
-                                        <option value={RecorrenciaTarefa.MENSAL}>Mensal (Todo mês)</option>
-                                        <option value={RecorrenciaTarefa.ANUAL}>Anual (Todo ano)</option>
-                                    </select>
-                                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-text-secondary"><ChevronDownIcon className="h-4 w-4" /></div>
-                                </div>
+                                <CustomSelect
+                                    label="Recorrência"
+                                    options={[
+                                        { label: 'Nenhuma (Apenas uma vez)', value: RecorrenciaTarefa.NENHUMA },
+                                        { label: 'Diária (Todos os dias)', value: RecorrenciaTarefa.DIARIA },
+                                        { label: 'Semanal (Toda semana)', value: RecorrenciaTarefa.SEMANAL },
+                                        { label: 'Mensal (Todo mês)', value: RecorrenciaTarefa.MENSAL },
+                                        { label: 'Anual (Todo ano)', value: RecorrenciaTarefa.ANUAL },
+                                    ]}
+                                    value={editingTarefa.recorrencia || RecorrenciaTarefa.NENHUMA}
+                                    onChange={(val) => handleInputChange({ target: { name: 'recorrencia', value: val } } as any)}
+                                />
                             </div>
                         </div>
                         <div className="flex justify-center gap-3 mt-8">
@@ -873,34 +846,6 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             <button onClick={() => setIsRecurringDeleteModalOpen(false)} className="w-full py-2 text-text-secondary font-medium hover:text-text-primary transition-colors">
                                 Cancelar
                             </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Reminder Modal (Only shows on mount if tasks due today) */}
-            {isLembreteOpen && lembretes.length > 0 && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
-                        <div className="flex items-center justify-center gap-2 mb-6">
-                            <CalendarClockIcon className="h-8 w-8 text-warning" />
-                            <h3 className="text-xl font-bold text-text-primary">Tarefas para Hoje</h3>
-                        </div>
-                        <div className="max-h-64 overflow-y-auto custom-scrollbar mb-6 space-y-3">
-                            {lembretes.map(t => (
-                                <div key={t.id} className="p-3 bg-secondary/30 rounded-xl border border-border flex justify-between items-center">
-                                    <div>
-                                        <p className="font-bold text-sm text-text-primary">{t.titulo}</p>
-                                        <p className="text-xs text-text-secondary">{t.categoria} - {t.prioridade}</p>
-                                    </div>
-                                    {getDynamicStatus(t) === 'Atrasada' && (
-                                        <span className="text-[10px] font-bold text-danger bg-danger/10 px-2 py-1 rounded-full">Atrasada</span>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                        <div className="flex justify-center">
-                            <button onClick={() => setIsLembreteOpen(false)} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold hover:bg-primary-hover transition-colors shadow-lg shadow-primary/20">Entendi</button>
                         </div>
                     </div>
                 </div>

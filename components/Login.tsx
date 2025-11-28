@@ -103,7 +103,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                 id="password"
                                 type="password"
                                 required
-                                className={`block w-full pl-11 pr-4 py-3.5 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all font-medium ${error ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-gray-200 hover:border-gray-300'}`}
+                                className={`block w-full pl-11 pr-4 h-12 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all font-medium ${error ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-gray-200 hover:border-gray-300'}`}
                                 placeholder="••••••"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -122,7 +122,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     <button
                         type="submit"
                         disabled={isLoading || isSuccess}
-                        className={`w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl text-base font-bold text-white transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5
+                        className={`w-full flex justify-center items-center h-12 px-4 border border-transparent rounded-xl text-base font-bold text-white transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5
                             ${isSuccess 
                                 ? 'bg-green-600 hover:bg-green-700 shadow-green-900/20' 
                                 : 'bg-orange-600 hover:bg-orange-700 shadow-orange-900/20'}

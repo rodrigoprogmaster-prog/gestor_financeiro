@@ -1,10 +1,11 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { PlusIcon, TrashIcon, EditIcon, DownloadIcon, SearchIcon } from './icons';
+import DatePicker from './DatePicker';
 
 interface Transferencia {
   id: string;
-  data: string;
+  data: string; // ISO YYYY-MM-DD
   empresaOrigem: string;
   empresaDestino: string;
   valor: number;
@@ -33,29 +34,6 @@ const formatDateToBR = (isoDate: string): string => {
     });
 };
 
-
-const formatDateToISO = (brDate: string): string => {
-    if (!brDate || !/^\d{2}\/\d{2}\/\d{4}$/.test(brDate)) return '';
-    const [day, month, year] = brDate.split('/');
-    return `${year}-${month}-${day}`;
-};
-
-const applyDateMask = (value: string): string => {
-    return value
-        .replace(/\D/g, '')
-        .replace(/(\d{2})(\d)/, '$1/$2')
-        .replace(/(\d{2})\/(\d{2})(\d)/, '$1/$2/$3')
-        .replace(/(\/\d{4})\d+?$/, '$1');
-};
-
-const isValidBRDate = (dateString: string): boolean => {
-    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) return false;
-    const [day, month, year] = dateString.split('/').map(Number);
-    const date = new Date(year, month - 1, day);
-    return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
-};
-
-
 const formatCurrency = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 
@@ -76,7 +54,7 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
         return saved ? JSON.parse(saved) : [];
     });
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingTransferencia, setEditingTransferencia] = useState<Partial<Transferencia> & { data_br?: string } | null>(null);
+    const [editingTransferencia, setEditingTransferencia] = useState<Partial<Transferencia> | null>(null);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<{ action: (() => void) | null, message: string }>({ action: null, message: '' });
     const [errors, setErrors] = useState<TransferenciaErrors>({});
@@ -102,7 +80,7 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
 
     const handleOpenAddModal = () => {
         setErrors({});
-        setEditingTransferencia({ ...newTransferenciaTemplate, data_br: formatDateToBR(newTransferenciaTemplate.data) });
+        setEditingTransferencia({ ...newTransferenciaTemplate });
         setIsModalOpen(true);
     };
 
@@ -119,7 +97,7 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
 
     const handleEditClick = (transferencia: Transferencia) => {
         setErrors({});
-        setEditingTransferencia({ ...transferencia, data_br: formatDateToBR(transferencia.data) });
+        setEditingTransferencia({ ...transferencia });
         setIsModalOpen(true);
     };
 
@@ -143,8 +121,6 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
                 if (numericValue === '') numericValue = '0';
                 const numberValue = Number(numericValue) / 100;
                 setEditingTransferencia({ ...editingTransferencia, valor: numberValue });
-            } else if (name === 'data_br') {
-                setEditingTransferencia({ ...editingTransferencia, data_br: applyDateMask(value) });
             }
             else {
                 setEditingTransferencia({ ...editingTransferencia, [name]: value });
@@ -214,8 +190,7 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
         
         const newErrors: TransferenciaErrors = {};
 
-        if (!editingTransferencia.data_br) newErrors.data = 'Data é obrigatória.';
-        else if (!isValidBRDate(editingTransferencia.data_br)) newErrors.data = 'Data inválida. Use DD/MM/AAAA.';
+        if (!editingTransferencia.data) newErrors.data = 'Data é obrigatória.';
         if (!editingTransferencia.empresaOrigem?.trim()) newErrors.empresaOrigem = 'Empresa de Origem é obrigatória.';
         if (!editingTransferencia.empresaDestino?.trim()) newErrors.empresaDestino = 'Empresa Destino é obrigatória.';
         if (!editingTransferencia.bancoOrigem?.trim()) newErrors.bancoOrigem = 'Banco de Origem é obrigatório.';
@@ -234,17 +209,15 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
             return;
         }
         
-        if (!editingTransferencia || !editingTransferencia.data_br) return;
+        if (!editingTransferencia || !editingTransferencia.data) return;
         
         const transferenciaToSave = {
             ...editingTransferencia,
-            data: formatDateToISO(editingTransferencia.data_br),
-        };
-        delete transferenciaToSave.data_br;
+        } as Transferencia;
 
         const action = () => {
             if (transferenciaToSave.id) { // Edit
-                setTransferencias(transferencias.map(t => t.id === transferenciaToSave.id ? { ...t, ...transferenciaToSave } as Transferencia : t));
+                setTransferencias(transferencias.map(t => t.id === transferenciaToSave.id ? transferenciaToSave : t));
             } else { // Add
                 const newTransferencia: Transferencia = {
                     id: `transf-${Date.now()}`,
@@ -274,13 +247,11 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
         <div className="animate-fade-in">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
                 <div className="flex items-center gap-2">
-                     <label htmlFor="report-date-filter" className="font-semibold text-sm">Filtrar por Dia:</label>
-                    <input
-                        id="report-date-filter"
-                        type="date"
-                        value={reportDateFilter}
-                        onChange={e => setReportDateFilter(e.target.value)}
-                        className="bg-background border border-border rounded-full px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10"
+                     <span className="font-semibold text-sm">Filtrar por Dia:</span>
+                     <DatePicker 
+                        value={reportDateFilter} 
+                        onChange={setReportDateFilter} 
+                        className="w-40"
                     />
                     <button onClick={() => setReportDateFilter('')} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">Limpar</button>
                 </div>
@@ -371,8 +342,12 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
                         </h3>
                         <div className="space-y-4">
                              <div>
-                                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Data</label>
-                                <input type="text" name="data_br" value={editingTransferencia.data_br || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" maxLength={10} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none ${errors.data ? 'border-danger' : ''}`} />
+                                <DatePicker 
+                                    label="Data"
+                                    value={editingTransferencia.data || ''} 
+                                    onChange={(val) => setEditingTransferencia(prev => ({...prev, data: val}))} 
+                                    placeholder="Selecione"
+                                />
                                 {errors.data && <p className="text-danger text-xs mt-1 ml-1">{errors.data}</p>}
                             </div>
                             <div>

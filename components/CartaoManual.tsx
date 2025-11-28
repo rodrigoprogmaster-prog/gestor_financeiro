@@ -1,6 +1,8 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { PlusIcon, TrashIcon, EditIcon, SearchIcon, DownloadIcon, ArrowLeftIcon, ChevronDownIcon } from './icons';
+import DatePicker from './DatePicker';
+import CustomSelect from './CustomSelect';
 
 // Data structure
 interface ManualTransaction {
@@ -25,27 +27,6 @@ const formatDateToBR = (isoDate: string): string => {
     });
 };
 
-const formatDateToISO = (brDate: string): string => {
-    if (!brDate || !/^\d{2}\/\d{2}\/\d{4}$/.test(brDate)) return '';
-    const [day, month, year] = brDate.split('/');
-    return `${year}-${month}-${day}`;
-};
-
-const applyDateMask = (value: string): string => {
-    return value
-        .replace(/\D/g, '')
-        .replace(/(\d{2})(\d)/, '$1/$2')
-        .replace(/(\d{2})\/(\d{2})(\d)/, '$1/$2/$3')
-        .replace(/(\/\d{4})\d+?$/, '$1');
-};
-
-const isValidBRDate = (dateString: string): boolean => {
-    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) return false;
-    const [day, month, year] = dateString.split('/').map(Number);
-    const date = new Date(year, month - 1, day);
-    return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
-};
-
 const formatCurrency = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 interface CartaoManualProps {
@@ -63,7 +44,7 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
     });
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingTransaction, setEditingTransaction] = useState<Partial<ManualTransaction> & { dataTransacao_br?: string } | null>(null);
+    const [editingTransaction, setEditingTransaction] = useState<Partial<ManualTransaction> | null>(null);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<{ action: (() => void) | null, message: string }>({ action: null, message: '' });
     const [monthFilter, setMonthFilter] = useState('');
@@ -173,7 +154,7 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
 
     const handleOpenAddModal = () => {
         setEditingTransaction({ 
-            dataTransacao_br: '', 
+            dataTransacao: '', 
             transacao: '',
             categoria: '',
             valor: 0,
@@ -194,10 +175,7 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
     }, []);
 
     const handleEditClick = (transaction: ManualTransaction) => {
-        setEditingTransaction({ 
-            ...transaction, 
-            dataTransacao_br: formatDateToBR(transaction.dataTransacao) 
-        });
+        setEditingTransaction({ ...transaction });
         setIsModalOpen(true);
     };
 
@@ -229,8 +207,6 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
             let numericValue = value.replace(/\D/g, '');
             if (numericValue === '') numericValue = '0';
             setEditingTransaction({ ...editingTransaction, valor: Number(numericValue) / 100 });
-        } else if (name === 'dataTransacao_br') {
-            setEditingTransaction({ ...editingTransaction, dataTransacao_br: applyDateMask(value) });
         } else {
             setEditingTransaction({ ...editingTransaction, [name]: value });
         }
@@ -238,12 +214,8 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
 
     const handleSaveChanges = () => {
         if (!editingTransaction) return;
-        if (!editingTransaction.transacao || !editingTransaction.dataTransacao_br || !editingTransaction.valor) {
+        if (!editingTransaction.transacao || !editingTransaction.dataTransacao || !editingTransaction.valor) {
             alert("Preencha todos os campos obrigatórios.");
-            return;
-        }
-        if (!isValidBRDate(editingTransaction.dataTransacao_br)) {
-            alert("Data inválida.");
             return;
         }
 
@@ -252,14 +224,14 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
             transacao: editingTransaction.transacao,
             categoria: editingTransaction.categoria || 'Geral',
             valor: editingTransaction.valor,
-            dataTransacao: formatDateToISO(editingTransaction.dataTransacao_br),
+            dataTransacao: editingTransaction.dataTransacao,
             status: editingTransaction.status || 'Pendente'
         };
 
         if (editingTransaction.id) {
-            setTransactions(prev => prev.map(t => t.id === transactionToSave.id ? transactionToSave : t));
+            setTransactions(prev => prev.map(t => t.id === transactionToSave.id ? transactionToSave as ManualTransaction : t));
         } else {
-            setTransactions(prev => [...prev, transactionToSave]);
+            setTransactions(prev => [...prev, transactionToSave as ManualTransaction]);
         }
         handleCloseModal();
     };
@@ -314,16 +286,17 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
                     <h3 className="text-xl md:text-2xl font-bold text-text-primary">{title}</h3>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                    <select
-                        value={monthFilter}
-                        onChange={(e) => setMonthFilter(e.target.value)}
-                        className="bg-background border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-10"
-                    >
-                        <option value="">Todos os Meses</option>
-                        {uniqueMonths.map(month => (
-                            <option key={month} value={month}>{month}</option>
-                        ))}
-                    </select>
+                    <div className="w-48">
+                        <CustomSelect
+                            options={[
+                                { label: 'Todos os Meses', value: '' },
+                                ...uniqueMonths.map(month => ({ label: month, value: month }))
+                            ]}
+                            value={monthFilter}
+                            onChange={(val) => setMonthFilter(val)}
+                            placeholder="Filtrar Mês"
+                        />
+                    </div>
                     <button onClick={() => setMonthFilter('')} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">
                         Limpar
                     </button>
@@ -336,21 +309,22 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
                 </div>
             </div>
 
-            <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4 flex-shrink-0">
-                <div className="bg-card p-4 rounded-2xl border border-border shadow-sm text-center">
-                    <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Valor Total</p>
+            {/* Unified Summary Strip */}
+            <div className="bg-white p-3 rounded-2xl border border-border shadow-sm mb-4 flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-border shrink-0">
+                <div className="px-6 py-2 flex-1 flex flex-col items-center justify-center">
+                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Valor Total</p>
                     <p className="text-xl font-bold text-primary">{formatCurrency(totals)}</p>
                 </div>
-                <div className="bg-card p-4 rounded-2xl border border-border shadow-sm text-center">
-                    <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Lançamentos</p>
-                    <p className="text-xl font-bold text-primary">{filteredTransactions.length}</p>
+                <div className="px-6 py-2 flex-1 flex flex-col items-center justify-center">
+                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Lançamentos</p>
+                    <p className="text-xl font-bold text-text-primary">{filteredTransactions.length}</p>
                 </div>
             </div>
 
             <div className="bg-card shadow-md rounded-2xl overflow-hidden flex flex-col flex-grow border border-border">
                 <div className="overflow-x-auto overflow-y-auto flex-grow">
                     <table className="min-w-full divide-y divide-border text-sm text-left">
-                        <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider sticky top-0 z-10 shadow-sm">
+                        <thead className="bg-secondary text-text-primary uppercase text-xs font-semibold sticky top-0 z-10 shadow-sm">
                             <tr>
                                 <th className="px-6 py-3 cursor-pointer hover:bg-border/50 select-none" onClick={() => requestSort('dataTransacao')}>Data {renderSortIcon('dataTransacao')}</th>
                                 <th className="px-6 py-3 cursor-pointer hover:bg-border/50 select-none" onClick={() => requestSort('transacao')}>Descrição {renderSortIcon('transacao')}</th>
@@ -368,22 +342,22 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
                                         className="hover:bg-secondary transition-colors cursor-pointer"
                                         onClick={() => handleStatusToggle(item.id)}
                                     >
-                                        <td className="px-6 py-4 whitespace-nowrap">{formatDateToBR(item.dataTransacao)}</td>
-                                        <td className="px-6 py-4 font-medium text-text-primary">{item.transacao}</td>
-                                        <td className="px-6 py-4">{item.categoria}</td>
-                                        <td className="px-6 py-4 text-right font-semibold text-text-primary whitespace-nowrap">{formatCurrency(item.valor)}</td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className={`px-2 py-1 text-xs font-bold rounded-full border ${item.status === 'Lançado' ? 'bg-success/10 text-success border-success/20' : 'bg-secondary text-text-secondary border-border'}`}>
+                                        <td className="px-6 py-2.5 whitespace-nowrap text-text-secondary">{formatDateToBR(item.dataTransacao)}</td>
+                                        <td className="px-6 py-2.5 font-medium text-text-primary">{item.transacao}</td>
+                                        <td className="px-6 py-2.5 text-text-secondary">{item.categoria}</td>
+                                        <td className="px-6 py-2.5 text-right font-semibold text-text-primary whitespace-nowrap">{formatCurrency(item.valor)}</td>
+                                        <td className="px-6 py-2.5 text-center">
+                                            <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${item.status === 'Lançado' ? 'bg-success/10 text-success border border-success/20' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>
                                                 {item.status || 'Pendente'}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                        <td className="px-6 py-2.5 text-center" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex items-center justify-center gap-2">
-                                                <button onClick={(e) => { e.stopPropagation(); handleEditClick(item); }} className="text-primary hover:text-primary/80 p-2 rounded-full hover:bg-primary/10 transition-colors">
-                                                    <EditIcon className="h-5 w-5" />
+                                                <button onClick={(e) => { e.stopPropagation(); handleEditClick(item); }} className="text-primary hover:text-primary/80 p-1.5 rounded-full hover:bg-primary/10 transition-colors">
+                                                    <EditIcon className="h-4 w-4" />
                                                 </button>
-                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(item.id); }} className="text-danger hover:text-danger/80 p-2 rounded-full hover:bg-danger/10 transition-colors">
-                                                    <TrashIcon className="h-5 w-5" />
+                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(item.id); }} className="text-danger hover:text-danger/80 p-1.5 rounded-full hover:bg-danger/10 transition-colors">
+                                                    <TrashIcon className="h-4 w-4" />
                                                 </button>
                                             </div>
                                         </td>
@@ -391,11 +365,11 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={6} className="text-center py-16">
-                                        <div className="flex flex-col items-center justify-center text-text-secondary">
-                                            <SearchIcon className="w-12 h-12 mb-4 text-gray-300" />
-                                            <h3 className="text-xl font-semibold text-text-primary">Nenhuma Transação Encontrada</h3>
-                                            <p className="mt-1">Adicione um lançamento manual para começar.</p>
+                                    <td colSpan={6} className="text-center py-12">
+                                        <div className="flex flex-col items-center justify-center text-text-secondary opacity-60">
+                                            <SearchIcon className="w-10 h-10 mb-3 text-gray-300" />
+                                            <h3 className="text-base font-semibold text-text-primary">Nenhuma Transação</h3>
+                                            <p className="text-sm mt-1">Adicione um lançamento manual para começar.</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -414,14 +388,11 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
                         
                         <div className="flex-1 overflow-y-auto p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-1">Data</label>
-                                <input 
-                                    name="dataTransacao_br" 
-                                    value={editingTransaction.dataTransacao_br || ''} 
-                                    onChange={handleInputChange} 
-                                    placeholder="DD/MM/AAAA"
-                                    maxLength={10}
-                                    className="w-full bg-background border border-border rounded-xl px-3 py-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12"
+                                <DatePicker 
+                                    label="Data"
+                                    value={editingTransaction.dataTransacao || ''} 
+                                    onChange={(val) => setEditingTransaction(prev => ({...prev, dataTransacao: val}))} 
+                                    placeholder="Selecione"
                                 />
                             </div>
                             <div>

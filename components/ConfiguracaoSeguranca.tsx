@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PasswordModal from './PasswordModal';
 import { UserIcon, KeyIcon, ArrowLeftIcon, EditIcon, CheckIcon, ChevronDownIcon, UploadIcon, DownloadIcon, DatabaseIcon, SpinnerIcon } from './icons';
+import CustomSelect from './CustomSelect';
 
 // Modal for managing users (placeholder)
 const ManageUsersModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
@@ -10,7 +11,7 @@ const ManageUsersModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
             <h3 className="text-lg font-bold mb-4 text-text-primary">Gerenciar Usuários</h3>
             <p className="text-text-secondary mb-6">Esta funcionalidade está em desenvolvimento e estará disponível em breve.</p>
             <div className="flex justify-end">
-                <button onClick={onClose} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Fechar</button>
+                <button onClick={onClose} className="h-12 px-6 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Fechar</button>
             </div>
         </div>
     </div>
@@ -61,16 +62,16 @@ const ChangePasswordModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             <div className="bg-card rounded-2xl shadow-lg border border-border p-8 w-full max-w-md">
                 <h3 className="text-xl font-bold mb-6 text-text-primary">Alterar Senha de Acesso</h3>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <input type="password" placeholder="Senha Atual" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required className="w-full bg-white border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12" autoFocus />
-                    <input type="password" placeholder="Nova Senha" value={newPassword} onChange={e => setNewPassword(e.target.value)} required className="w-full bg-white border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12" />
-                    <input type="password" placeholder="Confirmar Nova Senha" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="w-full bg-white border border-border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12" />
+                    <input type="password" placeholder="Senha Atual" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required className="w-full bg-white border border-border rounded-xl px-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12" autoFocus />
+                    <input type="password" placeholder="Nova Senha" value={newPassword} onChange={e => setNewPassword(e.target.value)} required className="w-full bg-white border border-border rounded-xl px-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12" />
+                    <input type="password" placeholder="Confirmar Nova Senha" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="w-full bg-white border border-border rounded-xl px-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary h-12" />
                     
                     {error && <p className="text-danger text-sm">{error}</p>}
                     {success && <p className="text-success text-sm">{success}</p>}
 
                     <div className="pt-4 flex justify-end gap-4">
-                        <button type="button" onClick={onClose} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                        <button type="submit" className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Salvar Nova Senha</button>
+                        <button type="button" onClick={onClose} className="h-12 px-6 rounded-xl bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
+                        <button type="submit" className="h-12 px-6 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Salvar Nova Senha</button>
                     </div>
                 </form>
             </div>
@@ -388,15 +389,38 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
                         </div>
                         <div className="space-y-3">
                             <label className="block text-sm font-medium text-text-secondary">Fonte do Sistema</label>
-                            <div className="flex gap-2">
-                                <select 
-                                    value={bodyFont} 
-                                    onChange={(e) => setBodyFont(e.target.value)}
-                                    className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm"
-                                >
-                                    {googleFonts.map(font => <option key={font} value={font}>{font}</option>)}
-                                </select>
-                                <button onClick={() => { setFontTarget('all'); handleApplyFont(); }} className="px-3 py-2 bg-primary text-white rounded-full text-xs font-bold hover:bg-primary-hover transition-colors">Aplicar</button>
+                            <div className="flex flex-col gap-3">
+                                <div className="flex gap-2">
+                                    <div className="flex-1">
+                                        <CustomSelect
+                                            options={googleFonts.map(font => ({ label: font, value: font }))}
+                                            value={bodyFont}
+                                            onChange={(val) => setBodyFont(String(val))}
+                                            placeholder="Selecione a fonte"
+                                        />
+                                    </div>
+                                    <div className="w-32">
+                                         <CustomSelect
+                                            options={[{label: 'Tudo', value: 'all'}, {label: 'Títulos', value: 'headings'}]}
+                                            value={fontTarget}
+                                            onChange={(val) => setFontTarget(val as any)}
+                                        />
+                                    </div>
+                                </div>
+                                {fontTarget === 'headings' && (
+                                     <div className="flex gap-2">
+                                        <div className="flex-1">
+                                            <CustomSelect
+                                                label="Fonte de Títulos"
+                                                options={googleFonts.map(font => ({ label: font, value: font }))}
+                                                value={headingFont}
+                                                onChange={(val) => setHeadingFont(String(val))}
+                                                placeholder="Selecione a fonte"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                                <button onClick={handleApplyFont} className="w-full h-12 flex items-center justify-center bg-secondary hover:bg-border rounded-xl text-sm font-semibold transition-colors">Aplicar Fonte</button>
                             </div>
                         </div>
                     </div>
@@ -407,52 +431,64 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
                     <h3 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
                         <KeyIcon className="h-5 w-5 text-primary"/> Segurança
                     </h3>
-                    <div className="space-y-3">
-                        <button onClick={() => requestPassword(() => setIsChangePasswordModalOpen(true))} className="w-full text-left px-4 py-3 bg-secondary hover:bg-border rounded-xl transition-colors text-text-primary flex justify-between items-center group">
-                            <span>Alterar Senha de Acesso</span>
-                            <ChevronDownIcon className="h-4 w-4 -rotate-90 text-text-secondary group-hover:text-text-primary" />
+                    <div className="space-y-4">
+                        <button onClick={() => requestPassword(() => setIsChangePasswordModalOpen(true))} className="w-full flex items-center justify-between p-4 rounded-xl bg-secondary hover:bg-border transition-colors group">
+                            <span className="font-medium text-text-primary">Alterar Senha de Acesso</span>
+                            <EditIcon className="h-4 w-4 text-text-secondary group-hover:text-primary transition-colors" />
                         </button>
-                        <button onClick={() => setIsManageUsersModalOpen(true)} className="w-full text-left px-4 py-3 bg-secondary hover:bg-border rounded-xl transition-colors text-text-primary flex justify-between items-center group">
-                            <span>Gerenciar Usuários</span>
-                            <ChevronDownIcon className="h-4 w-4 -rotate-90 text-text-secondary group-hover:text-text-primary" />
+                        <button onClick={() => setIsManageUsersModalOpen(true)} className="w-full flex items-center justify-between p-4 rounded-xl bg-secondary hover:bg-border transition-colors group">
+                            <span className="font-medium text-text-primary">Gerenciar Usuários</span>
+                            <UserIcon className="h-4 w-4 text-text-secondary group-hover:text-primary transition-colors" />
                         </button>
                     </div>
                 </div>
 
-                {/* Data Management */}
+                {/* Data Management Section */}
                 <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
                     <h3 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
-                        <DatabaseIcon className="h-5 w-5 text-primary"/> Backup e Dados
+                        <DatabaseIcon className="h-5 w-5 text-primary"/> Dados e Backup
                     </h3>
-                    <p className="text-sm text-text-secondary mb-4">Faça cópias de segurança ou restaure seus dados para manter seu histórico seguro.</p>
-                    <div className="grid grid-cols-2 gap-4">
-                        <button onClick={() => requestPassword(handleBackup)} disabled={isProcessing} className="flex flex-col items-center justify-center p-4 bg-secondary hover:bg-border rounded-xl transition-colors gap-2 border border-transparent hover:border-primary/20 disabled:opacity-50 disabled:cursor-not-allowed">
-                            {isProcessing ? <SpinnerIcon className="h-6 w-6 text-primary animate-spin" /> : <DownloadIcon className="h-6 w-6 text-primary" />}
-                            <span className="text-sm font-bold text-text-primary">Fazer Backup</span>
+                    <div className="space-y-4">
+                        <button onClick={() => requestPassword(handleBackup)} className="w-full flex items-center justify-between p-4 rounded-xl bg-secondary hover:bg-border transition-colors group" disabled={isProcessing}>
+                            <div className="flex items-center gap-3">
+                                <div className="bg-white p-2 rounded-full shadow-sm"><DownloadIcon className="h-5 w-5 text-primary" /></div>
+                                <div className="text-left">
+                                    <p className="font-medium text-text-primary">Fazer Backup</p>
+                                    <p className="text-xs text-text-secondary">Baixar cópia dos dados locais</p>
+                                </div>
+                            </div>
+                            {isProcessing ? <SpinnerIcon className="h-5 w-5 animate-spin text-primary" /> : null}
                         </button>
-                        <button onClick={() => !isProcessing && fileInputRef.current?.click()} disabled={isProcessing} className="flex flex-col items-center justify-center p-4 bg-secondary hover:bg-border rounded-xl transition-colors gap-2 relative border border-transparent hover:border-primary/20 disabled:opacity-50 disabled:cursor-not-allowed">
-                            {isProcessing ? <SpinnerIcon className="h-6 w-6 text-primary animate-spin" /> : <UploadIcon className="h-6 w-6 text-primary" />}
-                            <span className="text-sm font-bold text-text-primary">Restaurar</span>
-                            <input type="file" ref={fileInputRef} onChange={handleRestore} className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed" accept=".json" disabled={isProcessing} />
+                        
+                        <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center justify-between p-4 rounded-xl bg-secondary hover:bg-border transition-colors group" disabled={isProcessing}>
+                            <div className="flex items-center gap-3">
+                                <div className="bg-white p-2 rounded-full shadow-sm"><UploadIcon className="h-5 w-5 text-primary" /></div>
+                                <div className="text-left">
+                                    <p className="font-medium text-text-primary">Restaurar Backup</p>
+                                    <p className="text-xs text-text-secondary">Carregar dados de arquivo</p>
+                                </div>
+                            </div>
                         </button>
+                        <input type="file" ref={fileInputRef} onChange={handleRestore} className="hidden" accept=".json" />
                     </div>
                 </div>
+
             </div>
+
+            {/* Notification Toast */}
+            {notification && (
+                <div className={`fixed bottom-8 right-8 py-3 px-6 rounded-xl shadow-lg animate-fade-in z-50 font-medium text-white ${notification.type === 'error' ? 'bg-danger' : 'bg-success'}`}>
+                    {notification.message}
+                </div>
+            )}
 
             {/* Modals */}
             {isPasswordModalOpen && (
-                <PasswordModal
-                    isInitialUnlock
-                    onSuccess={handleInitialUnlockSuccess}
-                    onClose={() => { if(onBack) onBack(); }}
-                />
+                <PasswordModal onSuccess={handleInitialUnlockSuccess} onClose={() => onBack ? onBack() : null} isInitialUnlock={true} />
             )}
             
             {isActionPasswordModalOpen && (
-                <PasswordModal
-                    onSuccess={handleActionPasswordSuccess}
-                    onClose={() => setIsActionPasswordModalOpen(false)}
-                />
+                <PasswordModal onSuccess={handleActionPasswordSuccess} onClose={() => setIsActionPasswordModalOpen(false)} />
             )}
 
             {isChangePasswordModalOpen && (
@@ -464,20 +500,17 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
             )}
 
             {isRestoreSuccessModalOpen && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-card rounded-2xl shadow-lg border border-border p-8 w-full max-w-sm text-center">
-                        <CheckIcon className="h-12 w-12 text-success mx-auto mb-4" />
-                        <h3 className="text-lg font-bold mb-2 text-text-primary">Restauração Concluída!</h3>
-                        <p className="text-text-secondary mb-6">Seus dados foram restaurados com sucesso. A página será recarregada para aplicar as alterações.</p>
-                        <button onClick={() => window.location.reload()} className="py-2 px-6 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">OK, Recarregar</button>
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+                    <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm text-center">
+                        <div className="mx-auto w-16 h-16 bg-success/20 rounded-full flex items-center justify-center mb-4 text-success">
+                            <CheckIcon className="h-8 w-8" />
+                        </div>
+                        <h3 className="text-xl font-bold text-text-primary mb-2">Restauração Concluída</h3>
+                        <p className="text-text-secondary mb-6">Os dados foram restaurados com sucesso. A página será recarregada.</p>
+                        <button onClick={() => window.location.reload()} className="h-12 px-6 rounded-xl bg-primary text-white font-bold hover:bg-primary-hover transition-colors">
+                            Recarregar
+                        </button>
                     </div>
-                </div>
-            )}
-
-            {/* Toast Notification */}
-            {notification && (
-                <div className={`fixed bottom-8 right-8 py-3 px-6 rounded-xl shadow-lg animate-fade-in z-50 font-medium text-white ${notification.type === 'error' ? 'bg-danger' : 'bg-success'}`}>
-                    {notification.message}
                 </div>
             )}
         </div>
