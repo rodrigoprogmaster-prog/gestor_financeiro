@@ -55,13 +55,23 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [activeView, setActiveView] = useState<'boletos' | 'recorrentes' | 'notas_fiscais'>('boletos');
 
     const [boletos, setBoletos] = useState<Boleto[]>(() => {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        return saved ? JSON.parse(saved) : [];
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            console.error("Erro ao carregar boletos:", e);
+            return [];
+        }
     });
 
     const [despesasRecorrentes, setDespesasRecorrentes] = useState<DespesaRecorrente[]>(() => {
-        const saved = localStorage.getItem(STORAGE_KEY_RECORRENTES);
-        return saved ? JSON.parse(saved) : [];
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY_RECORRENTES);
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            console.error("Erro ao carregar despesas recorrentes:", e);
+            return [];
+        }
     });
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -180,13 +190,16 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             const statusMatch = !recorrentesFilters.status || item.status === recorrentesFilters.status;
             
             // Filter by "Dia/Mês" string inclusion (e.g. searching "5" matches "05" and "15")
-            const diaMatch = !recorrentesFilters.diaMes || String(item.diaVencimento).includes(recorrentesFilters.diaMes);
+            // Safe conversion to string to prevent crash on legacy data
+            const diaMatch = !recorrentesFilters.diaMes || String(item.diaVencimento || '').includes(recorrentesFilters.diaMes);
 
             return empresaMatch && descricaoMatch && diaMatch && statusMatch;
         }).sort((a, b) => {
             // Sort by day component. "05" -> 5, "05/10" -> 5.
-            const getDayValue = (val: string) => {
-                const parts = val.split('/');
+            const getDayValue = (val: any) => {
+                if (!val) return 0;
+                const strVal = String(val);
+                const parts = strVal.split('/');
                 return parseInt(parts[0], 10) || 0;
             };
             const dayA = getDayValue(a.diaVencimento);
