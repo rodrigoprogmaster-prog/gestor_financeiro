@@ -6,6 +6,33 @@ import { ClipboardCheckIcon, DatabaseIcon, ArrowLeftIcon } from './icons';
 
 type FechamentoView = 'cristiano' | 'fabrica' | 'caixa_cristiano' | 'caixa_fabrica';
 
+interface FechamentoCardProps {
+    title: string;
+    description: string;
+    icon: React.ReactNode;
+    onClick: () => void;
+}
+
+const FechamentoCard: React.FC<FechamentoCardProps> = ({ title, description, icon, onClick }) => (
+    <div
+        onClick={onClick}
+        className="bg-card w-full text-left rounded-2xl border border-border p-6 flex flex-col items-center text-center cursor-pointer hover:border-primary hover:shadow-md transition-all duration-200 group relative select-none"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                onClick();
+            }
+        }}
+    >
+        <div className="bg-secondary p-4 rounded-full mb-4 border border-border group-hover:border-primary/30 transition-colors">
+            {icon}
+        </div>
+        <h3 className="text-lg font-bold text-text-primary mb-2 group-hover:text-primary transition-colors">{title}</h3>
+        <p className="text-sm text-text-secondary">{description}</p>
+    </div>
+);
+
 const FechamentoPeriodo: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [selectedView, setSelectedView] = useState<FechamentoView | null>(null);
 
@@ -33,19 +60,6 @@ const FechamentoPeriodo: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         return <CaixaLiquidacao title="Caixa Liquidação Fábrica" storageKey="caixa_liquidacao_fabrica" onBack={handleBack} />;
     }
 
-    const Card = ({ title, description, icon, onClick }: { title: string, description: string, icon: React.ReactNode, onClick: () => void }) => (
-        <div
-            onClick={onClick}
-            className="bg-card rounded-2xl border border-border p-6 flex flex-col items-center text-center cursor-pointer hover:border-primary hover:shadow-sm transition-all duration-200 group"
-        >
-            <div className="bg-secondary p-4 rounded-full mb-4 border border-border group-hover:border-primary/30 transition-colors">
-                {icon}
-            </div>
-            <h3 className="text-lg font-bold text-text-primary mb-2 group-hover:text-primary transition-colors">{title}</h3>
-            <p className="text-sm text-text-secondary">{description}</p>
-        </div>
-    );
-
     return (
         <div className="p-4 sm:p-6 lg:p-8 w-full h-full overflow-y-auto animate-fade-in">
             <div className="flex items-center gap-4 mb-8 pb-4 border-b border-border">
@@ -62,25 +76,25 @@ const FechamentoPeriodo: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             
             <div className="max-w-5xl mx-auto">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card 
+                    <FechamentoCard 
                         title="Empresas Cristiano" 
                         description="Gerenciar o fechamento do período para as empresas de Cristiano." 
                         icon={<ClipboardCheckIcon className="h-6 w-6 text-primary" />} 
                         onClick={() => handleSelectView('cristiano')} 
                     />
-                    <Card 
+                    <FechamentoCard 
                         title="Empresas Fábrica" 
                         description="Gerenciar o fechamento do período para as empresas da Fábrica." 
                         icon={<ClipboardCheckIcon className="h-6 w-6 text-primary" />} 
                         onClick={() => handleSelectView('fabrica')} 
                     />
-                    <Card 
+                    <FechamentoCard 
                         title="Caixa Liquidação Cristiano" 
                         description="Gerenciar saldos de liquidação para as empresas de Cristiano." 
                         icon={<DatabaseIcon className="h-6 w-6 text-primary" />} 
                         onClick={() => handleSelectView('caixa_cristiano')} 
                     />
-                    <Card 
+                    <FechamentoCard 
                         title="Caixa Liquidação Fábrica" 
                         description="Gerenciar saldos de liquidação para as empresas da Fábrica." 
                         icon={<DatabaseIcon className="h-6 w-6 text-primary" />} 

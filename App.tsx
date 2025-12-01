@@ -18,6 +18,7 @@ import PagamentosDiariosHome from './components/PagamentosDiariosHome';
 import GerenciadorTarefas from './components/GerenciadorTarefas';
 import GlobalSearch from './components/GlobalSearch';
 import ConsultaCnpj from './components/ConsultaCnpj';
+import { useUI, useHideSidebarOnModal } from './UIContext';
 
 
 const App: React.FC = () => {
@@ -28,6 +29,11 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [globalSearchTerm, setGlobalSearchTerm] = useState('');
+
+  const { isAnyModalOpen } = useUI();
+  
+  // Register Global Search as a modal that hides sidebar
+  useHideSidebarOnModal(isGlobalSearchOpen);
 
   const handleCloseGlobalSearch = useCallback(() => {
     setIsGlobalSearchOpen(false);
@@ -205,14 +211,16 @@ const App: React.FC = () => {
         onToggleSidebar={handleToggleSidebar} 
       />
       <div className="flex flex-1 overflow-hidden min-h-0">
-        <Sidebar 
-            currentView={currentView} 
-            setView={setCurrentView} 
-            isOpen={isSidebarOpen} 
-            onClose={() => setIsSidebarOpen(false)}
-            onLogout={handleLogout}
-            onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
-        />
+        <div className={isAnyModalOpen ? 'hidden' : 'block h-full'}>
+            <Sidebar 
+                currentView={currentView} 
+                setView={setCurrentView} 
+                isOpen={isSidebarOpen} 
+                onClose={() => setIsSidebarOpen(false)}
+                onLogout={handleLogout}
+                onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
+            />
+        </div>
         {/* Main content wrapper with min-w-0 to prevent flex children from overflowing */}
         <main className="flex-1 relative flex flex-col h-full overflow-hidden bg-background min-w-0">
             <div className="w-full h-full flex flex-col overflow-hidden">

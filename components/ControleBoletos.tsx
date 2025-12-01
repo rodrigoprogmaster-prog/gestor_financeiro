@@ -5,6 +5,7 @@ import AutocompleteInput from './AutocompleteInput';
 import GerenciadorNotasFiscais from './GerenciadorNotasFiscais';
 import DatePicker from './DatePicker';
 import CustomSelect from './CustomSelect';
+import { useHideSidebarOnModal } from '../UIContext';
 
 enum StatusBoleto {
   A_VENCER = 'A Vencer',
@@ -101,6 +102,8 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         status: ''
     });
 
+    useHideSidebarOnModal(isModalOpen || isConfirmOpen);
+
     const uniqueFornecedores = useMemo(() => [...new Set(boletos.map(b => b.fornecedor).filter(Boolean))].sort(), [boletos]);
     const uniquePagadores = useMemo(() => [...new Set(boletos.map(b => b.pagador).filter(Boolean))].sort(), [boletos]);
     const uniqueEmpresasRecorrentes = useMemo(() => [...new Set(despesasRecorrentes.map(d => d.empresa).filter(Boolean))].sort(), [despesasRecorrentes]);
@@ -160,14 +163,12 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         return filtered;
     }, [allBoletosWithStatus, statusFilter, searchTerm, dateRange, sortConfig]);
 
-    // Calculate totals for cards
     const totals = useMemo(() => {
         return allBoletosWithStatus.reduce((acc, boleto) => {
             const searchMatch = !searchTerm || boleto.fornecedor.toLowerCase().includes(searchTerm.toLowerCase()) || boleto.pagador.toLowerCase().includes(searchTerm.toLowerCase());
             const startDateMatch = !dateRange.start || boleto.vencimento >= dateRange.start;
             const endDateMatch = !dateRange.end || boleto.vencimento <= dateRange.end;
             
-            // Only count items that match search/date criteria, ignoring status filter
             if (searchMatch && startDateMatch && endDateMatch) {
                 const status = boleto.dynamicStatus;
                 if (!acc[status]) acc[status] = { count: 0, value: 0 };
@@ -182,20 +183,15 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const paginatedBoletos = filteredBoletos.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-    // -- Recorrentes Logic --
     const filteredRecorrentes = useMemo(() => {
         return despesasRecorrentes.filter(item => {
             const empresaMatch = !recorrentesFilters.empresa || item.empresa.toLowerCase().includes(recorrentesFilters.empresa.toLowerCase());
             const descricaoMatch = !recorrentesFilters.descricao || item.descricao.toLowerCase().includes(recorrentesFilters.descricao.toLowerCase());
             const statusMatch = !recorrentesFilters.status || item.status === recorrentesFilters.status;
-            
-            // Filter by "Dia/Mês" string inclusion (e.g. searching "5" matches "05" and "15")
-            // Safe conversion to string to prevent crash on legacy data
             const diaMatch = !recorrentesFilters.diaMes || String(item.diaVencimento || '').includes(recorrentesFilters.diaMes);
 
             return empresaMatch && descricaoMatch && diaMatch && statusMatch;
         }).sort((a, b) => {
-            // Sort by day component. "05" -> 5, "05/10" -> 5.
             const getDayValue = (val: any) => {
                 if (!val) return 0;
                 const strVal = String(val);
@@ -220,7 +216,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
     const renderSortIcon = (key: keyof Boleto | 'dynamicStatus') => {
         if (sortConfig?.key === key) {
-            return <ChevronDownIcon className={`h-4 w-4 inline-block ml-1 transition-transform ${sortConfig.direction === 'asc' ? 'rotate-180' : ''}`} />;
+            return <ChevronDownIcon className={`h-3 w-3 inline-block ml-1 transition-transform ${sortConfig.direction === 'asc' ? 'rotate-180' : ''}`} />;
         }
         return null;
     };
@@ -392,32 +388,32 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {(Object.values(StatusBoleto) as StatusBoleto[]).map(status => {
                         const total = totals[status] || { count: 0, value: 0 };
-                        let borderColor = 'border-border';
-                        let textColor = 'text-primary';
-                        let bgColor = 'bg-card';
+                        let bgClass = 'bg-white hover:border-gray-200';
+                        let ringClass = '';
+                        let textClass = 'text-primary';
 
                         if (status === StatusBoleto.VENCIDO) {
-                            textColor = 'text-danger';
-                            if (statusFilter === status) borderColor = 'border-danger';
+                            textClass = 'text-danger';
+                            if (statusFilter === status) { bgClass = 'bg-red-50 border-danger'; ringClass = 'ring-1 ring-danger'; }
                         } else if (status === StatusBoleto.PAGO) {
-                            textColor = 'text-success';
-                            if (statusFilter === status) borderColor = 'border-success';
+                            textClass = 'text-success';
+                            if (statusFilter === status) { bgClass = 'bg-green-50 border-success'; ringClass = 'ring-1 ring-success'; }
                         } else if (status === StatusBoleto.LANCADO_SOLINTER) {
-                            textColor = 'text-blue-600';
-                            if (statusFilter === status) borderColor = 'border-blue-500';
+                            textClass = 'text-blue-600';
+                            if (statusFilter === status) { bgClass = 'bg-blue-50 border-blue-500'; ringClass = 'ring-1 ring-blue-500'; }
                         } else if (statusFilter === status) {
-                            borderColor = 'border-primary';
+                            bgClass = 'bg-orange-50 border-primary';
+                            ringClass = 'ring-1 ring-primary';
                         }
 
                         return (
                             <div 
                                 key={status} 
                                 onClick={() => setStatusFilter(status === statusFilter ? 'Todos' : status)} 
-                                className={`p-4 rounded-2xl border cursor-pointer transition-all hover:shadow-md ${statusFilter === status ? `bg-opacity-5 ${bgColor.replace('card', '')}` : 'bg-card hover:border-gray-300'} ${borderColor}`}
-                                style={statusFilter === status ? { backgroundColor: status === StatusBoleto.VENCIDO ? 'rgba(220, 38, 38, 0.05)' : status === StatusBoleto.PAGO ? 'rgba(5, 150, 105, 0.05)' : status === StatusBoleto.LANCADO_SOLINTER ? 'rgba(37, 99, 235, 0.05)' : 'rgba(194, 65, 12, 0.05)' } : {}}
+                                className={`p-4 rounded-2xl border shadow-sm cursor-pointer transition-all ${bgClass} ${ringClass} border-gray-200`}
                             >
-                                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">{status}</p>
-                                <p className={`text-xl font-bold ${textColor}`}>
+                                <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">{status}</p>
+                                <p className={`text-xl font-bold ${textClass}`}>
                                     {formatCurrency(total.value)}
                                 </p>
                                 <p className="text-xs text-text-secondary mt-1">{total.count} boletos</p>
@@ -434,67 +430,67 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             placeholder="Buscar Fornecedor ou Pagador..." 
                             value={searchTerm} 
                             onChange={e => setSearchTerm(e.target.value)} 
-                            className="w-full sm:w-80 pl-10 pr-3 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-12 transition-colors"
+                            className="w-full sm:w-80 pl-10 pr-3 bg-secondary border-transparent rounded-xl text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-10"
                         />
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon className="h-5 w-5 text-text-secondary"/></div>
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon className="h-4 w-4 text-text-secondary"/></div>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 bg-secondary rounded-lg p-1">
                             <DatePicker 
                                 value={dateRange.start} 
                                 onChange={(val) => setDateRange(prev => ({ ...prev, start: val }))} 
                                 placeholder="Início"
-                                className="w-32 h-12"
+                                className="w-28 h-9"
                             />
-                            <span className="text-xs text-text-secondary">até</span>
+                            <span className="text-xs text-text-secondary font-medium">até</span>
                             <DatePicker 
                                 value={dateRange.end} 
                                 onChange={(val) => setDateRange(prev => ({ ...prev, end: val }))} 
                                 placeholder="Fim"
-                                className="w-32 h-12"
+                                className="w-28 h-9"
                             />
                         </div>
-                        <button onClick={() => { setSearchTerm(''); setStatusFilter('Todos'); setDateRange({start: '', end: ''}); setSortConfig(null); }} className="px-4 py-2 rounded-xl bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-12 transition-colors">Limpar</button>
+                        <button onClick={() => { setSearchTerm(''); setStatusFilter('Todos'); setDateRange({start: '', end: ''}); setSortConfig(null); }} className="px-4 py-2 rounded-full bg-secondary hover:bg-border text-text-primary font-medium text-sm transition-colors">Limpar</button>
                     </div>
                 </div>
 
                 {/* Table */}
-                <div className="bg-card border border-border rounded-2xl overflow-hidden flex-grow shadow-sm flex flex-col">
-                    <div className="overflow-x-auto overflow-y-auto flex-grow">
+                <div className="bg-white border border-border rounded-2xl overflow-hidden flex-grow shadow-sm flex flex-col">
+                    <div className="overflow-x-auto overflow-y-auto flex-grow custom-scrollbar">
                         <table className="min-w-full divide-y divide-border text-sm text-left">
-                            <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider sticky top-0 z-10">
+                            <thead className="bg-gray-50 text-text-secondary font-semibold uppercase text-xs tracking-wider sticky top-0 z-10 shadow-sm">
                                 <tr>
-                                    <th className="px-6 py-3 cursor-pointer select-none hover:bg-border/50 transition-colors" onClick={() => requestSort('dynamicStatus')}>Status {renderSortIcon('dynamicStatus')}</th>
-                                    <th className="px-6 py-3 cursor-pointer select-none hover:bg-border/50 transition-colors" onClick={() => requestSort('fornecedor')}>Fornecedor {renderSortIcon('fornecedor')}</th>
-                                    <th className="px-6 py-3 cursor-pointer select-none hover:bg-border/50 transition-colors" onClick={() => requestSort('pagador')}>Pagador {renderSortIcon('pagador')}</th>
-                                    <th className="px-6 py-3 cursor-pointer select-none hover:bg-border/50 transition-colors" onClick={() => requestSort('vencimento')}>Vencimento {renderSortIcon('vencimento')}</th>
-                                    <th className="px-6 py-3 text-right cursor-pointer select-none hover:bg-border/50 transition-colors" onClick={() => requestSort('valor')}>Valor {renderSortIcon('valor')}</th>
+                                    <th className="px-6 py-3 cursor-pointer select-none hover:text-primary transition-colors" onClick={() => requestSort('dynamicStatus')}>Status {renderSortIcon('dynamicStatus')}</th>
+                                    <th className="px-6 py-3 cursor-pointer select-none hover:text-primary transition-colors" onClick={() => requestSort('fornecedor')}>Fornecedor {renderSortIcon('fornecedor')}</th>
+                                    <th className="px-6 py-3 cursor-pointer select-none hover:text-primary transition-colors" onClick={() => requestSort('pagador')}>Pagador {renderSortIcon('pagador')}</th>
+                                    <th className="px-6 py-3 cursor-pointer select-none hover:text-primary transition-colors" onClick={() => requestSort('vencimento')}>Vencimento {renderSortIcon('vencimento')}</th>
+                                    <th className="px-6 py-3 text-right cursor-pointer select-none hover:text-primary transition-colors" onClick={() => requestSort('valor')}>Valor {renderSortIcon('valor')}</th>
                                     <th className="px-6 py-3 text-center">Ações</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border bg-white">
                                 {paginatedBoletos.length > 0 ? paginatedBoletos.map(boleto => (
-                                    <tr key={boleto.id} className="hover:bg-secondary transition-colors">
-                                        <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded-full border ${
-                                                boleto.dynamicStatus === StatusBoleto.VENCIDO ? 'bg-danger/20 text-danger border-danger/30' :
-                                                boleto.dynamicStatus === StatusBoleto.PAGO ? 'bg-success/20 text-success border-success/30' :
-                                                boleto.dynamicStatus === StatusBoleto.LANCADO_SOLINTER ? 'bg-blue-100 text-blue-600 border-blue-200' :
-                                                'bg-primary/20 text-primary border-primary/30'
+                                    <tr key={boleto.id} className="hover:bg-gray-50 transition-colors group">
+                                        <td className="px-6 py-3">
+                                            <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-full border ${
+                                                boleto.dynamicStatus === StatusBoleto.VENCIDO ? 'bg-red-50 text-red-700 border-red-100' :
+                                                boleto.dynamicStatus === StatusBoleto.PAGO ? 'bg-green-50 text-green-700 border-green-100' :
+                                                boleto.dynamicStatus === StatusBoleto.LANCADO_SOLINTER ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                                'bg-orange-50 text-orange-700 border-orange-100'
                                             }`}>
                                                 {boleto.dynamicStatus}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 font-medium text-text-primary">{boleto.fornecedor}</td>
-                                        <td className="px-6 py-4 text-text-secondary">{boleto.pagador}</td>
-                                        <td className="px-6 py-4 text-text-secondary">{formatDateToBR(boleto.vencimento)}</td>
-                                        <td className="px-6 py-4 text-right font-semibold text-text-primary">{formatCurrency(boleto.valor)}</td>
-                                        <td className="px-6 py-4 text-center">
-                                            <div className="flex justify-center gap-2">
+                                        <td className="px-6 py-3 font-medium text-text-primary">{boleto.fornecedor}</td>
+                                        <td className="px-6 py-3 text-text-secondary">{boleto.pagador}</td>
+                                        <td className="px-6 py-3 text-text-secondary tabular-nums">{formatDateToBR(boleto.vencimento)}</td>
+                                        <td className="px-6 py-3 text-right font-semibold text-text-primary tabular-nums">{formatCurrency(boleto.valor)}</td>
+                                        <td className="px-6 py-3 text-center">
+                                            <div className="flex justify-center gap-1">
                                                 {/* Toggle Solinter */}
                                                 <button 
                                                     onClick={(e) => { e.stopPropagation(); handleToggleSolinter(boleto); }} 
-                                                    className={`p-1.5 rounded-full transition-colors ${boleto.lancadoSolinter ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'}`}
+                                                    className={`p-1.5 rounded-md transition-colors ${boleto.lancadoSolinter ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'}`}
                                                     title={boleto.lancadoSolinter ? "Remover do Solinter" : "Marcar como Lançado no Solinter"}
                                                 >
                                                     <ClipboardCheckIcon className="h-4 w-4" />
@@ -503,21 +499,21 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                                 {/* Toggle Pago */}
                                                 <button 
                                                     onClick={(e) => { e.stopPropagation(); handleTogglePago(boleto); }} 
-                                                    className={`p-1.5 rounded-full transition-colors ${boleto.pago ? 'text-success bg-green-50 hover:bg-green-100' : 'text-gray-400 hover:text-success hover:bg-green-50'}`}
+                                                    className={`p-1.5 rounded-md transition-colors ${boleto.pago ? 'text-success bg-green-50 hover:bg-green-100' : 'text-gray-400 hover:text-success hover:bg-green-50'}`}
                                                     title={boleto.pago ? "Marcar como Não Pago" : "Marcar como Pago"}
                                                 >
                                                     <CheckIcon className="h-4 w-4" />
                                                 </button>
 
-                                                <button onClick={() => handleEditClick(boleto)} className="text-primary hover:bg-primary/10 p-1.5 rounded-full transition-colors"><EditIcon className="h-4 w-4" /></button>
-                                                <button onClick={() => handleDeleteClick(boleto.id)} className="text-danger hover:bg-danger/10 p-1.5 rounded-full transition-colors"><TrashIcon className="h-4 w-4" /></button>
+                                                <button onClick={() => handleEditClick(boleto)} className="text-primary hover:bg-primary/10 p-1.5 rounded-md transition-colors"><EditIcon className="h-4 w-4" /></button>
+                                                <button onClick={() => handleDeleteClick(boleto.id)} className="text-danger hover:bg-danger/10 p-1.5 rounded-md transition-colors"><TrashIcon className="h-4 w-4" /></button>
                                             </div>
                                         </td>
                                     </tr>
                                 )) : (
                                     <tr>
                                         <td colSpan={6} className="text-center py-16">
-                                            <div className="flex flex-col items-center text-text-secondary">
+                                            <div className="flex flex-col items-center text-text-secondary opacity-60">
                                                 <SearchIcon className="w-10 h-10 mb-3 text-gray-300"/>
                                                 <h3 className="text-lg font-medium text-text-primary">Nenhum Boleto Encontrado</h3>
                                                 <p className="text-sm">Tente ajustar os filtros ou adicione um novo boleto.</p>
@@ -529,14 +525,14 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         </table>
                     </div>
                     {/* Pagination Footer */}
-                    <div className="flex justify-between items-center p-4 border-t border-border bg-card rounded-b-2xl">
-                        <div className="text-sm text-text-secondary">
+                    <div className="flex justify-between items-center p-4 border-t border-border bg-gray-50 text-xs text-text-secondary">
+                        <div>
                             Exibindo {filteredBoletos.length > 0 ? startIndex + 1 : 0} a {Math.min(startIndex + ITEMS_PER_PAGE, filteredBoletos.length)} de {filteredBoletos.length} registros
                         </div>
                         <div className="flex items-center gap-2">
-                            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 rounded-full hover:bg-secondary disabled:opacity-50 transition-colors"><ChevronLeftIcon className="h-5 w-5 text-text-primary" /></button>
-                            <span className="text-sm font-medium text-text-primary">Página {currentPage} de {Math.max(1, totalPages)}</span>
-                            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 rounded-full hover:bg-secondary disabled:opacity-50 transition-colors"><ChevronRightIcon className="h-5 w-5 text-text-primary" /></button>
+                            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-1.5 rounded-md hover:bg-gray-200 disabled:opacity-50 transition-colors"><ChevronLeftIcon className="h-4 w-4" /></button>
+                            <span className="font-medium">Página {currentPage} de {Math.max(1, totalPages)}</span>
+                            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-1.5 rounded-md hover:bg-gray-200 disabled:opacity-50 transition-colors"><ChevronRightIcon className="h-4 w-4" /></button>
                         </div>
                     </div>
                 </div>
@@ -555,9 +551,9 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             placeholder="Buscar Empresa..." 
                             value={recorrentesFilters.empresa} 
                             onChange={e => setRecorrentesFilters(prev => ({...prev, empresa: e.target.value}))} 
-                            className="w-full pl-10 pr-3 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-12 transition-colors"
+                            className="w-full pl-10 pr-3 bg-secondary border-transparent rounded-xl text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-10"
                         />
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon className="h-5 w-5 text-text-secondary"/></div>
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon className="h-4 w-4 text-text-secondary"/></div>
                     </div>
                     <div className="relative w-full sm:w-64">
                         <input 
@@ -565,7 +561,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             placeholder="Buscar Descrição..." 
                             value={recorrentesFilters.descricao} 
                             onChange={e => setRecorrentesFilters(prev => ({...prev, descricao: e.target.value}))} 
-                            className="w-full pl-3 pr-3 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-12 transition-colors"
+                            className="w-full pl-3 pr-3 bg-secondary border-transparent rounded-xl text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-10"
                         />
                     </div>
                     <div className="relative w-full sm:w-32">
@@ -574,21 +570,21 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             placeholder="Dia/Mês" 
                             value={recorrentesFilters.diaMes} 
                             onChange={e => setRecorrentesFilters(prev => ({...prev, diaMes: e.target.value}))} 
-                            className="w-full pl-3 pr-3 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-12 transition-colors text-center"
+                            className="w-full pl-3 pr-3 bg-secondary border-transparent rounded-xl text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-10 text-center"
                         />
                     </div>
                     <button 
                         onClick={() => setRecorrentesFilters({ empresa: '', descricao: '', diaMes: '', status: '' })} 
-                        className="px-4 py-2 rounded-xl bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-12 transition-colors"
+                        className="px-4 py-2 rounded-full bg-secondary hover:bg-border text-text-primary font-medium text-sm transition-colors"
                     >
                         Limpar
                     </button>
                 </div>
 
-                <div className="bg-card border border-border rounded-2xl overflow-hidden flex-grow shadow-sm flex flex-col">
-                    <div className="overflow-x-auto overflow-y-auto flex-grow">
+                <div className="bg-white border border-border rounded-2xl overflow-hidden flex-grow shadow-sm flex flex-col">
+                    <div className="overflow-x-auto overflow-y-auto flex-grow custom-scrollbar">
                         <table className="min-w-full divide-y divide-border text-sm text-left">
-                            <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider sticky top-0 z-10">
+                            <thead className="bg-gray-50 text-text-secondary font-semibold uppercase text-xs tracking-wider sticky top-0 z-10 shadow-sm">
                                 <tr>
                                     <th className="px-6 py-3">Dia Venc.</th>
                                     <th className="px-6 py-3">Empresa</th>
@@ -603,21 +599,21 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                     <tr 
                                         key={despesa.id} 
                                         onClick={() => handleToggleRecorrenteStatus(despesa.id)}
-                                        className={`cursor-pointer transition-colors ${despesa.status === 'Lançado' ? 'bg-green-50 hover:bg-green-100' : 'hover:bg-secondary'}`}
+                                        className={`cursor-pointer transition-colors ${despesa.status === 'Lançado' ? 'bg-green-50 hover:bg-green-100' : 'hover:bg-gray-50'}`}
                                     >
-                                        <td className="px-6 py-4 text-text-secondary font-medium">{despesa.diaVencimento}</td>
-                                        <td className="px-6 py-4 font-medium text-text-primary">{despesa.empresa}</td>
-                                        <td className="px-6 py-4 text-text-secondary">{despesa.descricao}</td>
-                                        <td className="px-6 py-4 text-text-secondary">{despesa.recorrencia}</td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded-full border ${despesa.status === 'Lançado' ? 'bg-success/20 text-success border-success/30' : 'bg-warning/20 text-warning border-warning/30'}`}>
+                                        <td className="px-6 py-3 text-text-secondary font-medium">{despesa.diaVencimento}</td>
+                                        <td className="px-6 py-3 font-medium text-text-primary">{despesa.empresa}</td>
+                                        <td className="px-6 py-3 text-text-secondary">{despesa.descricao}</td>
+                                        <td className="px-6 py-3 text-text-secondary">{despesa.recorrencia}</td>
+                                        <td className="px-6 py-3 text-center">
+                                            <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-full border ${despesa.status === 'Lançado' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
                                                 {despesa.status}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <div className="flex justify-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                                <button onClick={() => handleEditClick(despesa)} className="text-primary hover:bg-primary/10 p-1.5 rounded-full transition-colors"><EditIcon className="h-4 w-4" /></button>
-                                                <button onClick={() => handleDeleteClick(despesa.id)} className="text-danger hover:bg-danger/10 p-1.5 rounded-full transition-colors"><TrashIcon className="h-4 w-4" /></button>
+                                        <td className="px-6 py-3 text-center">
+                                            <div className="flex justify-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                                <button onClick={() => handleEditClick(despesa)} className="text-primary hover:bg-primary/10 p-1.5 rounded-md transition-colors"><EditIcon className="h-4 w-4"/></button>
+                                                <button onClick={() => handleDeleteClick(despesa.id)} className="text-danger hover:bg-danger/10 p-1.5 rounded-md transition-colors"><TrashIcon className="h-4 w-4"/></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -631,11 +627,11 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     };
 
     return (
-        <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in flex flex-col h-full">
+        <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in flex flex-col h-full max-w-[1600px] mx-auto">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
                 <div className="flex items-center gap-4">
                     {onBack && (
-                      <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-9">
+                      <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold transition-colors h-10 text-sm shadow-sm">
                           <ArrowLeftIcon className="h-4 w-4" />
                           Voltar
                       </button>
@@ -643,15 +639,15 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     <h2 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Controle de Boletos e Despesas</h2>
                 </div>
                 <div className="flex bg-secondary p-1 rounded-full border border-border">
-                    <button onClick={() => setActiveView('boletos')} className={`px-4 py-1.5 text-sm font-bold rounded-full transition-all ${activeView === 'boletos' ? 'bg-white text-primary shadow-sm' : 'text-text-secondary'}`}>Boletos</button>
-                    <button onClick={() => setActiveView('recorrentes')} className={`px-4 py-1.5 text-sm font-bold rounded-full transition-all ${activeView === 'recorrentes' ? 'bg-white text-primary shadow-sm' : 'text-text-secondary'}`}>Recorrentes</button>
-                    <button onClick={() => setActiveView('notas_fiscais')} className={`px-4 py-1.5 text-sm font-bold rounded-full transition-all ${activeView === 'notas_fiscais' ? 'bg-white text-primary shadow-sm' : 'text-text-secondary'}`}>Notas Fiscais</button>
+                    <button onClick={() => setActiveView('boletos')} className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all ${activeView === 'boletos' ? 'bg-white text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}>Boletos</button>
+                    <button onClick={() => setActiveView('recorrentes')} className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all ${activeView === 'recorrentes' ? 'bg-white text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}>Recorrentes</button>
+                    <button onClick={() => setActiveView('notas_fiscais')} className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all ${activeView === 'notas_fiscais' ? 'bg-white text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}>Notas Fiscais</button>
                 </div>
             </div>
 
             {activeView === 'boletos' && (
                 <div className="flex justify-end mb-4">
-                    <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-primary text-white font-medium py-2 px-4 rounded-full hover:bg-primary-hover text-sm h-10 shadow-sm transition-colors">
+                    <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-white border border-gray-200 text-primary font-medium py-2 px-4 rounded-full hover:bg-orange-50 hover:border-orange-200 text-sm h-10 shadow-sm transition-colors">
                         <PlusIcon className="h-4 w-4" /> Novo Boleto
                     </button>
                 </div>
@@ -659,7 +655,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             
             {activeView === 'recorrentes' && (
                 <div className="flex justify-end mb-4">
-                    <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-primary text-white font-medium py-2 px-4 rounded-full hover:bg-primary-hover text-sm h-10 shadow-sm transition-colors">
+                    <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-white border border-gray-200 text-primary font-medium py-2 px-4 rounded-full hover:bg-orange-50 hover:border-orange-200 text-sm h-10 shadow-sm transition-colors">
                         <PlusIcon className="h-4 w-4" /> Nova Despesa
                     </button>
                 </div>
@@ -673,7 +669,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
                         <div className="shrink-0 p-6 pb-4 border-b border-gray-100">
-                            <h3 className="text-2xl font-bold text-text-primary text-center">
+                            <h3 className="text-xl font-bold text-text-primary text-center">
                                 {editingBoleto?.id || editingDespesa?.id ? 'Editar' : 'Adicionar'}
                             </h3>
                         </div>
@@ -748,8 +744,8 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         </div>
 
                         <div className="shrink-0 p-6 pt-4 border-t border-gray-100 flex justify-center gap-3 bg-gray-50">
-                            <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                            <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
+                            <button onClick={handleCloseModal} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-text-primary font-semibold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
+                            <button onClick={handleSaveChanges} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Salvar</button>
                         </div>
                     </div>
                 </div>
@@ -761,8 +757,8 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         <h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar</h3>
                         <p className="text-text-secondary mb-8">{confirmAction.message}</p>
                         <div className="flex justify-center gap-4">
-                            <button onClick={handleCancelConfirm} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                            <button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button>
+                            <button onClick={handleCancelConfirm} className="px-6 py-2.5 rounded-full bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
+                            <button onClick={handleConfirm} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Confirmar</button>
                         </div>
                     </div>
                 </div>

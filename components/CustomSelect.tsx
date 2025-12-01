@@ -58,7 +58,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={`
-          relative w-full bg-white border rounded-xl px-4 py-2.5 text-left text-sm cursor-pointer transition-all duration-200 flex items-center justify-between
+          relative w-full bg-white border rounded-xl px-4 text-left text-sm cursor-pointer transition-all duration-200 flex items-center justify-between h-12
           ${isOpen ? 'border-primary ring-2 ring-primary/10 shadow-sm' : 'border-border hover:border-gray-300'}
           ${disabled ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'text-text-primary'}
         `}

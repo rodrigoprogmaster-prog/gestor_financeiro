@@ -11,7 +11,7 @@ const ManageUsersModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
             <h3 className="text-lg font-bold mb-4 text-text-primary">Gerenciar Usuários</h3>
             <p className="text-text-secondary mb-6">Esta funcionalidade está em desenvolvimento e estará disponível em breve.</p>
             <div className="flex justify-end">
-                <button onClick={onClose} className="h-12 px-6 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Fechar</button>
+                <button onClick={onClose} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Fechar</button>
             </div>
         </div>
     </div>
@@ -70,8 +70,8 @@ const ChangePasswordModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
                     {success && <p className="text-success text-sm">{success}</p>}
 
                     <div className="pt-4 flex justify-end gap-4">
-                        <button type="button" onClick={onClose} className="h-12 px-6 rounded-xl bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                        <button type="submit" className="h-12 px-6 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Salvar Nova Senha</button>
+                        <button type="button" onClick={onClose} className="px-6 py-2.5 rounded-full bg-secondary hover:bg-gray-200 text-text-primary font-semibold transition-colors">Cancelar</button>
+                        <button type="submit" className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Salvar Nova Senha</button>
                     </div>
                 </form>
             </div>
@@ -507,7 +507,7 @@ const ConfiguracaoSeguranca: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
                         </div>
                         <h3 className="text-xl font-bold text-text-primary mb-2">Restauração Concluída</h3>
                         <p className="text-text-secondary mb-6">Os dados foram restaurados com sucesso. A página será recarregada.</p>
-                        <button onClick={() => window.location.reload()} className="h-12 px-6 rounded-xl bg-primary text-white font-bold hover:bg-primary-hover transition-colors">
+                        <button onClick={() => window.location.reload()} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">
                             Recarregar
                         </button>
                     </div>

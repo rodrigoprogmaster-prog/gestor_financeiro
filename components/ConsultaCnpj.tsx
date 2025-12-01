@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { SearchIcon, SpinnerIcon, BuildingIcon, CopyIcon, ArrowLeftIcon, CheckIcon } from './icons';
 
@@ -122,7 +121,7 @@ const ConsultaCnpj: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         onChange={handleInputChange}
                         onKeyDown={handleKeyDown}
                         placeholder="00.000.000/0000-00"
-                        className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 pl-12 text-lg font-mono text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 shadow-inner"
+                        className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 pl-12 text-lg text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 shadow-inner"
                         maxLength={18}
                     />
                     <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-text-secondary" />
@@ -131,7 +130,7 @@ const ConsultaCnpj: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             <button
                 onClick={fetchCnpj}
                 disabled={loading || cnpjInput.length < 14}
-                className="w-full sm:w-auto h-12 px-8 rounded-full bg-primary text-white font-bold hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto h-12 px-8 rounded-full bg-white border border-gray-200 text-primary font-bold hover:bg-orange-50 hover:border-orange-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center gap-2"
             >
                 {loading ? <SpinnerIcon className="h-5 w-5 animate-spin" /> : <SearchIcon className="h-5 w-5" />}
                 {loading ? 'Consultando...' : 'Consultar'}

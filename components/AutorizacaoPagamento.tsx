@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { DownloadIcon } from './icons';
+import DatePicker from './DatePicker';
 
 // Interfaces for data structure
 interface AuthValues {
@@ -279,179 +279,143 @@ const AutorizacaoPagamento: React.FC<AutorizacaoPagamentoProps> = ({ storageKeyS
     );
 
     const ws = XLSX.utils.aoa_to_sheet(data);
-    
-    // Formatting
-    const range = XLSX.utils.decode_range(ws['!ref']);
-    for(let R = 0; R <= range.e.r; ++R) {
-        const cellRef = XLSX.utils.encode_cell({c: 1, r: R}); // Check column B (index 1)
-        if (ws[cellRef] && typeof ws[cellRef].v === 'number' && R !== 3 && R !== 7 && R !== 13 && R !== 20) { // Rudimentary check to skip Lancamentos counts based on fixed layout assumptions or just apply currency to everything in Col B > 100 maybe?
-             // Easier: just check specific cells or apply to all numbers in column B
-             // Let's just apply to all numbers in Col B for now, assuming counts are small integers and values are large? No, unsafe.
-             // Let's stick to formatting specific cells is tricky dynamically.
-             // We can iterate and check if label in Col A is 'Lançamentos', then skip formatting.
-             const labelRef = XLSX.utils.encode_cell({c: 0, r: R});
-             if(ws[labelRef] && ws[labelRef].v !== 'Lançamentos' && ws[labelRef].v !== 'DIFERENÇA LANÇAMENTOS') {
-                 ws[cellRef].z = 'R$ #,##0.00';
-             }
-        }
-    }
-
-    ws['!cols'] = [{ wch: 50 }, { wch: 20 }];
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Aprovação');
-    XLSX.writeFile(wb, `aprovacao_pagamento_${storageKeySuffix}_${selectedDate}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, "Autorização");
+    XLSX.writeFile(wb, `autorizacao_pagamento_${selectedDate}.xlsx`);
   };
 
   return (
-    <div className="animate-fade-in p-4 lg:p-8 w-full max-w-5xl mx-auto">
-        <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-2xl border border-border shadow-sm">
-            <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-text-primary uppercase tracking-wider">
-                    Aprovação ({isFabrica ? 'Fábrica' : isCristiano ? 'Cristiano' : 'Geral'}) - {formatDateToBR(selectedDate)}
-                </h2>
-            </div>
+    <div className="animate-fade-in flex flex-col h-full">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-4">
-                <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={e => setSelectedDate(e.target.value)}
-                    className="bg-secondary border border-border rounded-lg px-3 py-1.5 text-text-primary text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                <DatePicker 
+                    value={selectedDate} 
+                    onChange={setSelectedDate}
+                    className="w-40" 
                 />
-                <button
-                    onClick={handleExportXLSX}
-                    className="flex items-center gap-2 bg-secondary text-text-primary font-medium py-1.5 px-4 rounded-full hover:bg-border transition-colors text-sm"
-                >
-                    <DownloadIcon className="h-4 w-4" />
-                    Exportar
-                </button>
+            </div>
+            <button 
+                onClick={handleExportXLSX}
+                className="flex items-center gap-2 bg-white border border-gray-300 text-success font-medium py-2 px-4 rounded-full hover:bg-green-50 transition-colors shadow-sm text-sm"
+            >
+                <DownloadIcon className="h-4 w-4" /> Exportar Planilha
+            </button>
+        </div>
+
+        {/* Content Grid */}
+        <div className="bg-card rounded-2xl border border-border shadow-sm p-6 overflow-y-auto flex-grow custom-scrollbar">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                
+                {/* Left Column: Solinter */}
+                <div className="space-y-6">
+                    <div className="bg-secondary/30 p-4 rounded-xl border border-border">
+                        <EditableLabel name="solinterTitle" value={currentData.labels.solinterTitle} onChange={(e) => handleInputChange(e, 'labels')} className="font-bold text-lg text-primary mb-3 block" />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-xs font-bold text-text-secondary uppercase">Lançamentos</label>
+                                <NumberInput name="solinterLancamentos" value={currentData.values.solinterLancamentos} onChange={(e) => handleInputChange(e, 'values')} />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-text-secondary uppercase">Valor Total</label>
+                                <FormattedInput name="solinterTotal" value={currentData.values.solinterTotal} onChange={(e) => handleInputChange(e, 'values')} className="font-bold" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Column: Banks */}
+                <div className="space-y-6">
+                    {/* Inter */}
+                    <div className="bg-white p-4 rounded-xl border border-border shadow-sm">
+                        <EditableLabel name="interTitle" value={currentData.labels.interTitle} onChange={(e) => handleInputChange(e, 'labels')} className="font-bold text-lg text-text-primary mb-3 block" />
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className="text-xs font-bold text-text-secondary uppercase">Lançamentos</label>
+                                <NumberInput name="interLancamentos" value={currentData.values.interLancamentos} onChange={(e) => handleInputChange(e, 'values')} />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-text-secondary uppercase">Valor Total</label>
+                                <FormattedInput name="interTotal" value={currentData.values.interTotal} onChange={(e) => handleInputChange(e, 'values')} />
+                            </div>
+                        </div>
+                        <div className="space-y-2 border-t border-border pt-2">
+                            <div className="grid grid-cols-3 gap-2 items-center">
+                                <div className="col-span-2"><EditableLabel name="interBoletoInvalidoLabel" value={currentData.labels.interBoletoInvalidoLabel} onChange={(e) => handleInputChange(e, 'labels')} className="text-sm text-text-secondary" /></div>
+                                <FormattedInput name="interBoletoInvalido" value={currentData.values.interBoletoInvalido} onChange={(e) => handleInputChange(e, 'values')} />
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 items-center">
+                                <div className="col-span-2"><EditableLabel name="interDescontoLabel" value={currentData.labels.interDescontoLabel} onChange={(e) => handleInputChange(e, 'labels')} className="text-sm text-text-secondary" /></div>
+                                <FormattedInput name="interDesconto" value={currentData.values.interDesconto} onChange={(e) => handleInputChange(e, 'values')} />
+                            </div>
+                            <div className="flex justify-between items-center pt-2 mt-2 border-t border-dashed border-border">
+                                <span className="text-sm font-bold text-text-primary">Subtotal Inter</span>
+                                <span className="text-sm font-bold text-text-primary">{formatCurrency(calculations.totalInterCalculado)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* BB (Only Fabrica) */}
+                    {isFabrica && (
+                        <div className="bg-white p-4 rounded-xl border border-border shadow-sm">
+                            <EditableLabel name="bbTitle" value={currentData.labels.bbTitle} onChange={(e) => handleInputChange(e, 'labels')} className="font-bold text-lg text-text-primary mb-3 block" />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs font-bold text-text-secondary uppercase">Lançamentos</label>
+                                    <NumberInput name="bbLancamentos" value={currentData.values.bbLancamentos} onChange={(e) => handleInputChange(e, 'values')} />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-text-secondary uppercase">Valor Total</label>
+                                    <FormattedInput name="bbTotal" value={currentData.values.bbTotal} onChange={(e) => handleInputChange(e, 'values')} />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Santander / Inter WW */}
+                    <div className="bg-white p-4 rounded-xl border border-border shadow-sm">
+                        <EditableLabel name="santanderTitle" value={currentData.labels.santanderTitle} onChange={(e) => handleInputChange(e, 'labels')} className="font-bold text-lg text-text-primary mb-3 block" />
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className="text-xs font-bold text-text-secondary uppercase">Lançamentos</label>
+                                <NumberInput name="santanderLancamentos" value={currentData.values.santanderLancamentos} onChange={(e) => handleInputChange(e, 'values')} />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-text-secondary uppercase">Valor Total</label>
+                                <FormattedInput name="santanderTotal" value={currentData.values.santanderTotal} onChange={(e) => handleInputChange(e, 'values')} />
+                            </div>
+                        </div>
+                        <div className="space-y-2 border-t border-border pt-2">
+                            <div className="grid grid-cols-3 gap-2 items-center">
+                                <div className="col-span-2"><EditableLabel name="santanderCartaoCreditoLabel" value={currentData.labels.santanderCartaoCreditoLabel} onChange={(e) => handleInputChange(e, 'labels')} className="text-sm text-text-secondary" /></div>
+                                <FormattedInput name="santanderCartaoCredito" value={currentData.values.santanderCartaoCredito} onChange={(e) => handleInputChange(e, 'values')} />
+                            </div>
+                             <div className="flex justify-between items-center pt-2 mt-2 border-t border-dashed border-border">
+                                <span className="text-sm font-bold text-text-primary">Subtotal</span>
+                                <span className="text-sm font-bold text-text-primary">{formatCurrency(calculations.totalSantanderCalculado)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div className="bg-white border border-border shadow-md rounded-none overflow-hidden text-sm">
-            {/* SECTION 1: Solinter */}
-            <div className="border-b border-border">
-                <div className="bg-secondary/20 px-4 py-2 font-bold text-text-primary">
-                    <EditableLabel name="solinterTitle" value={currentData.labels.solinterTitle} onChange={(e) => handleInputChange(e, 'labels')} className="font-bold" />
+        {/* Footer Summary */}
+        <div className="mt-6 bg-white p-6 rounded-2xl border border-border shadow-sm max-w-5xl mx-auto w-full">
+            <div className="grid grid-cols-2 gap-8">
+                <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-xl border border-border/50">
+                    <span className="font-bold text-text-secondary uppercase text-sm">Diferença Valor</span>
+                    <span className={`text-2xl font-bold ${calculations.diferencaValor === 0 ? 'text-success' : 'text-danger'}`}>
+                        {formatCurrency(calculations.diferencaValor)}
+                    </span>
                 </div>
-                <div className="px-4 py-2 flex items-center justify-between border-b border-gray-100">
-                    <span className="text-text-secondary">Lançamentos</span>
-                    <div className="w-24">
-                        <NumberInput name="solinterLancamentos" value={currentData.values.solinterLancamentos} onChange={(e) => handleInputChange(e, 'values')} />
-                    </div>
-                </div>
-                <div className="px-4 py-2 flex items-center justify-between">
-                    <span className="text-text-primary font-medium">Total</span>
-                    <div className="w-32">
-                        <FormattedInput name="solinterTotal" value={currentData.values.solinterTotal} onChange={(e) => handleInputChange(e, 'values')} className="font-medium" />
-                    </div>
+                <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-xl border border-border/50">
+                    <span className="font-bold text-text-secondary uppercase text-sm">Diferença Lançamentos</span>
+                    <span className={`text-2xl font-bold ${calculations.diferencaLancamentos === 0 ? 'text-success' : 'text-danger'}`}>
+                        {calculations.diferencaLancamentos}
+                    </span>
                 </div>
             </div>
-
-            {/* SECTION 2: Banco Inter */}
-            <div className="border-b border-border mt-4">
-                <div className="bg-secondary/20 px-4 py-2 font-bold text-text-primary">
-                    <EditableLabel name="interTitle" value={currentData.labels.interTitle} onChange={(e) => handleInputChange(e, 'labels')} className="font-bold" />
-                </div>
-                <div className="px-4 py-2 flex items-center justify-between border-b border-gray-100">
-                    <span className="text-text-secondary">Lançamentos</span>
-                    <div className="w-24">
-                        <NumberInput name="interLancamentos" value={currentData.values.interLancamentos} onChange={(e) => handleInputChange(e, 'values')} />
-                    </div>
-                </div>
-                <div className="px-4 py-2 flex items-center justify-between border-b border-gray-100">
-                    <span className="text-text-primary font-medium">Total</span>
-                    <div className="w-32">
-                        <FormattedInput name="interTotal" value={currentData.values.interTotal} onChange={(e) => handleInputChange(e, 'values')} className="font-medium" />
-                    </div>
-                </div>
-                {/* Generic Row 1 for Deductions/Adjustments (Shown for Cristiano, Optional for Fabrica) */}
-                {(isCristiano || currentData.values.interBoletoInvalido !== 0) && (
-                    <div className="px-4 py-2 flex items-center justify-between border-b border-gray-100">
-                        <div className="flex-grow mr-4">
-                            <EditableLabel name="interBoletoInvalidoLabel" value={currentData.labels.interBoletoInvalidoLabel} onChange={(e) => handleInputChange(e, 'labels')} className="text-text-secondary w-full" />
-                        </div>
-                        <div className="w-32">
-                            <FormattedInput name="interBoletoInvalido" value={currentData.values.interBoletoInvalido} onChange={(e) => handleInputChange(e, 'values')} />
-                        </div>
-                    </div>
-                )}
-                 {/* Generic Row 2 for Deductions/Adjustments (Hidden if 0 and empty label, optional logic) */}
-                 {(currentData.values.interDesconto !== 0 || currentData.labels.interDescontoLabel !== 'Outros Ajustes') && (
-                    <div className="px-4 py-2 flex items-center justify-between">
-                        <div className="flex-grow mr-4">
-                            <EditableLabel name="interDescontoLabel" value={currentData.labels.interDescontoLabel} onChange={(e) => handleInputChange(e, 'labels')} className="text-text-secondary w-full" />
-                        </div>
-                        <div className="w-32">
-                            <FormattedInput name="interDesconto" value={currentData.values.interDesconto} onChange={(e) => handleInputChange(e, 'values')} />
-                        </div>
-                    </div>
-                 )}
-            </div>
-
-            {/* SECTION 3: BB (Fábrica Only) */}
-            {isFabrica && (
-                <div className="border-b border-border mt-4">
-                    <div className="bg-secondary/20 px-4 py-2 font-bold text-text-primary">
-                        <EditableLabel name="bbTitle" value={currentData.labels.bbTitle} onChange={(e) => handleInputChange(e, 'labels')} className="font-bold" />
-                    </div>
-                    <div className="px-4 py-2 flex items-center justify-between border-b border-gray-100">
-                        <span className="text-text-secondary">Lançamentos</span>
-                        <div className="w-24">
-                            <NumberInput name="bbLancamentos" value={currentData.values.bbLancamentos} onChange={(e) => handleInputChange(e, 'values')} />
-                        </div>
-                    </div>
-                    <div className="px-4 py-2 flex items-center justify-between border-b border-gray-100">
-                        <span className="text-text-primary font-medium">Total</span>
-                        <div className="w-32">
-                            <FormattedInput name="bbTotal" value={currentData.values.bbTotal} onChange={(e) => handleInputChange(e, 'values')} className="font-medium" />
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* SECTION 4 (or 3): Santander / Inter WW */}
-            <div className="border-b border-border mt-4">
-                <div className="bg-secondary/20 px-4 py-2 font-bold text-text-primary">
-                    <EditableLabel name="santanderTitle" value={currentData.labels.santanderTitle} onChange={(e) => handleInputChange(e, 'labels')} className="font-bold" />
-                </div>
-                <div className="px-4 py-2 flex items-center justify-between border-b border-gray-100">
-                    <span className="text-text-secondary">Lançamentos</span>
-                    <div className="w-24">
-                        <NumberInput name="santanderLancamentos" value={currentData.values.santanderLancamentos} onChange={(e) => handleInputChange(e, 'values')} />
-                    </div>
-                </div>
-                <div className="px-4 py-2 flex items-center justify-between border-b border-gray-100">
-                    <span className="text-text-primary font-medium">Total</span>
-                    <div className="w-32">
-                        <FormattedInput name="santanderTotal" value={currentData.values.santanderTotal} onChange={(e) => handleInputChange(e, 'values')} className="font-medium" />
-                    </div>
-                </div>
-                 {/* Generic Row for Deductions/Adjustments */}
-                 {(currentData.values.santanderCartaoCredito !== 0 || (currentData.labels.santanderCartaoCreditoLabel !== 'Ajustes / Tarifas' && currentData.labels.santanderCartaoCreditoLabel !== 'Ajustes')) && (
-                    <div className="px-4 py-2 flex items-center justify-between">
-                        <div className="flex-grow mr-4">
-                            <EditableLabel name="santanderCartaoCreditoLabel" value={currentData.labels.santanderCartaoCreditoLabel} onChange={(e) => handleInputChange(e, 'labels')} className="text-text-secondary w-full" />
-                        </div>
-                        <div className="w-32">
-                            <FormattedInput name="santanderCartaoCredito" value={currentData.values.santanderCartaoCredito} onChange={(e) => handleInputChange(e, 'values')} />
-                        </div>
-                    </div>
-                 )}
-            </div>
-
-            {/* FOOTER: Summary (Yellow Box) */}
-            <div className="bg-yellow-300 border-t border-yellow-400 p-4 flex flex-col items-end justify-center gap-1">
-                <div className="flex items-center gap-4 w-full justify-end">
-                    <span className="text-yellow-900 font-bold text-lg">{formatCurrency(calculations.diferencaValor)}</span>
-                </div>
-                <div className="flex items-center gap-4 w-full justify-end">
-                    <span className="text-yellow-800 font-semibold text-sm">{calculations.diferencaLancamentos}</span>
-                </div>
-            </div>
-        </div>
-        
-        <div className="mt-4 text-xs text-text-secondary text-center">
-            * Valores negativos podem ser inseridos digitando o sinal de menos (-) antes do número.
         </div>
     </div>
   );

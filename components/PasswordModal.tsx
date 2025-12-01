@@ -48,11 +48,11 @@ const PasswordModal: React.FC<PasswordModalProps> = ({ onSuccess, onClose, isIni
                     </div>
                     <div className="flex justify-end gap-4">
                         {!isInitialUnlock && (
-                            <button type="button" onClick={onClose} className="h-12 px-6 rounded-xl bg-secondary hover:bg-border font-semibold transition-colors">
+                            <button type="button" onClick={onClose} className="px-6 py-2.5 rounded-full bg-secondary hover:bg-gray-200 text-text-primary font-semibold transition-colors">
                                 Cancelar
                             </button>
                         )}
-                        <button type="submit" className="h-12 px-6 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">
+                        <button type="submit" className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">
                             Confirmar
                         </button>
                     </div>

@@ -4,6 +4,7 @@ import TransferenciasEmpresas from './TransferenciasEmpresas';
 import AutorizacaoPagamento from './AutorizacaoPagamento';
 import { CalendarClockIcon, TrashIcon, ReportIcon, ChevronDownIcon, CalculatorIcon } from './icons';
 import Calculator from './Calculator';
+import DatePicker from './DatePicker';
 
 // Interface for a launch of payment
 interface Pagamento {
@@ -430,18 +431,17 @@ const PagamentosCristiano: React.FC = () => {
             {/* Right: Filters (Only show for Pagamentos tab) */}
             {activeTab === 'pagamentos' && (
                 <div className="flex items-center gap-2 w-full lg:w-auto justify-end">
-                    <div className="flex items-center bg-secondary rounded-full px-3 border border-border">
-                        <span className="text-xs font-medium text-text-secondary mr-2">Data:</span>
-                        <input
-                            type="date"
+                    <div className="flex items-center rounded-full px-2">
+                        <DatePicker
                             value={selectedDate}
-                            onChange={e => handleDateSelect(e.target.value)}
-                            className="bg-transparent border-none text-sm text-text-primary focus:ring-0 h-9"
+                            onChange={handleDateSelect}
+                            className="w-36 h-9"
+                            placeholder="Selecione Data"
                         />
                     </div>
                     <button 
                         onClick={handleClearDate}
-                        className="py-1.5 px-3 rounded-full bg-white border border-border hover:bg-secondary font-medium text-xs text-text-primary transition-colors h-9 shadow-sm"
+                        className="py-1.5 px-3 rounded-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium text-xs transition-colors h-9 shadow-sm"
                     >
                         Limpar
                     </button>
@@ -554,8 +554,8 @@ const PagamentosCristiano: React.FC = () => {
 
               {/* Fixed Footer */}
               <div className="shrink-0 p-6 pt-4 border-t border-gray-100 flex justify-center gap-3 bg-gray-50">
-                <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
+                <button onClick={handleCloseModal} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-text-primary font-semibold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
+                <button onClick={handleSaveChanges} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Salvar</button>
               </div>
             </div>
           </div>
@@ -567,8 +567,8 @@ const PagamentosCristiano: React.FC = () => {
                     <h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar Ação</h3>
                     <p className="text-text-secondary mb-8">{confirmAction.message}</p>
                      <div className="flex justify-center gap-4">
-                        <button onClick={handleCancelConfirm} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                        <button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button>
+                        <button onClick={handleCancelConfirm} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-text-primary font-semibold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
+                        <button onClick={handleConfirm} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Confirmar</button>
                      </div>
                 </div>
             </div>

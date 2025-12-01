@@ -20,33 +20,32 @@
 
         /* Minimalist Corporate Theme (Warm Gray & Discrete Orange) */
         
-        /* Brand Color - Orange 700 - Used for Primary Actions/Active States */
+        /* Brand Color - Orange 700 */
         --color-primary: #C2410C; 
         --color-primary-hover: #9A3412; 
-        --color-primary-light: #FFEDD5; /* Orange 100 for backgrounds */
+        --color-primary-light: #FFEDD5; /* Orange 100 */
         
         /* Structure Colors */
-        --color-secondary: #F3F4F6; /* Gray 100 - Hover states/Secondary bgs */
-        --color-background: #F9FAFB; /* Gray 50 - App Background */
+        --color-secondary: #F3F4F6; /* Gray 100 */
+        --color-background: #F9FAFB; /* Gray 50 */
         --color-card: #FFFFFF; /* White */
         
         /* Typography */
-        --color-text-primary: #111827; /* Gray 900 - Headings */
-        --color-text-secondary: #4B5563; /* Gray 600 - Body Text */
-        --color-text-muted: #9CA3AF; /* Gray 400 - Placeholders/Icons */
+        --color-text-primary: #111827; /* Gray 900 */
+        --color-text-secondary: #4B5563; /* Gray 600 */
+        --color-text-muted: #9CA3AF; /* Gray 400 */
         
         /* Borders */
         --color-border: #E5E7EB; /* Gray 200 */
         
-        /* Status Colors (Refined) */
+        /* Status Colors (Refined for accessibility contrast) */
         --color-success: #059669; /* Emerald 600 */
         --color-warning: #D97706; /* Amber 600 */
         --color-danger: #DC2626; /* Red 600 */
       }
 
       html.dark {
-        /* Dark Theme - Mapped for consistency if needed, but primary request is Light Theme */
-        --color-primary: #FB923C; /* Orange 400 */
+        --color-primary: #FB923C; 
         --color-primary-hover: #FDBA74; 
         --color-secondary: #1F2937; 
         --color-background: #111827; 
@@ -59,14 +58,13 @@
         --color-danger: #F87171;
       }
       
-      /* STRICT FULL HEIGHT LAYOUT RESET */
       html, body, #root {
         height: 100%;
         width: 100%;
         margin: 0;
         padding: 0;
-        overflow: hidden; /* Critical: prevents body scrolling */
-        overscroll-behavior: none; /* Prevents bounce effects on Mac/iOS */
+        overflow: hidden; 
+        overscroll-behavior: none;
       }
       
       body {
@@ -80,25 +78,25 @@
         font-family: var(--font-heading);
       }
       
-      /* Input Standardization - Premium 48px Height */
+      /* Input Standardization */
       input, select, textarea {
         background-color: var(--color-card);
         border: 1px solid var(--color-border);
         color: var(--color-text-primary);
-        height: 3rem; /* 48px standard height */
+        height: 3rem; 
         padding: 0.5rem 1rem;
-        border-radius: 0.75rem; /* 12px rounded-xl */
-        font-size: 0.875rem; /* 14px */
+        border-radius: 0.75rem; 
+        font-size: 0.875rem; 
         line-height: 1.25rem;
         transition: all 0.2s ease-in-out;
         width: 100%;
       }
       
-      /* Focus State - The Orange Ring */
-      input:focus, select:focus, textarea:focus {
+      /* Accessibility: Enhanced Focus State */
+      input:focus, select:focus, textarea:focus, button:focus-visible {
         border-color: var(--color-primary);
         outline: none;
-        box-shadow: 0 0 0 1px var(--color-primary), 0 0 0 4px rgba(194, 65, 12, 0.1); /* Subtle orange ring */
+        box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px var(--color-primary); 
       }
 
       textarea {
@@ -106,7 +104,7 @@
         min-height: 3rem;
       }
 
-      /* Custom scrollbar */
+      /* Custom scrollbar - Thinner and cleaner */
       ::-webkit-scrollbar {
         width: 6px;
         height: 6px;
@@ -116,7 +114,7 @@
       }
       ::-webkit-scrollbar-thumb {
         background: #D1D5DB;
-        border-radius: 3px;
+        border-radius: 10px;
       }
       ::-webkit-scrollbar-thumb:hover {
         background: #9CA3AF;
@@ -149,16 +147,17 @@
             boxShadow: {
               'sm': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
               'md': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+              'lg': '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025)',
               'xl': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
               'inner': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
             },
             animation: {
-              'fade-in': 'fadeIn 0.4s ease-out forwards',
-              'fade-in-down': 'fadeInDown 0.4s ease-out forwards',
+              'fade-in': 'fadeIn 0.3s ease-out forwards',
+              'fade-in-down': 'fadeInDown 0.3s ease-out forwards',
               'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
             },
             keyframes: {
-              fadeIn: { '0%': { opacity: 0, transform: 'translateY(4px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+              fadeIn: { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
               fadeInDown: { '0%': { opacity: 0, transform: 'translateY(-10px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
               shake: {
                 '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },

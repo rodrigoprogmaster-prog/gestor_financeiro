@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, ArrowLeftIcon, CalendarClockIcon, RefreshIcon } from './icons';
 import DatePicker from './DatePicker';
@@ -363,7 +362,7 @@ export const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageK
                                 />
                                 <button
                                     onClick={handleGenerateMonth}
-                                    className="flex items-center gap-2 bg-primary text-white font-semibold py-1.5 px-4 rounded-full hover:bg-primary-hover transition-colors duration-200 text-sm whitespace-nowrap shadow-sm h-8"
+                                    className="flex items-center gap-2 bg-white border border-gray-200 text-primary font-bold py-1.5 px-4 rounded-full hover:bg-orange-50 hover:border-orange-200 transition-colors duration-200 text-sm whitespace-nowrap shadow-sm h-8"
                                 >
                                     <PlusIcon className="h-4 w-4" />
                                     Gerar Lançamentos
@@ -383,12 +382,12 @@ export const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageK
                         <span className="text-sm font-semibold">Filtros:</span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
-                        <input name="mesReferencia" value={filters.mesReferencia} onChange={handleFilterChange} placeholder="Mês Ref..." className="bg-secondary border-transparent rounded-xl px-3 py-1.5 text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary h-9 w-full outline-none transition-all" />
-                        <input name="empresa" value={filters.empresa} onChange={handleFilterChange} placeholder="Empresa..." className="bg-secondary border-transparent rounded-xl px-3 py-1.5 text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary h-9 w-full outline-none transition-all" />
-                        <input name="contabilidade" value={filters.contabilidade} onChange={handleFilterChange} placeholder="Contabilidade..." className="bg-secondary border-transparent rounded-xl px-3 py-1.5 text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary h-9 w-full outline-none transition-all" />
+                        <input name="mesReferencia" value={filters.mesReferencia} onChange={handleFilterChange} placeholder="Mês Ref..." className="bg-secondary border-transparent rounded-xl px-3 py-1.5 text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary h-10 w-full outline-none transition-all" />
+                        <input name="empresa" value={filters.empresa} onChange={handleFilterChange} placeholder="Empresa..." className="bg-secondary border-transparent rounded-xl px-3 py-1.5 text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary h-10 w-full outline-none transition-all" />
+                        <input name="contabilidade" value={filters.contabilidade} onChange={handleFilterChange} placeholder="Contabilidade..." className="bg-secondary border-transparent rounded-xl px-3 py-1.5 text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary h-10 w-full outline-none transition-all" />
                         <div className="flex gap-2">
-                            <input name="portador" value={filters.portador} onChange={handleFilterChange} placeholder="Portador..." className="bg-secondary border-transparent rounded-xl px-3 py-1.5 text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary h-9 w-full outline-none transition-all" />
-                            <button onClick={handleClearFilters} className="px-3 py-1.5 rounded-full bg-gray-200 hover:bg-gray-300 text-text-secondary hover:text-text-primary font-medium transition-colors h-9" title="Limpar Filtros">
+                            <input name="portador" value={filters.portador} onChange={handleFilterChange} placeholder="Portador..." className="bg-secondary border-transparent rounded-xl px-3 py-1.5 text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary h-10 w-full outline-none transition-all" />
+                            <button onClick={handleClearFilters} className="px-3 py-1.5 rounded-full bg-gray-200 hover:bg-gray-300 text-text-secondary hover:text-text-primary font-medium transition-colors h-10 w-10 flex items-center justify-center" title="Limpar Filtros">
                                 <RefreshIcon className="h-4 w-4" />
                             </button>
                         </div>
@@ -489,31 +488,31 @@ export const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageK
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Mês Ref. <span className="text-danger">*</span></label>
-                                    <input type="text" name="mesReferencia" placeholder="MM/AAAA" maxLength={7} value={editingFechamento.mesReferencia || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 ${errors.mesReferencia ? 'border-danger' : ''}`} />
+                                    <input type="text" name="mesReferencia" placeholder="MM/AAAA" maxLength={7} value={editingFechamento.mesReferencia || ''} onChange={handleInputChange} onBlur={handleBlur} className={`w-full bg-secondary border border-transparent rounded-xl px-4 py-2 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-10 ${errors.mesReferencia ? 'border-danger' : ''}`} />
                                     {errors.mesReferencia && <p className="text-danger text-xs mt-1 ml-1">{errors.mesReferencia}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Empresa <span className="text-danger">*</span></label>
-                                    <input type="text" value={editingFechamento.empresa || ''} disabled={isFabrica || isCristiano} className={`w-full rounded-xl px-4 py-3 h-12 ${isFabrica || isCristiano ? 'bg-gray-100 border-gray-200 text-text-secondary cursor-not-allowed' : `bg-secondary border-transparent text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none ${errors.empresa ? 'border-danger' : ''}`}`} />
+                                    <input type="text" value={editingFechamento.empresa || ''} disabled={isFabrica || isCristiano} className={`w-full rounded-xl px-4 py-2 h-10 ${isFabrica || isCristiano ? 'bg-gray-100 border-gray-200 text-text-secondary cursor-not-allowed' : `bg-secondary border-transparent text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none ${errors.empresa ? 'border-danger' : ''}`}`} />
                                     {!(isFabrica || isCristiano) && errors.empresa && <p className="text-danger text-xs mt-1 ml-1">{errors.empresa}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Contabilidade <span className="text-danger">*</span></label>
-                                    <input type="text" name="contabilidade" value={editingFechamento.contabilidade || ''} onChange={handleInputChange} disabled={isCristiano || isFabrica} className={`w-full rounded-xl px-4 py-3 h-12 ${isCristiano || isFabrica ? 'bg-gray-100 border-gray-200 text-text-secondary cursor-not-allowed' : `bg-secondary border-transparent text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none ${errors.contabilidade ? 'border-danger' : ''}`}`} />
+                                    <input type="text" name="contabilidade" value={editingFechamento.contabilidade || ''} onChange={handleInputChange} disabled={isCristiano || isFabrica} className={`w-full rounded-xl px-4 py-2 h-10 ${isCristiano || isFabrica ? 'bg-gray-100 border-gray-200 text-text-secondary cursor-not-allowed' : `bg-secondary border-transparent text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none ${errors.contabilidade ? 'border-danger' : ''}`}`} />
                                     {!(isCristiano || isFabrica) && errors.contabilidade && <p className="text-danger text-xs mt-1 ml-1">{errors.contabilidade}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Portador <span className="text-danger">*</span></label>
-                                     <input type="text" value={editingFechamento.portador || ''} disabled={isFabrica || isCristiano} className={`w-full rounded-xl px-4 py-3 h-12 ${isFabrica || isCristiano ? 'bg-gray-100 border-gray-200 text-text-secondary cursor-not-allowed' : `bg-secondary border-transparent text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none ${errors.portador ? 'border-danger' : ''}`}`} />
+                                     <input type="text" value={editingFechamento.portador || ''} disabled={isFabrica || isCristiano} className={`w-full rounded-xl px-4 py-2 h-10 ${isFabrica || isCristiano ? 'bg-gray-100 border-gray-200 text-text-secondary cursor-not-allowed' : `bg-secondary border-transparent text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none ${errors.portador ? 'border-danger' : ''}`}`} />
                                     {!(isFabrica || isCristiano) && errors.portador && <p className="text-danger text-xs mt-1 ml-1">{errors.portador}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Valor Banco</label>
-                                    <input type="text" name="valorBanco" value={formatCurrency(editingFechamento.valorBanco || 0)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12" />
+                                    <input type="text" name="valorBanco" value={formatCurrency(editingFechamento.valorBanco || 0)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-2 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-10" />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Valor Solinter</label>
-                                    <input type="text" name="valorSolinter" value={formatCurrency(editingFechamento.valorSolinter || 0)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12" />
+                                    <input type="text" name="valorSolinter" value={formatCurrency(editingFechamento.valorSolinter || 0)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-2 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-10" />
                                 </div>
                                  <div className="md:col-span-2">
                                     <DatePicker 
@@ -530,8 +529,8 @@ export const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageK
                             </div>
                         </div>
                         <div className="shrink-0 p-6 pt-4 border-t border-gray-100 flex justify-center gap-3 bg-gray-50">
-                            <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                            <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
+                            <button onClick={handleCloseModal} className="px-6 py-2.5 rounded-xl bg-white border border-gray-200 text-text-primary font-semibold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
+                            <button onClick={handleSaveChanges} className="px-6 py-2.5 rounded-xl bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Salvar</button>
                         </div>
                     </div>
                 </div>
@@ -548,8 +547,8 @@ export const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageK
                             placeholder="Selecione a data"
                         />
                         <div className="flex justify-end gap-3 mt-6">
-                            <button onClick={handleCloseDateModal} className="px-4 py-2 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors text-sm">Cancelar</button>
-                            <button onClick={() => handleSaveDateEnvio(tempDateEnvio)} className="px-4 py-2 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors text-sm">Salvar</button>
+                            <button onClick={handleCloseDateModal} className="px-6 py-2.5 rounded-xl bg-white border border-gray-200 text-text-primary font-semibold hover:bg-gray-50 transition-colors shadow-sm text-sm">Cancelar</button>
+                            <button onClick={() => handleSaveDateEnvio(tempDateEnvio)} className="px-6 py-2.5 rounded-xl bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors text-sm">Salvar</button>
                         </div>
                     </div>
                 </div>
@@ -561,8 +560,8 @@ export const FechamentoEmpresas: React.FC<FechamentoEmpresasProps> = ({ storageK
                         <h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar Ação</h3>
                         <p className="text-text-secondary mb-8">{confirmAction.message}</p>
                         <div className="flex justify-center gap-4">
-                            <button onClick={handleCancelConfirm} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                            <button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button>
+                            <button onClick={handleCancelConfirm} className="px-6 py-2.5 rounded-xl bg-white border border-gray-200 text-text-primary font-semibold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
+                            <button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Confirmar</button>
                         </div>
                     </div>
                 </div>

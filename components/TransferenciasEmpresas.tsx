@@ -310,14 +310,14 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
                     <div className="flex items-center gap-2">
                         <button
                             onClick={handleExportXLSX}
-                            className="flex items-center justify-center gap-2 bg-white border border-border text-text-primary font-medium py-2 px-4 rounded-full hover:bg-secondary transition-colors h-10 shadow-sm text-sm"
+                            className="flex items-center justify-center gap-2 bg-white border border-gray-300 text-text-primary font-medium py-2 px-4 rounded-full hover:bg-gray-50 transition-colors h-10 shadow-sm text-sm"
                         >
                             <DownloadIcon className="h-4 w-4" />
                             Relatório
                         </button>
                         <button
                             onClick={handleOpenAddModal}
-                            className="flex items-center justify-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-full hover:bg-primary-hover transition-colors h-10 shadow-sm text-sm"
+                            className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-primary font-bold py-2 px-4 rounded-full hover:bg-orange-50 hover:border-orange-200 transition-colors h-10 shadow-sm text-sm"
                         >
                             <PlusIcon className="h-4 w-4" />
                             Adicionar
@@ -498,8 +498,8 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
                             </div>
                         </div>
                         <div className="shrink-0 p-6 pt-4 border-t border-gray-100 flex justify-center gap-3 bg-gray-50">
-                            <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                            <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
+                            <button onClick={handleCloseModal} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-text-primary font-semibold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
+                            <button onClick={handleSaveChanges} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Salvar</button>
                         </div>
                     </div>
                 </div>
@@ -511,8 +511,8 @@ const TransferenciasEmpresas: React.FC<TransferenciasEmpresasProps> = ({ storage
                         <h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar Ação</h3>
                         <p className="text-text-secondary mb-8">{confirmAction.message}</p>
                         <div className="flex justify-center gap-4">
-                            <button onClick={handleCancelConfirm} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                            <button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button>
+                            <button onClick={handleCancelConfirm} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-text-primary font-semibold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
+                            <button onClick={handleConfirm} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Confirmar</button>
                         </div>
                     </div>
                 </div>

@@ -112,7 +112,7 @@ const Calculator: React.FC<CalculatorProps> = ({ initialValue = 0, onResult, onC
         onClick={onClose}
     >
         <div 
-            className="bg-card w-80 rounded-3xl shadow-2xl border border-border p-6 flex flex-col"
+            className="bg-card w-full max-w-xs rounded-3xl shadow-2xl border border-border p-6 flex flex-col"
             onClick={(e) => e.stopPropagation()}
         >
             {/* Header */}

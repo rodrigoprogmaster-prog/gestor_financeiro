@@ -1,305 +1,245 @@
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { ArrowLeftIcon, PlusIcon, SearchIcon } from './icons';
-
-// Data structure
-interface SaldoEmpresa {
-    empresa: string;
-    saldo: number;
-}
-
-// Helper function
-const applyMonthYearMask = (value: string): string => {
-    let maskedValue = value.replace(/\D/g, '');
-    if (maskedValue.length > 2) {
-        maskedValue = `${maskedValue.slice(0, 2)}/${maskedValue.slice(2, 6)}`;
-    }
-    return maskedValue;
-};
-
-const formatNumericStringToCurrency = (numericString: string): string => {
-    if (!numericString) return 'R$ 0,00';
-    const numberValue = Number(numericString) / 100;
-    return numberValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-};
-
-
-// Predefined company lists
-const EMPRESAS_CRISTIANO = [
-    'FIBER ADM DE FRANQUIAS ITAU', 'WORLD WIDE ITAU', 'CACHOEIRINHA PISCINAS', 
-    'CAMARGOS PISCINAS E SPAS LTDA', 'IPR INDUSTRIA E COMERCIO DE PLASTIC', 'ZMR PISCINAS LTDA.',
-    'WORLD WIDE SWIMMINGPOOLS NEGOCIOS D'
-];
-
-const EMPRESAS_FABRICA = [
-    'FIBER HIDROMASSAGENS INDUSTRIA E COMERCIO LTDA-ME', 'LLS SERVIÇOS DE LIMPEZA EIRELI',
-    'CSJ INDUSTRIA E COMERCIO DE PLASTIC', 'LOPC INDUSTRIA E COMERCIO DE PLASTICOS REFORÇADOS',
-    'MMA INDUSTRIA DE PLASTICOS REFORCAD', 'PXT INDUSTRIA E COMERCIO DE PLASTIC',
-    'SJB COMERCIO E INDUSTRIA DE PISCINAS LTDA'
-];
-
-const formatCurrency = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+import React, { useState, useMemo, useEffect } from 'react';
+import { ArrowLeftIcon, DownloadIcon, SearchIcon, PlusIcon, TrashIcon, CalculatorIcon } from './icons';
 
 interface CaixaLiquidacaoProps {
-    storageKey: string;
     title: string;
+    storageKey: string;
     onBack: () => void;
 }
 
-export const CaixaLiquidacao: React.FC<CaixaLiquidacaoProps> = ({ storageKey, title, onBack }) => {
-    const isCristiano = storageKey.includes('cristiano');
-    const empresaList = isCristiano ? EMPRESAS_CRISTIANO : EMPRESAS_FABRICA;
+// Predefined lists
+const COMPANIES_CRISTIANO = [
+    'FIBER ANEL - CACHOEIRINHA',
+    'CAMARGOS PISCINAS E SPAS LTDA',
+    'FIBER ADM DE FRANQUIAS',
+    'WORLD WIDE SWIMMINGPOOLS',
+    'ZMR PISCINAS LTDA'
+];
 
-    const [allSaldos, setAllSaldos] = useState<Record<string, Record<string, number>>>(() => {
+const COMPANIES_FABRICA = [
+    'FIBER HIDROMASSAGENS',
+    'LLS SERVIÇOS DE LIMPEZA',
+    'CSJ INDUSTRIA',
+    'LOPC INDUSTRIA',
+    'MMA INDUSTRIA',
+    'PXT INDUSTRIA',
+    'SJB COMERCIO'
+];
+
+const applyMonthMask = (val: string) => {
+    return val.replace(/\D/g, '')
+        .replace(/(\d{2})(\d)/, '$1/$2')
+        .slice(0, 7);
+};
+
+const formatCurrency = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+export const CaixaLiquidacao: React.FC<CaixaLiquidacaoProps> = ({ title, storageKey, onBack }) => {
+    // Current Month (MM/YYYY)
+    const [currentMonth, setCurrentMonth] = useState(() => {
+        const now = new Date();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+        return `${month}/${year}`;
+    });
+
+    // Data Structure: { "MM/YYYY": { "Company Name": 1234.56, ... } }
+    const [allData, setAllData] = useState<Record<string, Record<string, number>>>(() => {
         const saved = localStorage.getItem(storageKey);
         return saved ? JSON.parse(saved) : {};
     });
-    
-    const [mesReferencia, setMesReferencia] = useState('');
-    const [mesReferenciaError, setMesReferenciaError] = useState('');
 
-    const [editingCell, setEditingCell] = useState<string | null>(null);
-    const [editingValue, setEditingValue] = useState<string>(''); // Will store raw digits, e.g., "12345"
-    const inputRef = useRef<HTMLInputElement>(null);
-    const mesRefInputRef = useRef<HTMLInputElement>(null);
-    
-    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-    const [confirmAction, setConfirmAction] = useState<{ action: (() => void) | null, message: string }>({ action: null, message: '' });
+    // Custom Companies List
+    const [customCompanies, setCustomCompanies] = useState<string[]>(() => {
+        const saved = localStorage.getItem(`${storageKey}_companies`);
+        return saved ? JSON.parse(saved) : (storageKey.includes('cristiano') ? COMPANIES_CRISTIANO : COMPANIES_FABRICA);
+    });
+
+    const [newCompany, setNewCompany] = useState('');
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     useEffect(() => {
-        localStorage.setItem(storageKey, JSON.stringify(allSaldos));
-    }, [allSaldos, storageKey]);
+        localStorage.setItem(storageKey, JSON.stringify(allData));
+    }, [allData, storageKey]);
 
     useEffect(() => {
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.ctrlKey && event.key === '+') {
-                event.preventDefault();
-                if (mesRefInputRef.current) {
-                    mesRefInputRef.current.focus();
-                }
+        localStorage.setItem(`${storageKey}_companies`, JSON.stringify(customCompanies));
+    }, [customCompanies, storageKey]);
+
+    const currentBalances = useMemo(() => {
+        return allData[currentMonth] || {};
+    }, [allData, currentMonth]);
+
+    const totalGeral = useMemo(() => {
+        return Object.values(currentBalances).reduce((acc: number, val: number) => acc + val, 0);
+    }, [currentBalances]);
+
+    const handleBalanceChange = (company: string, rawValue: string) => {
+        let numericValue = rawValue.replace(/\D/g, '');
+        const value = Number(numericValue) / 100;
+
+        setAllData(prev => ({
+            ...prev,
+            [currentMonth]: {
+                ...(prev[currentMonth] || {}),
+                [company]: value
             }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
-
-    useEffect(() => {
-        if (editingCell && inputRef.current) {
-            inputRef.current.focus();
-            inputRef.current.select();
-        }
-    }, [editingCell]);
-    
-    const tableData: SaldoEmpresa[] = useMemo(() => {
-        if (!mesReferencia || !allSaldos[mesReferencia]) {
-            return [];
-        }
-        return empresaList.map(empresa => ({
-            empresa,
-            saldo: allSaldos[mesReferencia][empresa] || 0
         }));
-    }, [empresaList, allSaldos, mesReferencia]);
-    
-    const handleCellClick = (empresa: string, saldo: number) => {
-        setEditingCell(empresa);
-        // Convert number to raw digit string
-        setEditingValue(String(Math.round(saldo * 100)));
     };
 
-    const handleSaldoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Store only digits from input
-        const numericValue = e.target.value.replace(/\D/g, '');
-        setEditingValue(numericValue);
+    const handleAddCompany = () => {
+        if (newCompany.trim() && !customCompanies.includes(newCompany.trim().toUpperCase())) {
+            setCustomCompanies(prev => [...prev, newCompany.trim().toUpperCase()]);
+            setNewCompany('');
+            setIsAddModalOpen(false);
+        }
     };
 
-    const handleInputBlur = () => {
-        if (editingCell) {
-            // Convert raw digit string back to number
-            const numberValue = Number(editingValue) / 100 || 0;
-            
-            setAllSaldos(prev => {
-                const newAllSaldos = { ...prev };
-                if (!newAllSaldos[mesReferencia]) {
-                    newAllSaldos[mesReferencia] = {};
-                }
-                newAllSaldos[mesReferencia] = {
-                    ...newAllSaldos[mesReferencia],
-                    [editingCell]: numberValue
-                };
-                return newAllSaldos;
-            });
+    const handleDeleteCompany = (company: string) => {
+        if (confirm(`Deseja remover "${company}" da lista? Os dados históricos serão mantidos.`)) {
+            setCustomCompanies(prev => prev.filter(c => c !== company));
         }
-        setEditingCell(null);
-        setEditingValue('');
-    };
-    
-    const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' || e.key === 'Escape') {
-            handleInputBlur();
-        }
-    };
-    
-    const handleMesReferenciaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (mesReferenciaError) setMesReferenciaError('');
-        setMesReferencia(applyMonthYearMask(e.target.value));
     };
 
-    const handleGenerateMonth = () => {
-        const monthRegex = /^(0[1-9]|1[0-2])\/\d{4}$/;
-        if (!mesReferencia.trim()) {
-            setMesReferenciaError('Por favor, insira o Mês/Ano.');
-            return;
-        }
-        if (!monthRegex.test(mesReferencia.trim())) {
-            setMesReferenciaError('Formato inválido. Use MM/AAAA (ex: 08/2024).');
-            return;
-        }
+    const handleExport = () => {
+        const XLSX = (window as any).XLSX;
+        if (!XLSX) { alert("Biblioteca XLSX não carregada."); return; }
+
+        const dataToExport = customCompanies.map(company => ({
+            'Empresa': company,
+            'Saldo': currentBalances[company] || 0
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
         
-        setMesReferenciaError('');
-        
-        if (allSaldos[mesReferencia.trim()]) {
-            alert('Lançamentos para este mês já existem. O filtro foi aplicado.');
-            return;
+        // Format Currency Column
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        for (let R = 1; R <= range.e.r; ++R) {
+            const cellRef = XLSX.utils.encode_cell({c: 1, r: R});
+            if(ws[cellRef]) {
+                ws[cellRef].t = 'n';
+                ws[cellRef].z = 'R$ #,##0.00';
+            }
         }
 
-        const action = () => {
-            const newMonthSaldos: Record<string, number> = {};
-            empresaList.forEach(empresa => {
-                newMonthSaldos[empresa] = 0;
-            });
-            setAllSaldos(prev => ({
-                ...prev,
-                [mesReferencia.trim()]: newMonthSaldos
-            }));
-        };
-        
-        setConfirmAction({
-            action,
-            message: `Deseja gerar os lançamentos do caixa de liquidação para o mês de referência "${mesReferencia.trim()}"?`
-        });
-        setIsConfirmOpen(true);
-    };
-    
-    const handleConfirm = () => {
-        if (confirmAction.action) confirmAction.action();
-        setIsConfirmOpen(false);
-        setConfirmAction({ action: null, message: '' });
-    };
+        XLSX.utils.sheet_add_aoa(ws, [[null, 'Total:', totalGeral]], { origin: -1 });
 
-    const handleCancelConfirm = () => {
-        setIsConfirmOpen(false);
-        setConfirmAction({ action: null, message: '' });
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, `Caixa ${currentMonth.replace('/', '-')}`);
+        XLSX.writeFile(wb, `caixa_liquidacao_${currentMonth.replace('/', '-')}.xlsx`);
     };
 
     return (
-        <div className="animate-fade-in p-4 sm:p-6 lg:p-8 w-full">
-            <div className="flex items-center gap-4 mb-6">
-                <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">
-                    <ArrowLeftIcon className="h-5 w-5" />
-                    Voltar
-                </button>
-                <h3 className="text-xl md:text-2xl font-bold text-text-primary">{title}</h3>
-            </div>
-            
-             <div className="flex flex-col sm:flex-row justify-end items-center mb-6 gap-4">
-                <div className="flex flex-col w-full sm:w-auto">
-                    <div className="flex items-center gap-2">
-                        <input
-                            ref={mesRefInputRef}
-                            type="text"
-                            value={mesReferencia}
-                            onChange={handleMesReferenciaChange}
-                            placeholder="Filtrar ou Gerar por MM/AAAA"
+        <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in flex flex-col h-full">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 shrink-0">
+                <div className="flex items-center gap-4">
+                    <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10 text-sm shadow-sm">
+                        <ArrowLeftIcon className="h-4 w-4" />
+                        Voltar
+                    </button>
+                    <h3 className="text-xl md:text-2xl font-bold text-text-primary tracking-tight">{title}</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="bg-white border border-border rounded-xl px-3 py-1.5 flex items-center shadow-sm h-10">
+                        <span className="text-xs font-bold text-text-secondary uppercase mr-2">Mês:</span>
+                        <input 
+                            type="text" 
+                            value={currentMonth} 
+                            onChange={(e) => setCurrentMonth(applyMonthMask(e.target.value))}
+                            placeholder="MM/AAAA"
+                            className="w-20 bg-transparent text-sm font-bold text-text-primary focus:outline-none text-center"
                             maxLength={7}
-                            className={`bg-background border rounded-xl px-3 py-2 text-text-primary focus:outline-none focus:ring-2 h-10 w-full ${mesReferenciaError ? 'border-danger focus:ring-danger' : 'border-border focus:ring-primary'}`}
                         />
-                        <button
-                            onClick={handleGenerateMonth}
-                            className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-full hover:bg-primary-hover transition-colors duration-300 h-10 whitespace-nowrap"
-                        >
-                            <PlusIcon className="h-5 w-5" />
-                            Gerar Lançamentos
-                        </button>
                     </div>
-                    {mesReferenciaError && <p className="text-danger text-xs mt-1">{mesReferenciaError}</p>}
+                    <button 
+                        onClick={handleExport}
+                        className="flex items-center gap-2 bg-white border border-gray-300 text-success font-bold py-2 px-4 rounded-full hover:bg-green-50 transition-colors h-10 text-sm shadow-sm"
+                    >
+                        <DownloadIcon className="h-4 w-4" /> Exportar
+                    </button>
                 </div>
             </div>
 
-            <div className="bg-card shadow-md rounded-2xl overflow-x-auto">
-                <table className="w-full text-base text-left text-text-secondary">
-                    <thead className="text-sm text-text-primary uppercase bg-secondary">
-                        <tr>
-                            <th scope="col" className="px-6 py-3 w-3/5">Empresa</th>
-                            <th scope="col" className="px-6 py-3 text-right">Saldo</th>
-                            <th scope="col" className="px-6 py-3 text-center">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {tableData.length > 0 ? (
-                            tableData.map(item => {
-                                const status = item.saldo === 0 ? 'Conciliado' : 'Pendente';
-                                const isEditing = editingCell === item.empresa;
+            {/* Summary Card */}
+            <div className="bg-white p-4 rounded-2xl border border-border shadow-sm mb-6 flex items-center justify-between shrink-0 max-w-md">
+                <div>
+                    <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Saldo Total ({currentMonth})</p>
+                    <p className="text-2xl font-bold text-primary">{formatCurrency(totalGeral)}</p>
+                </div>
+                <div className="bg-primary/10 p-3 rounded-full">
+                    <CalculatorIcon className="h-6 w-6 text-primary" />
+                </div>
+            </div>
 
-                                return (
-                                    <tr 
-                                      key={item.empresa} 
-                                      className="bg-card border-b border-border hover:bg-secondary transition-colors duration-200 cursor-pointer"
-                                      onClick={() => { if (!isEditing) handleCellClick(item.empresa, item.saldo); }}
-                                    >
-                                        <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{item.empresa}</td>
-                                        <td className="px-6 py-4 text-right font-semibold">
-                                            {isEditing ? (
-                                                <input
-                                                    ref={inputRef}
-                                                    type="text"
-                                                    value={formatNumericStringToCurrency(editingValue)}
-                                                    onChange={handleSaldoChange}
-                                                    onBlur={handleInputBlur}
-                                                    onKeyDown={handleInputKeyDown}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    className="w-full bg-yellow-100 text-right font-semibold p-1 rounded focus:outline-none focus:ring-2 focus:ring-primary"
-                                                />
-                                            ) : (
-                                                <span className={`${item.saldo >= 0 ? 'text-blue-600' : 'text-danger'}`}>
-                                                    {formatCurrency(item.saldo)}
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${status === 'Conciliado' ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'}`}>
-                                                {status}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                );
-                            })
-                         ) : (
+            {/* Table */}
+            <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm flex-grow flex flex-col">
+                <div className="overflow-auto flex-grow">
+                    <table className="min-w-full divide-y divide-border text-sm text-left">
+                        <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider sticky top-0 z-10 shadow-sm">
                             <tr>
-                                <td colSpan={3} className="text-center py-16">
-                                     <div className="flex flex-col items-center justify-center text-text-secondary">
-                                        <SearchIcon className="w-12 h-12 mb-4 text-gray-300" />
-                                        <h3 className="text-xl font-semibold text-text-primary">Nenhum Lançamento Encontrado</h3>
-                                        <p className="mt-1">Digite um Mês/Ano e clique em "Gerar Lançamentos" para começar.</p>
-                                    </div>
+                                <th className="px-6 py-3">Empresa</th>
+                                <th className="px-6 py-3 text-right">Saldo em Caixa</th>
+                                <th className="px-6 py-3 text-center w-20">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border bg-white">
+                            {customCompanies.map((company) => (
+                                <tr key={company} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-6 py-3 font-medium text-text-primary">{company}</td>
+                                    <td className="px-6 py-3 text-right">
+                                        <div className="relative inline-block w-full max-w-[200px]">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">R$</span>
+                                            <input 
+                                                type="text"
+                                                value={(currentBalances[company] || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                onChange={(e) => handleBalanceChange(company, e.target.value)}
+                                                className="w-full bg-secondary/50 border border-transparent hover:border-border focus:border-primary focus:bg-white rounded-lg py-1.5 pl-10 pr-3 text-right font-medium outline-none transition-all"
+                                            />
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-3 text-center">
+                                        <button 
+                                            onClick={() => handleDeleteCompany(company)}
+                                            className="p-1.5 rounded-full text-gray-400 hover:text-danger hover:bg-danger/10 transition-colors"
+                                            title="Remover empresa"
+                                        >
+                                            <TrashIcon className="h-4 w-4" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {/* Add Button Row */}
+                            <tr>
+                                <td colSpan={3} className="px-6 py-3 text-center border-t border-dashed border-border">
+                                    {isAddModalOpen ? (
+                                        <div className="flex items-center justify-center gap-2 max-w-md mx-auto">
+                                            <input 
+                                                type="text" 
+                                                value={newCompany}
+                                                onChange={(e) => setNewCompany(e.target.value)}
+                                                placeholder="Nome da nova empresa..."
+                                                className="flex-grow bg-white border border-primary rounded-lg px-3 py-1.5 text-sm focus:outline-none"
+                                                autoFocus
+                                            />
+                                            <button onClick={handleAddCompany} className="bg-primary text-white px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-primary-hover">Salvar</button>
+                                            <button onClick={() => setIsAddModalOpen(false)} className="text-text-secondary hover:text-text-primary px-2 text-sm">Cancelar</button>
+                                        </div>
+                                    ) : (
+                                        <button 
+                                            onClick={() => setIsAddModalOpen(true)}
+                                            className="text-primary hover:text-primary-hover font-semibold text-sm flex items-center justify-center gap-2 py-1"
+                                        >
+                                            <PlusIcon className="h-4 w-4" /> Adicionar Empresa
+                                        </button>
+                                    )}
                                 </td>
                             </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
-            
-            {isConfirmOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-card rounded-2xl shadow-xl p-8 w-full max-w-sm">
-                        <h3 className="text-lg font-bold mb-4 text-text-primary">Confirmar Ação</h3>
-                        <p className="text-text-secondary mb-6">{confirmAction.message}</p>
-                        <div className="flex justify-end gap-4">
-                            <button onClick={handleCancelConfirm} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                            <button onClick={handleConfirm} className="py-2 px-4 rounded-full bg-primary hover:bg-primary-hover text-white font-semibold transition-colors">Confirmar</button>
-                        </div>
-                    </div>
+                        </tbody>
+                    </table>
                 </div>
-            )}
+            </div>
         </div>
     );
 };

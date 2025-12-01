@@ -217,14 +217,13 @@ export const PrevisaoFabrica: React.FC = () => {
 
     const totaisPorBanco = useMemo(() => {
         const porEmpresaBanco = filteredReportData.reduce((acc, item) => {
-            // Normalize keys to group effectively (Trim and UpperCase)
             const empresaClean = item.empresa.trim().toUpperCase();
             const bancoClean = item.tipo.trim().toUpperCase();
             const key = `${empresaClean}-${bancoClean}`;
             
             if (!acc[key]) {
                 acc[key] = { 
-                    empresa: item.empresa.trim(), // Keep original (trimmed) casing for display
+                    empresa: item.empresa.trim(), 
                     banco: item.tipo.trim(), 
                     receitas: 0 
                 };
@@ -241,14 +240,13 @@ export const PrevisaoFabrica: React.FC = () => {
             });
     }, [filteredReportData]);
 
-    // NEW: Summary only by bank (ignoring company) for the cards next to filters
     const bankSummaries = useMemo(() => {
         const acc: Record<string, number> = {};
         filteredReportData.forEach(item => {
             const bank = item.tipo.trim().toUpperCase();
             acc[bank] = (acc[bank] || 0) + item.receitas;
         });
-        return Object.entries(acc).sort((a, b) => b[1] - a[1]); // Descending value
+        return Object.entries(acc).sort((a, b) => b[1] - a[1]); 
     }, [filteredReportData]);
 
     const despesasPorEmpresa = useMemo(() => {
@@ -548,7 +546,7 @@ export const PrevisaoFabrica: React.FC = () => {
                     value={reportDateFilter} 
                     onChange={setReportDateFilter} 
                     placeholder="Selecione"
-                    className="w-full sm:w-40"
+                    className="w-full sm:w-40 h-10"
                 />
             </div>
             <div className="w-full sm:w-auto">
@@ -558,12 +556,12 @@ export const PrevisaoFabrica: React.FC = () => {
                     placeholder="Ex: Semana 42" 
                     value={reportWeekFilter} 
                     onChange={e => setReportWeekFilter(e.target.value)} 
-                    className="bg-white border border-border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary w-full sm:w-40 h-[48px] transition-all"
+                    className="bg-white border border-border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary w-full sm:w-40 h-10 transition-all"
                 />
             </div>
             <button 
                 onClick={() => {setReportDateFilter(''); setReportWeekFilter('')}} 
-                className="w-full sm:w-auto px-6 rounded-xl bg-secondary hover:bg-border text-text-primary font-bold text-sm transition-colors h-[48px]"
+                className="w-full sm:w-auto px-6 rounded-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold text-sm transition-colors h-10 shadow-sm"
             >
                 Limpar
             </button>
@@ -574,7 +572,7 @@ export const PrevisaoFabrica: React.FC = () => {
     <div className="p-4 sm:p-6 w-full h-full flex flex-col animate-fade-in">
        <div className="flex items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-4">
-              <button onClick={() => setView('menu')} className="flex items-center gap-2 py-1.5 px-3 rounded-full bg-white border border-border hover:bg-secondary font-medium transition-colors text-sm">
+              <button onClick={() => setView('menu')} className="flex items-center gap-2 py-1.5 px-3 rounded-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium transition-colors text-sm shadow-sm">
                   <ArrowLeftIcon className="h-4 w-4" /> Voltar
               </button>
               <h2 className="text-xl font-bold text-text-primary">{viewTitles[view]}</h2>
@@ -586,26 +584,24 @@ export const PrevisaoFabrica: React.FC = () => {
           case 'previsao':
             return (
               <div className="animate-fade-in flex flex-col h-full">
-                {/* ... (Previous code for 'previsao' remains unchanged) ... */}
                 <div className="flex flex-col lg:flex-row justify-end items-center mb-4 gap-2 bg-card p-3 rounded-2xl border border-border shadow-sm">
                     <div className="flex items-center rounded-full px-2">
                         <DatePicker 
-                            label="Data"
                             value={dateFilter} 
                             onChange={setDateFilter} 
                             placeholder="Selecione"
-                            className="w-40"
+                            className="w-40 h-9"
                         />
                     </div>
-                    <button onClick={() => setDateFilter('')} className="px-3 py-1.5 rounded-full bg-white border border-border hover:bg-secondary font-medium text-xs text-text-primary transition-colors h-9 shadow-sm mt-5">Limpar</button>
-                    <div className="h-6 w-px bg-border mx-2 hidden lg:block mt-5"></div>
-                    <button onClick={handleFecharDia} disabled={isCurrentDayClosed || !dateFilter} className="px-3 py-1.5 rounded-full bg-warning hover:bg-warning/90 text-white font-medium text-xs h-9 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed shadow-sm mt-5">
+                    <button onClick={() => setDateFilter('')} className="px-3 py-1.5 rounded-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium text-xs transition-colors h-9 shadow-sm">Limpar</button>
+                    <div className="h-6 w-px bg-border mx-2 hidden lg:block"></div>
+                    <button onClick={handleFecharDia} disabled={isCurrentDayClosed || !dateFilter} className={`px-3 py-1.5 rounded-full font-medium text-xs h-9 transition-colors shadow-sm ${isCurrentDayClosed ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed' : 'bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300'}`}>
                             {isCurrentDayClosed ? 'Dia Fechado' : 'Fechar Dia'}
                     </button>
-                    <button onClick={handleOpenAddEntryModal} className="flex items-center justify-center gap-2 bg-primary text-white font-medium py-1.5 px-3 rounded-full hover:bg-primary-hover transition-colors duration-300 h-9 text-xs shadow-sm mt-5">
+                    <button onClick={handleOpenAddEntryModal} className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-primary font-medium py-1.5 px-3 rounded-full hover:bg-orange-50 hover:border-orange-200 transition-colors duration-300 h-9 text-xs shadow-sm">
                         <PlusIcon className="h-4 w-4" /> <span>Adicionar</span>
                     </button>
-                    <button onClick={handleTransferToPagamentos} disabled={!dateFilter || filteredPrevisoes.length === 0} className="flex items-center justify-center gap-2 bg-success text-white font-medium py-1.5 px-3 rounded-full hover:bg-success/90 transition-colors duration-300 h-9 text-xs shadow-sm disabled:bg-gray-300 disabled:cursor-not-allowed mt-5">
+                    <button onClick={handleTransferToPagamentos} disabled={!dateFilter || filteredPrevisoes.length === 0} className={`flex items-center justify-center gap-2 font-medium py-1.5 px-3 rounded-full transition-colors duration-300 h-9 text-xs shadow-sm ${(!dateFilter || filteredPrevisoes.length === 0) ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed' : 'bg-white border border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300'}`}>
                         <TransferIcon className="h-4 w-4" /> <span>Transferir</span>
                     </button>
                 </div>
@@ -661,12 +657,11 @@ export const PrevisaoFabrica: React.FC = () => {
           case 'dashboard':
             return (
               <div className="animate-fade-in">
-                {/* ... (Previous code for 'dashboard' remains unchanged) ... */}
                 {previsaoGeradaAtiva ? (
                     <div>
                       <div className="flex justify-between items-center mb-4">
                           <h3 className="text-lg font-bold text-text-primary">Previsão: <span className="text-primary">{previsaoGeradaAtiva.semana}</span></h3>
-                          <button onClick={() => setPrevisaoGeradaAtiva(null)} className="px-4 py-2 rounded-full bg-white border border-border text-text-primary text-sm font-medium hover:bg-secondary transition-colors">Voltar</button>
+                          <button onClick={() => setPrevisaoGeradaAtiva(null)} className="px-4 py-2 rounded-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium transition-colors shadow-sm">Voltar</button>
                       </div>
                       <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm"><table className="min-w-full divide-y divide-border text-sm text-left"><thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider"><tr><th className="px-6 py-3">Data</th><th className="px-6 py-3 text-right">Receitas</th><th className="px-6 py-3 text-right">Despesas</th><th className="px-6 py-3 text-right">Saldo</th></tr></thead><tbody className="divide-y divide-border bg-white">{previsaoGeradaAtiva.dias.map(dia => (<tr key={dia.data} className="hover:bg-secondary"><td className="px-6 py-4 font-medium text-text-primary">{formatDateToBR(dia.data)}</td><td className="px-6 py-4 text-right text-success font-semibold">{formatCurrency(dia.receitas)}</td><td className="px-6 py-4 text-right text-danger font-semibold">{formatCurrency(dia.despesas)}</td><td className={`px-6 py-4 text-right font-bold ${dia.saldo >= 0 ? 'text-success' : 'text-danger'}`}>{formatCurrency(dia.saldo)}</td></tr>))}</tbody><tfoot><tr className="bg-secondary/50 font-bold text-text-primary"><td colSpan={2} className="px-6 py-4 text-right uppercase text-xs tracking-wider">Total Despesas:</td><td className="px-6 py-4 text-danger">{formatCurrency(previsaoGeradaAtiva.totais.totalDespesas)}</td><td className="px-6 py-4"></td></tr></tfoot></table></div>
                         </div>
@@ -674,7 +669,7 @@ export const PrevisaoFabrica: React.FC = () => {
                         <>
                           <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 bg-white p-3 rounded-2xl border border-border">
                               <div className="relative w-full sm:w-auto flex-grow sm:flex-grow-0"><input type="text" placeholder="Buscar por semana..." value={dashboardSemanaFilter} onChange={(e) => setDashboardSemanaFilter(e.target.value)} className="w-full sm:w-64 pl-10 pr-3 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-9"/><div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon className="h-4 w-4 text-text-secondary" /></div></div>
-                              <div className="flex items-center gap-2"><button onClick={() => setDashboardSemanaFilter('')} className="px-3 py-2 rounded-full bg-secondary hover:bg-secondary/80 text-text-primary font-medium text-sm transition-colors">Limpar</button><button onClick={() => setIsGerarPrevisaoModalOpen(true)} className="flex items-center justify-center gap-2 bg-primary text-white font-medium py-2 px-4 rounded-full hover:bg-primary-hover transition-colors text-sm shadow-sm"><PlusIcon className="h-4 w-4" /> Criar Nova Previsão</button></div>
+                              <div className="flex items-center gap-2"><button onClick={() => setDashboardSemanaFilter('')} className="px-3 py-2 rounded-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium text-sm transition-colors shadow-sm">Limpar</button><button onClick={() => setIsGerarPrevisaoModalOpen(true)} className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-primary font-bold py-2 px-4 rounded-full hover:bg-orange-50 hover:border-orange-200 transition-colors text-sm shadow-sm"><PlusIcon className="h-4 w-4" /> Criar Nova Previsão</button></div>
                           </div>
                           {filteredHistoricoGerado.length > 0 ? (
                               <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm"><table className="min-w-full divide-y divide-border text-sm text-left"><thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider"><tr><th className="px-6 py-3">Semana</th><th className="px-6 py-3">Data da Geração</th><th className="px-6 py-3 text-right">Resultado Total</th><th className="px-6 py-3 text-center">Ações</th></tr></thead><tbody className="divide-y divide-border bg-white">{filteredHistoricoGerado.map(item => (<tr key={item.dataGeracao} className="hover:bg-secondary"><td className="px-6 py-4 font-medium text-text-primary">{item.semana}</td><td className="px-6 py-4 text-text-secondary">{new Date(item.dataGeracao).toLocaleString('pt-BR')}</td><td className={`px-6 py-4 text-right font-bold ${item.totais.totalResultado >= 0 ? 'text-success' : 'text-danger'}`}>{formatCurrency(item.totais.totalResultado)}</td><td className="px-6 py-4 text-center"><div className="flex items-center justify-center gap-2"><button onClick={() => setPrevisaoGeradaAtiva(item)} className="px-3 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 font-medium text-xs transition-colors border border-primary/30">Visualizar</button><button onClick={() => handleDeleteGeneratedForecastClick(item.dataGeracao)} className="text-danger hover:bg-danger/10 p-1.5 rounded-full transition-colors" aria-label="Excluir"><TrashIcon className="h-4 w-4"/></button></div></td></tr>))}</tbody></table></div>
@@ -689,12 +684,8 @@ export const PrevisaoFabrica: React.FC = () => {
                 return (
                   <div className="animate-fade-in">
                       <h3 className="text-lg font-bold text-text-primary mb-4">Totais por Banco</h3>
-                      
-                      {/* Unified Filter + Cards Section */}
                       <div className="flex flex-col xl:flex-row items-start xl:items-center gap-6 mb-6">
                           <FilterBar />
-                          
-                          {/* Cards Scroll Container */}
                           <div className="w-full xl:flex-1 overflow-x-auto custom-scrollbar pb-2 xl:pb-0">
                               <div className="flex gap-3 xl:justify-end min-w-max px-1">
                                   {bankSummaries.map(([bank, value]) => (
@@ -786,33 +777,47 @@ export const PrevisaoFabrica: React.FC = () => {
           
           {isEditModalOpen && editingPrevisao && (
               <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                {/* ... (Modal content remains unchanged) ... */}
-                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-visible">
-                    <h3 className="text-2xl font-bold text-text-primary mb-6 text-center pt-8">Editar Previsão</h3>
-                    <div className="px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-                        <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Data</label><input type="date" name="data" value={editingPrevisao.data || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                        <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Semana</label><input type="text" name="semana" value={editingPrevisao.semana || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                        <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label>
-                        <AutocompleteInput name="empresa" value={editingPrevisao.empresa || ''} onChange={handleInputChange} suggestions={uniqueEmpresas} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                        <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Banco</label>
-                        <AutocompleteInput name="tipo" value={editingPrevisao.tipo || ''} onChange={handleInputChange} suggestions={uniqueBancos} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                        
-                        <div className="relative">
-                            <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Receitas</label>
-                            <input type="text" name="receitas" value={formatCurrency(editingPrevisao.receitas)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/>
-                            <button onClick={() => setShowCalculator({ field: 'receitas' })} className="absolute right-3 top-9 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
-                            {showCalculator.field === 'receitas' && <Calculator initialValue={editingPrevisao.receitas} onResult={(res) => handleCalculatorUpdate(res, 'receitas', 'edit')} onClose={() => setShowCalculator({ field: null })} />}
-                        </div>
-                        <div className="relative">
-                            <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Despesas</label>
-                            <input type="text" name="despesas" value={formatCurrency(editingPrevisao.despesas)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/>
-                            <button onClick={() => setShowCalculator({ field: 'despesas' })} className="absolute right-3 top-9 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
-                            {showCalculator.field === 'despesas' && <Calculator initialValue={editingPrevisao.despesas} onResult={(res) => handleCalculatorUpdate(res, 'despesas', 'edit')} onClose={() => setShowCalculator({ field: null })} />}
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                    <div className="shrink-0 p-6 pb-4 border-b border-gray-100">
+                        <h3 className="text-2xl font-bold text-text-primary text-center">Editar Previsão</h3>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar pb-32">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
+                            <div>
+                                <DatePicker 
+                                    label="Data"
+                                    value={editingPrevisao.data || ''} 
+                                    onChange={(val) => setEditingPrevisao(prev => ({...prev, data: val}))} 
+                                    placeholder="Selecione"
+                                />
+                            </div>
+                            <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Semana</label><input type="text" name="semana" value={editingPrevisao.semana || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                            <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label>
+                            <AutocompleteInput name="empresa" value={editingPrevisao.empresa || ''} onChange={handleInputChange} suggestions={uniqueEmpresas} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                            <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Banco</label>
+                            <AutocompleteInput name="tipo" value={editingPrevisao.tipo || ''} onChange={handleInputChange} suggestions={uniqueBancos} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                            
+                            <div className="relative">
+                                <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Receitas</label>
+                                <div className="relative">
+                                    <input type="text" name="receitas" value={formatCurrency(editingPrevisao.receitas)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 pr-10 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/>
+                                    <button onClick={() => setShowCalculator({ field: 'receitas' })} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                                </div>
+                                {showCalculator.field === 'receitas' && <Calculator initialValue={editingPrevisao.receitas} onResult={(res) => handleCalculatorUpdate(res, 'receitas', 'edit')} onClose={() => setShowCalculator({ field: null })} />}
+                            </div>
+                            <div className="relative">
+                                <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Despesas</label>
+                                <div className="relative">
+                                    <input type="text" name="despesas" value={formatCurrency(editingPrevisao.despesas)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 pr-10 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/>
+                                    <button onClick={() => setShowCalculator({ field: 'despesas' })} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                                </div>
+                                {showCalculator.field === 'despesas' && <Calculator initialValue={editingPrevisao.despesas} onResult={(res) => handleCalculatorUpdate(res, 'despesas', 'edit')} onClose={() => setShowCalculator({ field: null })} />}
+                            </div>
                         </div>
                     </div>
-                    <div className="px-8 pb-8 flex justify-center gap-3">
-                        <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                        <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
+                    <div className="shrink-0 p-6 pt-4 border-t border-gray-100 flex justify-center gap-3 bg-gray-50">
+                        <button onClick={handleCloseModal} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-text-primary font-semibold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
+                        <button onClick={handleSaveChanges} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Salvar</button>
                     </div>
                 </div>
               </div>
@@ -820,40 +825,47 @@ export const PrevisaoFabrica: React.FC = () => {
               
               {isAddEntryModalOpen && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                    {/* ... (Add modal content remains unchanged) ... */}
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-visible">
-                        <h3 className="text-2xl font-bold text-text-primary mb-6 text-center pt-8">Adicionar Lançamento</h3>
-                        <div className="px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-                            <div>
-                                <DatePicker 
-                                    label="Data"
-                                    value={newEntry.data || ''} 
-                                    onChange={(val) => setNewEntry(prev => ({...prev, data: val}))} 
-                                    placeholder="Selecione"
-                                />
-                            </div>
-                            <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Semana</label><input type="text" name="semana" value={newEntry.semana || ''} onChange={handleNewEntryChange} placeholder="Ex: Semana 32" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                            <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label>
-                            <AutocompleteInput name="empresa" value={newEntry.empresa || ''} onChange={handleNewEntryChange} suggestions={uniqueEmpresas} placeholder="Digite a empresa" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                            <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Banco</label>
-                            <AutocompleteInput name="tipo" value={newEntry.tipo || ''} onChange={handleNewEntryChange} suggestions={uniqueBancos} placeholder="Digite o banco" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                            
-                            <div className="relative">
-                                <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Receitas</label>
-                                <input type="text" name="receitas" value={formatCurrency(newEntry.receitas)} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/>
-                                <button onClick={() => setShowCalculator({ field: 'receitas' })} className="absolute right-3 top-9 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
-                                {showCalculator.field === 'receitas' && <Calculator initialValue={newEntry.receitas} onResult={(res) => handleCalculatorUpdate(res, 'receitas', 'add')} onClose={() => setShowCalculator({ field: null })} />}
-                            </div>
-                            <div className="relative">
-                                <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Despesas</label>
-                                <input type="text" name="despesas" value={formatCurrency(newEntry.despesas)} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/>
-                                <button onClick={() => setShowCalculator({ field: 'despesas' })} className="absolute right-3 top-9 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
-                                {showCalculator.field === 'despesas' && <Calculator initialValue={newEntry.despesas} onResult={(res) => handleCalculatorUpdate(res, 'despesas', 'add')} onClose={() => setShowCalculator({ field: null })} />}
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="shrink-0 p-6 pb-4 border-b border-gray-100">
+                            <h3 className="text-2xl font-bold text-text-primary text-center">Adicionar Lançamento</h3>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar pb-32">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
+                                <div>
+                                    <DatePicker 
+                                        label="Data"
+                                        value={newEntry.data || ''} 
+                                        onChange={(val) => setNewEntry(prev => ({...prev, data: val}))} 
+                                        placeholder="Selecione"
+                                    />
+                                </div>
+                                <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Semana</label><input type="text" name="semana" value={newEntry.semana || ''} onChange={handleNewEntryChange} placeholder="Ex: Semana 32" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                                <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label>
+                                <AutocompleteInput name="empresa" value={newEntry.empresa || ''} onChange={handleNewEntryChange} suggestions={uniqueEmpresas} placeholder="Digite a empresa" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                                <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Banco</label>
+                                <AutocompleteInput name="tipo" value={newEntry.tipo || ''} onChange={handleNewEntryChange} suggestions={uniqueBancos} placeholder="Digite o banco" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                                
+                                <div className="relative">
+                                    <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Receitas</label>
+                                    <div className="relative">
+                                        <input type="text" name="receitas" value={formatCurrency(newEntry.receitas)} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 pr-10 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/>
+                                        <button onClick={() => setShowCalculator({ field: 'receitas' })} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                                    </div>
+                                    {showCalculator.field === 'receitas' && <Calculator initialValue={newEntry.receitas} onResult={(res) => handleCalculatorUpdate(res, 'receitas', 'add')} onClose={() => setShowCalculator({ field: null })} />}
+                                </div>
+                                <div className="relative">
+                                    <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Despesas</label>
+                                    <div className="relative">
+                                        <input type="text" name="despesas" value={formatCurrency(newEntry.despesas)} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 pr-10 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/>
+                                        <button onClick={() => setShowCalculator({ field: 'despesas' })} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                                    </div>
+                                    {showCalculator.field === 'despesas' && <Calculator initialValue={newEntry.despesas} onResult={(res) => handleCalculatorUpdate(res, 'despesas', 'add')} onClose={() => setShowCalculator({ field: null })} />}
+                                </div>
                             </div>
                         </div>
-                        <div className="px-8 pb-8 flex justify-center gap-3">
-                            <button onClick={() => setIsAddEntryModalOpen(false)} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                            <button onClick={handleAddNewEntry} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
+                        <div className="shrink-0 p-6 pt-4 border-t border-gray-100 flex justify-center gap-3 bg-gray-50">
+                            <button onClick={() => setIsAddEntryModalOpen(false)} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-text-primary font-semibold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
+                            <button onClick={handleAddNewEntry} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Salvar</button>
                         </div>
                     </div>
                 </div>
@@ -869,8 +881,8 @@ export const PrevisaoFabrica: React.FC = () => {
                              : confirmAction.message}
                         </p>
                         <div className="flex justify-center gap-4">
-                            <button onClick={() => { setIsGerarPrevisaoConfirmOpen(false); setIsTransferConfirmOpen(false); if(confirmAction.action) setIsConfirmOpen(false); }} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                            <button onClick={isGerarPrevisaoConfirmOpen ? handleGerarPrevisao : isTransferConfirmOpen ? confirmTransfer : handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button>
+                            <button onClick={() => { setIsGerarPrevisaoConfirmOpen(false); setIsTransferConfirmOpen(false); if(confirmAction.action) setIsConfirmOpen(false); }} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-text-primary font-semibold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
+                            <button onClick={isGerarPrevisaoConfirmOpen ? handleGerarPrevisao : isTransferConfirmOpen ? confirmTransfer : handleConfirm} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Confirmar</button>
                         </div>
                     </div>
                 </div>
@@ -878,7 +890,6 @@ export const PrevisaoFabrica: React.FC = () => {
               
               {isGerarPrevisaoModalOpen && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                    {/* ... (Gerar Previsao modal content remains unchanged) ... */}
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center">
                         <h3 className="text-xl font-bold mb-4 text-text-primary">Gerar Previsão</h3>
                         <p className="text-text-secondary mb-4">Informe a semana para agrupar os lançamentos.</p>
@@ -890,8 +901,8 @@ export const PrevisaoFabrica: React.FC = () => {
                             className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12 mb-6"
                         />
                         <div className="flex justify-center gap-4">
-                            <button onClick={() => setIsGerarPrevisaoModalOpen(false)} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                            <button onClick={handleProceedToConfirmGerar} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Continuar</button>
+                            <button onClick={() => setIsGerarPrevisaoModalOpen(false)} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-text-primary font-semibold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
+                            <button onClick={handleProceedToConfirmGerar} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Continuar</button>
                         </div>
                     </div>
                 </div>

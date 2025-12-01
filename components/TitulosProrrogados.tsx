@@ -1,10 +1,10 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, 
-    // Add ArrowLeftIcon here
     ArrowLeftIcon, SpinnerIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
 import DatePicker from './DatePicker';
 import CustomSelect from './CustomSelect';
+import { useHideSidebarOnModal } from '../UIContext';
 
 // Enum for status
 enum StatusTitulo {
@@ -28,7 +28,6 @@ interface Title {
 const formatDateToBR = (isoDate: string): string => {
     if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return '';
     const [year, month, day] = isoDate.split('-');
-    // Create a UTC date to avoid timezone issues
     const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
     return date.toLocaleDateString('pt-BR', {
         timeZone: 'UTC',
@@ -102,6 +101,8 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
+
+  useHideSidebarOnModal(isModalOpen || isConfirmOpen);
 
   useEffect(() => {
     setSelectedTitles(new Set());
@@ -388,12 +389,12 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in flex flex-col h-full">
+    <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in flex flex-col h-full max-w-[1600px] mx-auto">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
         <div className="flex items-center gap-2 flex-wrap">
           {/* Add onBack button here */}
            {onBack && (
-              <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">
+              <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold transition-colors h-10 text-sm shadow-sm">
                   <ArrowLeftIcon className="h-5 w-5" />
                   Voltar
               </button>
@@ -404,7 +405,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             {selectedTitles.size > 0 && (
                 <button
                     onClick={handleDeleteSelectedClick}
-                    className="flex items-center gap-2 bg-danger text-white font-semibold py-2 px-4 rounded-full hover:bg-danger/90 transition-colors duration-300 h-9"
+                    className="flex items-center gap-2 bg-white border border-red-200 text-red-700 font-semibold py-2 px-4 rounded-full hover:bg-red-50 transition-colors duration-300 h-10 text-sm shadow-sm"
                 >
                     <TrashIcon className="h-4 w-4" />
                     Apagar ({selectedTitles.size})
@@ -412,45 +413,45 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             )}
            <button 
              onClick={handleOpenAddModal}
-             className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-full hover:bg-primary-hover transition-colors duration-300 h-9 shadow-sm"
+             className="flex items-center gap-2 bg-white border border-gray-200 text-primary font-semibold py-2 px-4 rounded-full hover:bg-orange-50 hover:border-orange-200 transition-colors duration-300 h-10 text-sm shadow-sm"
            >
              <PlusIcon className="h-4 w-4" />
              Adicionar Título
            </button>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-            <button onClick={handleExportXLSX} className="flex items-center gap-2 bg-white border border-border text-text-primary font-semibold py-2 px-4 rounded-full hover:bg-secondary transition-colors duration-300 h-9">
+            <button onClick={handleExportXLSX} className="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-full hover:bg-gray-50 transition-colors duration-300 h-10 text-sm shadow-sm">
                 <DownloadIcon className="h-4 w-4" /> Exportar XLSX
             </button>
         </div>
       </div>
 
       <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div onClick={() => setStatusFilter(StatusTitulo.A_PRORROGAR)} className={`p-4 rounded-2xl border cursor-pointer transition-all ${statusFilter === StatusTitulo.A_PRORROGAR ? 'border-warning bg-warning/5 ring-1 ring-warning' : 'border-border bg-card hover:border-gray-300'}`}>
-                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">A Prorrogar</p>
+            <div onClick={() => setStatusFilter(StatusTitulo.A_PRORROGAR)} className={`p-4 rounded-2xl shadow-sm border cursor-pointer transition-all ${statusFilter === StatusTitulo.A_PRORROGAR ? 'border-warning bg-yellow-50 ring-1 ring-warning' : 'border-gray-200 bg-white hover:border-yellow-200'}`}>
+                <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">A Prorrogar</p>
                 <p className="text-xl font-bold text-warning">{formatCurrency(totals[StatusTitulo.A_PRORROGAR]?.value || 0)}</p>
                 <p className="text-xs text-text-secondary mt-1">{totals[StatusTitulo.A_PRORROGAR]?.count || 0} títulos</p>
             </div>
-            <div onClick={() => setStatusFilter(StatusTitulo.PRORROGADO)} className={`p-4 rounded-2xl border cursor-pointer transition-all ${statusFilter === StatusTitulo.PRORROGADO ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border bg-card hover:border-gray-300'}`}>
-                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Prorrogados</p>
+            <div onClick={() => setStatusFilter(StatusTitulo.PRORROGADO)} className={`p-4 rounded-2xl shadow-sm border cursor-pointer transition-all ${statusFilter === StatusTitulo.PRORROGADO ? 'border-primary bg-orange-50 ring-1 ring-primary' : 'border-gray-200 bg-white hover:border-orange-200'}`}>
+                <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Prorrogados</p>
                 <p className="text-xl font-bold text-primary">{formatCurrency(totals[StatusTitulo.PRORROGADO]?.value || 0)}</p>
                 <p className="text-xs text-text-secondary mt-1">{totals[StatusTitulo.PRORROGADO]?.count || 0} títulos</p>
             </div>
-            <div onClick={() => setStatusFilter('Todos')} className={`p-4 rounded-2xl border cursor-pointer transition-all ${statusFilter === 'Todos' ? 'border-gray-400 bg-gray-50 ring-1 ring-gray-300 dark:bg-slate-800 dark:border-slate-600' : 'border-border bg-card hover:border-gray-300'}`}>
-                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Total Geral</p>
+            <div onClick={() => setStatusFilter('Todos')} className={`p-4 rounded-2xl shadow-sm border cursor-pointer transition-all ${statusFilter === 'Todos' ? 'border-gray-400 bg-gray-50 ring-1 ring-gray-300' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
+                <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Total Geral</p>
                 <p className="text-xl font-bold text-text-primary">{formatCurrency(totals.total.value)}</p>
                 <p className="text-xs text-text-secondary mt-1">{totals.total.count} títulos</p>
             </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 bg-white p-3 rounded-2xl border border-border">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 bg-white p-3 rounded-2xl border border-border shadow-sm">
         <div className="relative w-full sm:w-auto flex-grow sm:flex-grow-0">
             <input
             type="text"
             placeholder="Buscar..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full sm:w-80 pl-10 pr-3 py-2 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors h-9"
+            className="w-full sm:w-80 pl-10 pr-3 py-2 bg-secondary border-transparent rounded-xl text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-10"
             />
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <SearchIcon className="h-4 w-4 text-text-secondary" />
@@ -469,7 +470,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 />
             </div>
 
-            <div className="flex items-center gap-2 bg-secondary rounded-xl px-2 border border-border h-9">
+            <div className="flex items-center gap-2 bg-secondary rounded-lg px-2 border border-transparent h-10">
                 <span className="text-xs font-medium text-text-secondary whitespace-nowrap">Novo Venc.:</span>
                 <DatePicker 
                     value={dateRange.start} 
@@ -486,19 +487,19 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 />
             </div>
 
-            <button onClick={handleClearFilters} className="px-3 py-1.5 rounded-full bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-9 transition-colors">Limpar</button>
+            <button onClick={handleClearFilters} className="px-4 py-2 rounded-lg bg-secondary hover:bg-border text-text-primary font-medium text-sm transition-colors">Limpar</button>
         </div>
       </div>
 
-      <div className="bg-card shadow-sm rounded-2xl overflow-hidden flex flex-col flex-grow border border-border">
-        <div className="overflow-x-auto overflow-y-auto flex-grow">
+      <div className="bg-white border border-border rounded-2xl overflow-hidden flex flex-col flex-grow shadow-sm">
+        <div className="overflow-x-auto overflow-y-auto flex-grow custom-scrollbar">
             <table className="min-w-full divide-y divide-border text-sm text-left">
-            <thead className="bg-secondary text-xs uppercase font-medium text-text-secondary sticky top-0 z-10">
+            <thead className="bg-gray-50 text-xs font-semibold text-text-secondary uppercase tracking-wider sticky top-0 z-10 shadow-sm">
                 <tr>
                 <th className="px-6 py-3">
                     <input 
                         type="checkbox" 
-                        className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                         checked={filteredTitles.length > 0 && selectedTitles.size === filteredTitles.length}
                         onChange={handleSelectAll}
                     />
@@ -517,32 +518,32 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 paginatedTitles.map((title) => (
                     <tr 
                         key={title.id} 
-                        className={`hover:bg-secondary transition-colors cursor-pointer ${selectedTitles.has(title.id) ? 'bg-primary/5' : ''}`}
+                        className={`hover:bg-gray-50 transition-colors cursor-pointer group ${selectedTitles.has(title.id) ? 'bg-orange-50' : ''}`}
                         onClick={() => handleRowClick(title)}
                     >
-                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-6 py-3" onClick={(e) => e.stopPropagation()}>
                         <input 
                             type="checkbox" 
-                            className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                             checked={selectedTitles.has(title.id)}
                             onChange={() => handleSelectTitle(title.id)}
                         />
                     </td>
-                    <td className="px-6 py-4">
-                        <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded-full border ${
+                    <td className="px-6 py-3">
+                        <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-full border ${
                         title.status === StatusTitulo.A_PRORROGAR 
-                            ? 'bg-warning/20 text-warning border-warning/30' 
-                            : 'bg-primary/20 text-primary border-primary/30'
+                            ? 'bg-yellow-50 text-yellow-700 border-yellow-200' 
+                            : 'bg-orange-50 text-orange-700 border-orange-200'
                         }`}>
                         {title.status}
                         </span>
                     </td>
-                    <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{title.fornecedor}</td>
-                    <td className="px-6 py-4 text-text-secondary whitespace-nowrap">{title.numeroTitulo}</td>
-                    <td className="px-6 py-4 text-text-secondary whitespace-nowrap">{formatDateToBR(title.vencimentoOriginal)}</td>
-                    <td className="px-6 py-4 text-text-secondary whitespace-nowrap">{title.devedor}</td>
-                    <td className="px-6 py-4 text-text-secondary whitespace-nowrap">{formatDateToBR(title.novoVencimento)}</td>
-                    <td className="px-6 py-4 text-right font-semibold text-text-primary whitespace-nowrap">
+                    <td className="px-6 py-3 font-medium text-text-primary whitespace-nowrap">{title.fornecedor}</td>
+                    <td className="px-6 py-3 text-text-secondary whitespace-nowrap">{title.numeroTitulo}</td>
+                    <td className="px-6 py-3 text-text-secondary whitespace-nowrap tabular-nums">{formatDateToBR(title.vencimentoOriginal)}</td>
+                    <td className="px-6 py-3 text-text-secondary whitespace-nowrap">{title.devedor}</td>
+                    <td className="px-6 py-3 text-text-secondary whitespace-nowrap tabular-nums">{formatDateToBR(title.novoVencimento)}</td>
+                    <td className="px-6 py-3 text-right font-semibold text-text-primary whitespace-nowrap tabular-nums">
                         {formatCurrency(title.valor)}
                     </td>
                     </tr>
@@ -550,7 +551,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 ) : (
                 <tr>
                     <td colSpan={8} className="text-center py-16">
-                        <div className="flex flex-col items-center justify-center text-text-secondary">
+                        <div className="flex flex-col items-center justify-center text-text-secondary opacity-60">
                             <SearchIcon className="w-10 h-10 mb-4 text-gray-300" />
                             <h3 className="text-lg font-medium text-text-primary">Nenhum Título Encontrado</h3>
                             <p className="mt-1">Tente ajustar os filtros ou adicione um novo título.</p>
@@ -562,27 +563,27 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             </table>
         </div>
         {/* Pagination Footer */}
-        <div className="flex justify-between items-center p-4 border-t border-border bg-card rounded-b-2xl">
-            <div className="text-sm text-text-secondary">
+        <div className="flex justify-between items-center p-4 border-t border-border bg-gray-50 text-xs text-text-secondary">
+            <div>
                 Exibindo {filteredTitles.length > 0 ? startIndex + 1 : 0} a {Math.min(startIndex + ITEMS_PER_PAGE, filteredTitles.length)} de {filteredTitles.length} registros
             </div>
             <div className="flex items-center gap-2">
                 <button
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-1.5 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     title="Página Anterior"
                 >
-                    <ChevronLeftIcon className="h-5 w-5 text-text-primary" />
+                    <ChevronLeftIcon className="h-4 w-4" />
                 </button>
-                <span className="text-sm font-medium text-text-primary">Página {currentPage} de {Math.max(1, totalPages)}</span>
+                <span className="font-medium">Página {currentPage} de {Math.max(1, totalPages)}</span>
                 <button
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages || totalPages === 0}
-                    className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-1.5 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     title="Próxima Página"
                 >
-                    <ChevronRightIcon className="h-5 w-5 text-text-primary" />
+                    <ChevronRightIcon className="h-4 w-4" />
                 </button>
             </div>
         </div>
@@ -592,11 +593,11 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
             <div className="shrink-0 p-6 pb-4 border-b border-gray-100 flex justify-between items-center">
-                <h3 className="text-2xl font-bold text-text-primary">{editingTitle.id ? 'Editar Título' : 'Novo Título'}</h3>
+                <h3 className="text-xl font-bold text-text-primary">{editingTitle.id ? 'Editar Título' : 'Novo Título'}</h3>
                 {editingTitle.id && (
                     <button 
                         onClick={(e) => handleDeleteClick(e, editingTitle.id!)} 
-                        className="text-danger hover:bg-danger/10 p-2 rounded-full transition-colors"
+                        className="text-danger hover:bg-danger/10 p-2 rounded-md transition-colors"
                         title="Excluir Título"
                     >
                         <TrashIcon className="h-5 w-5" />
@@ -665,8 +666,8 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             </div>
 
             <div className="shrink-0 p-6 pt-4 border-t border-gray-100 flex justify-center gap-3 bg-gray-50">
-              <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-              <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
+                <button onClick={handleCloseModal} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-text-primary font-semibold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
+                <button onClick={handleSaveChanges} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Salvar</button>
             </div>
           </div>
         </div>
@@ -674,14 +675,14 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
       {isConfirmOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center">
-            <h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar</h3>
-            <p className="text-text-secondary mb-8">{confirmAction.message}</p>
-            <div className="flex justify-center gap-4">
-              <button onClick={handleCancelConfirm} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-              <button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center">
+                <h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar Ação</h3>
+                <p className="text-text-secondary mb-8">{confirmAction.message}</p>
+                <div className="flex justify-center gap-4">
+                    <button onClick={handleCancelConfirm} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-text-primary font-semibold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
+                    <button onClick={handleConfirm} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Confirmar</button>
+                </div>
             </div>
-          </div>
         </div>
       )}
     </div>

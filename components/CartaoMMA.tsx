@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { UploadIcon, SearchIcon, DownloadIcon, ArrowLeftIcon } from './icons';
 import CustomSelect from './CustomSelect';
@@ -343,13 +342,13 @@ const CartaoMMA: React.FC<CartaoMmaProps> = ({ onBack }) => {
                     </button>
                      <button
                         onClick={handleExportXLSX}
-                        className="flex items-center gap-2 bg-success text-white font-semibold py-2 px-4 rounded-full hover:bg-green-700 transition-colors duration-300 h-10"
+                        className="flex items-center gap-2 bg-white border border-gray-300 text-success font-semibold py-2 px-4 rounded-full hover:bg-green-50 transition-colors duration-300 h-10 shadow-sm"
                     >
                         <DownloadIcon className="h-5 w-5" /> Emitir Fatura
                     </button>
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-full hover:bg-primary-hover transition-colors duration-300 h-10"
+                        className="flex items-center gap-2 bg-white border border-gray-200 text-primary font-semibold py-2 px-4 rounded-full hover:bg-orange-50 hover:border-orange-200 transition-colors duration-300 h-10 shadow-sm"
                     >
                         <UploadIcon className="h-5 w-5" />
                         Subir Arquivo CSV

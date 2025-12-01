@@ -1,8 +1,9 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, CalendarClockIcon, SpinnerIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
+import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, CalendarClockIcon, SpinnerIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ArrowLeftIcon } from './icons';
 import AutocompleteInput from './AutocompleteInput';
 import DatePicker from './DatePicker';
+import { useHideSidebarOnModal } from '../UIContext';
 
 // Enum for status
 enum StatusBoletoReceber {
@@ -110,6 +111,8 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
+
+    useHideSidebarOnModal(isModalOpen || isConfirmOpen);
 
     // --- Autocomplete Data Sources ---
     const uniqueCredores = useMemo(() => [...new Set(boletos.map(b => b.credor).filter(Boolean))].sort(), [boletos]);
@@ -440,29 +443,35 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
     const renderSortIcon = (key: keyof BoletoReceber | 'dynamicStatus') => {
         if (sortConfig?.key === key) {
-            return <ChevronDownIcon className={`h-4 w-4 inline-block ml-1 transition-transform ${sortConfig.direction === 'asc' ? 'rotate-180' : ''}`} />;
+            return <ChevronDownIcon className={`h-3 w-3 inline-block ml-1 transition-transform ${sortConfig.direction === 'asc' ? 'rotate-180' : ''}`} />;
         }
         return null;
     };
 
     return (
-        <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in flex flex-col h-full">
+        <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in flex flex-col h-full max-w-[1600px] mx-auto">
             <input type="file" ref={fileInputRef} onChange={handleFileImport} className="hidden" accept=".xlsx, .xls" />
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
                 <div className="flex items-center gap-4">
+                    {onBack && (
+                      <button onClick={onBack} className="flex items-center gap-2 py-2 px-4 rounded-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold transition-colors h-10 text-sm shadow-sm">
+                          <ArrowLeftIcon className="h-4 w-4" />
+                          Voltar
+                      </button>
+                    )}
                     <h2 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Boletos a Receber</h2>
                 </div>
                 <div className="flex items-center flex-wrap gap-2">
-                    <button onClick={handleResetTable} className="flex items-center gap-2 bg-white border border-border text-danger font-medium py-2 px-4 rounded-full hover:bg-red-50 text-sm h-10 transition-colors shadow-sm" title="Apagar todos os registros">
+                    <button onClick={handleResetTable} className="flex items-center gap-2 bg-white border border-red-200 text-red-700 font-medium py-2 px-4 rounded-full hover:bg-red-50 text-sm h-10 transition-colors shadow-sm" title="Apagar todos os registros">
                         <TrashIcon className="h-4 w-4" /> Resetar Tabela
                     </button>
-                    <button onClick={handleExportXLSX} className="flex items-center gap-2 bg-white border border-border text-text-primary font-medium py-2 px-4 rounded-full hover:bg-secondary text-sm h-10 transition-colors shadow-sm">
+                    <button onClick={handleExportXLSX} className="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 font-medium py-2 px-4 rounded-full hover:bg-gray-50 text-sm h-10 transition-colors shadow-sm">
                         <DownloadIcon className="h-4 w-4" /> Exportar
                     </button>
-                    <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 bg-white border border-border text-text-primary font-medium py-2 px-4 rounded-full hover:bg-secondary text-sm h-10 transition-colors shadow-sm">
+                    <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 font-medium py-2 px-4 rounded-full hover:bg-gray-50 text-sm h-10 transition-colors shadow-sm">
                         <UploadIcon className="h-4 w-4" /> Importar
                     </button>
-                    <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-primary text-white font-medium py-2 px-4 rounded-full hover:bg-primary-hover text-sm h-10 shadow-sm transition-colors">
+                    <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-white border border-gray-200 text-primary font-medium py-2 px-4 rounded-full hover:bg-orange-50 hover:border-orange-200 text-sm h-10 shadow-sm transition-colors">
                         <PlusIcon className="h-4 w-4" /> Novo Boleto
                     </button>
                 </div>
@@ -471,14 +480,30 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {(Object.values(StatusBoletoReceber) as StatusBoletoReceber[]).map(status => {
                     const total = totals[status] || { count: 0, value: 0 };
+                    let bgClass = 'bg-white hover:border-orange-200';
+                    let ringClass = '';
+                    let textClass = 'text-primary';
+
+                    if (statusFilter === status) {
+                        bgClass = 'bg-orange-50 border-primary';
+                        ringClass = 'ring-1 ring-primary';
+                    }
+                    if (status === StatusBoletoReceber.VENCIDO) {
+                        textClass = 'text-danger';
+                        if (statusFilter === status) { bgClass = 'bg-red-50 border-danger'; ringClass = 'ring-1 ring-danger'; }
+                    } else if (status === StatusBoletoReceber.RECEBIDO) {
+                        textClass = 'text-success';
+                        if (statusFilter === status) { bgClass = 'bg-green-50 border-success'; ringClass = 'ring-1 ring-success'; }
+                    }
+
                     return (
                         <div 
                             key={status} 
                             onClick={() => setStatusFilter(status === statusFilter ? 'Todos' : status)} 
-                            className={`p-4 rounded-2xl border cursor-pointer transition-all ${statusFilter === status ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-gray-300'}`}
+                            className={`p-4 rounded-2xl border shadow-sm cursor-pointer transition-all ${bgClass} ${ringClass} border-gray-200`}
                         >
-                            <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">{status}</p>
-                            <p className={`text-xl font-bold ${status === StatusBoletoReceber.VENCIDO ? 'text-danger' : status === StatusBoletoReceber.RECEBIDO ? 'text-success' : 'text-primary'}`}>
+                            <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">{status}</p>
+                            <p className={`text-xl font-bold ${textClass}`}>
                                 {formatCurrency(total.value)}
                             </p>
                             <p className="text-xs text-text-secondary mt-1">{total.count} boletos</p>
@@ -494,70 +519,70 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         placeholder="Buscar Credor ou Cliente..." 
                         value={searchTerm} 
                         onChange={e => setSearchTerm(e.target.value)} 
-                        className="w-full sm:w-80 pl-10 pr-3 bg-white border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary h-12 transition-colors"
+                        className="w-full sm:w-80 pl-10 pr-3 bg-secondary border-transparent rounded-xl text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-10"
                     />
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon className="h-5 w-5 text-text-secondary"/></div>
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon className="h-4 w-4 text-text-secondary"/></div>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 bg-secondary rounded-lg p-1">
                         <DatePicker 
                             value={dateRange.start} 
                             onChange={(val) => setDateRange(prev => ({ ...prev, start: val }))} 
                             placeholder="Início"
-                            className="w-32 h-12"
+                            className="w-28 h-9"
                         />
-                        <span className="text-xs text-text-secondary">até</span>
+                        <span className="text-xs text-text-secondary font-medium">até</span>
                         <DatePicker 
                             value={dateRange.end} 
                             onChange={(val) => setDateRange(prev => ({ ...prev, end: val }))} 
                             placeholder="Fim"
-                            className="w-32 h-12"
+                            className="w-28 h-9"
                         />
                     </div>
-                    <button onClick={() => { setSearchTerm(''); setStatusFilter('Todos'); setDateRange({start: '', end: ''}); setSortConfig(null); }} className="px-4 py-2 rounded-xl bg-secondary hover:bg-gray-200 text-text-primary font-medium text-sm h-12 transition-colors">Limpar</button>
+                    <button onClick={() => { setSearchTerm(''); setStatusFilter('Todos'); setDateRange({start: '', end: ''}); setSortConfig(null); }} className="px-4 py-2 rounded-lg bg-secondary hover:bg-border text-text-primary font-medium text-sm transition-colors">Limpar</button>
                 </div>
             </div>
 
-            <div className="bg-card border border-border rounded-2xl overflow-hidden flex-grow shadow-sm flex flex-col">
-                <div className="overflow-x-auto overflow-y-auto flex-grow">
+            <div className="bg-white border border-border rounded-2xl overflow-hidden flex-grow shadow-sm flex flex-col">
+                <div className="overflow-x-auto overflow-y-auto flex-grow custom-scrollbar">
                     <table className="min-w-full divide-y divide-border text-sm text-left">
-                        <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider sticky top-0 z-10">
+                        <thead className="bg-gray-50 text-text-secondary font-semibold uppercase text-xs tracking-wider sticky top-0 z-10 shadow-sm">
                             <tr>
-                                <th className="px-6 py-3 cursor-pointer hover:bg-border/50 transition-colors select-none" onClick={() => requestSort('dynamicStatus')}>Status {renderSortIcon('dynamicStatus')}</th>
-                                <th className="px-6 py-3 cursor-pointer hover:bg-border/50 transition-colors select-none" onClick={() => requestSort('credor')}>Credor {renderSortIcon('credor')}</th>
-                                <th className="px-6 py-3 cursor-pointer hover:bg-border/50 transition-colors select-none" onClick={() => requestSort('cliente')}>Cliente {renderSortIcon('cliente')}</th>
-                                <th className="px-6 py-3 cursor-pointer hover:bg-border/50 transition-colors select-none" onClick={() => requestSort('vencimento')}>Vencimento {renderSortIcon('vencimento')}</th>
-                                <th className="px-6 py-3 text-right cursor-pointer hover:bg-border/50 transition-colors select-none" onClick={() => requestSort('valor')}>Valor {renderSortIcon('valor')}</th>
+                                <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors select-none" onClick={() => requestSort('dynamicStatus')}>Status {renderSortIcon('dynamicStatus')}</th>
+                                <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors select-none" onClick={() => requestSort('credor')}>Credor {renderSortIcon('credor')}</th>
+                                <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors select-none" onClick={() => requestSort('cliente')}>Cliente {renderSortIcon('cliente')}</th>
+                                <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors select-none" onClick={() => requestSort('vencimento')}>Vencimento {renderSortIcon('vencimento')}</th>
+                                <th className="px-6 py-3 text-right cursor-pointer hover:text-primary transition-colors select-none" onClick={() => requestSort('valor')}>Valor {renderSortIcon('valor')}</th>
                                 <th className="px-6 py-3 text-center">Ações</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border bg-white">
                             {paginatedBoletos.length > 0 ? paginatedBoletos.map(boleto => (
-                                <tr key={boleto.id} className="hover:bg-secondary transition-colors">
-                                    <td className="px-6 py-4 text-center w-32">
-                                        <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded-full border inline-block w-24 ${
-                                            boleto.dynamicStatus === StatusBoletoReceber.VENCIDO ? 'bg-danger/20 text-danger border-danger/30' :
-                                            boleto.dynamicStatus === StatusBoletoReceber.RECEBIDO ? 'bg-success/20 text-success border-success/30' :
-                                            'bg-primary/20 text-primary border-primary/30'
+                                <tr key={boleto.id} className="hover:bg-gray-50 transition-colors group">
+                                    <td className="px-6 py-3 text-center w-32">
+                                        <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-full border inline-block w-24 ${
+                                            boleto.dynamicStatus === StatusBoletoReceber.VENCIDO ? 'bg-red-50 text-red-700 border-red-100' :
+                                            boleto.dynamicStatus === StatusBoletoReceber.RECEBIDO ? 'bg-green-50 text-green-700 border-green-100' :
+                                            'bg-orange-50 text-orange-700 border-orange-100'
                                         }`}>
                                             {boleto.dynamicStatus}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{boleto.credor || '-'}</td>
-                                    <td className="px-6 py-4 text-text-secondary whitespace-nowrap">{boleto.cliente}</td>
-                                    <td className="px-6 py-4 text-text-secondary whitespace-nowrap">{formatDateToBR(boleto.vencimento)}</td>
-                                    <td className="px-6 py-4 text-right font-semibold text-text-primary whitespace-nowrap">{formatCurrency(boleto.valor)}</td>
-                                    <td className="px-6 py-4 text-center">
-                                        <div className="flex items-center justify-center gap-2">
+                                    <td className="px-6 py-3 font-medium text-text-primary whitespace-nowrap">{boleto.credor || '-'}</td>
+                                    <td className="px-6 py-3 text-text-secondary whitespace-nowrap">{boleto.cliente}</td>
+                                    <td className="px-6 py-3 text-text-secondary whitespace-nowrap tabular-nums">{formatDateToBR(boleto.vencimento)}</td>
+                                    <td className="px-6 py-3 text-right font-semibold text-text-primary whitespace-nowrap tabular-nums">{formatCurrency(boleto.valor)}</td>
+                                    <td className="px-6 py-3 text-center">
+                                        <div className="flex items-center justify-center gap-1">
                                             {!boleto.recebido && (
-                                                <button onClick={() => handleMarkAsReceived(boleto)} title="Receber" className="text-success p-1.5 rounded-full hover:bg-success/10 transition-colors">
+                                                <button onClick={() => handleMarkAsReceived(boleto)} title="Receber" className="text-success p-1.5 rounded-md hover:bg-success/10 transition-colors">
                                                     <CheckIcon className="h-4 w-4"/>
                                                 </button>
                                             )}
-                                            <button onClick={() => handleEditClick(boleto)} title="Editar" className="text-primary p-1.5 rounded-full hover:bg-primary/10 transition-colors">
+                                            <button onClick={() => handleEditClick(boleto)} title="Editar" className="text-primary p-1.5 rounded-md hover:bg-primary/10 transition-colors">
                                                 <EditIcon className="h-4 w-4"/>
                                             </button>
-                                            <button onClick={() => handleDeleteClick(boleto.id)} title="Excluir" className="text-danger p-1.5 rounded-full hover:bg-danger/10 transition-colors">
+                                            <button onClick={() => handleDeleteClick(boleto.id)} title="Excluir" className="text-danger p-1.5 rounded-md hover:bg-danger/10 transition-colors">
                                                 <TrashIcon className="h-4 w-4"/>
                                             </button>
                                         </div>
@@ -566,7 +591,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             )) : (
                                 <tr>
                                     <td colSpan={6} className="text-center py-16">
-                                        <div className="flex flex-col items-center text-text-secondary">
+                                        <div className="flex flex-col items-center text-text-secondary opacity-60">
                                             <SearchIcon className="w-10 h-10 mb-3 text-gray-300"/>
                                             <h3 className="text-lg font-medium text-text-primary">Nenhum Boleto Encontrado</h3>
                                             <p className="text-sm">Tente ajustar os filtros ou adicione um novo boleto.</p>
@@ -578,27 +603,27 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     </table>
                 </div>
                 {/* Pagination Footer */}
-                <div className="flex justify-between items-center p-4 border-t border-border bg-card rounded-b-2xl">
-                    <div className="text-sm text-text-secondary">
+                <div className="flex justify-between items-center p-4 border-t border-border bg-gray-50 text-xs text-text-secondary">
+                    <div>
                         Exibindo {filteredBoletos.length > 0 ? startIndex + 1 : 0} a {Math.min(startIndex + ITEMS_PER_PAGE, filteredBoletos.length)} de {filteredBoletos.length} registros
                     </div>
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
-                            className="p-2 rounded-full hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="p-1.5 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             title="Página Anterior"
                         >
-                            <ChevronLeftIcon className="h-5 w-5 text-text-primary" />
+                            <ChevronLeftIcon className="h-4 w-4" />
                         </button>
-                        <span className="text-sm font-medium text-text-primary">Página {currentPage} de {Math.max(1, totalPages)}</span>
+                        <span className="font-medium">Página {currentPage} de {Math.max(1, totalPages)}</span>
                         <button
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages || totalPages === 0}
-                            className="p-2 rounded-full hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="p-1.5 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             title="Próxima Página"
                         >
-                            <ChevronRightIcon className="h-5 w-5 text-text-primary" />
+                            <ChevronRightIcon className="h-4 w-4" />
                         </button>
                     </div>
                 </div>
@@ -608,7 +633,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
                         <div className="shrink-0 p-6 pb-4 border-b border-gray-100">
-                            <h3 className="text-2xl font-bold text-text-primary text-center">{editingBoleto.id ? 'Editar Boleto' : 'Novo Boleto a Receber'}</h3>
+                            <h3 className="text-xl font-bold text-text-primary text-center">{editingBoleto.id ? 'Editar Boleto' : 'Novo Boleto a Receber'}</h3>
                         </div>
                         <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
                             <div>
@@ -653,8 +678,8 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             </div>
                         </div>
                         <div className="shrink-0 p-6 pt-4 border-t border-gray-100 flex justify-center gap-3 bg-gray-50">
-                            <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                            <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
+                            <button onClick={handleCloseModal} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-text-primary font-semibold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
+                            <button onClick={handleSaveChanges} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Salvar</button>
                         </div>
                     </div>
                 </div>
@@ -666,8 +691,8 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         <h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar</h3>
                         <p className="text-text-secondary mb-8">{confirmAction.message}</p>
                         <div className="flex justify-center gap-4">
-                            <button onClick={() => setIsConfirmOpen(false)} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                            <button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button>
+                            <button onClick={() => setIsConfirmOpen(false)} className="px-6 py-2.5 rounded-full bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
+                            <button onClick={handleConfirm} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Confirmar</button>
                         </div>
                     </div>
                 </div>

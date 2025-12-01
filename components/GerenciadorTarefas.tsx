@@ -1,8 +1,8 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, EditIcon, CheckIcon, CalendarClockIcon, ArrowLeftIcon, ListIcon, KanbanIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, RefreshIcon } from './icons';
 import DatePicker from './DatePicker';
 import CustomSelect from './CustomSelect';
+import { useHideSidebarOnModal } from '../UIContext';
 
 // Enums
 enum StatusTarefa {
@@ -110,6 +110,8 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [activeTab, setActiveTab] = useState<'tarefas' | 'analise'>('tarefas');
     const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
     const [currentPage, setCurrentPage] = useState(1);
+
+    useHideSidebarOnModal(isModalOpen || isConfirmOpen || isRecurringDeleteModalOpen);
 
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(tarefas));
@@ -527,7 +529,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                 <button 
                                     key={status} 
                                     onClick={() => setStatusFilter(status)}
-                                    className={`px-4 h-10 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${statusFilter === status ? 'bg-primary text-white border-primary shadow-md' : 'bg-white text-text-secondary border-border hover:border-primary/50 hover:text-primary'}`}
+                                    className={`px-4 h-10 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${statusFilter === status ? 'bg-white text-primary border-primary shadow-sm' : 'bg-white text-text-secondary border-border hover:border-primary/50 hover:text-primary'}`}
                                 >
                                     {status}
                                 </button>
@@ -557,7 +559,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         <button onClick={() => setViewMode('list')} className={`p-2 rounded-full transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-text-secondary hover:text-text-primary'}`} title="Lista"><ListIcon className="h-5 w-5" /></button>
                         <button onClick={() => setViewMode('board')} className={`p-2 rounded-full transition-all ${viewMode === 'board' ? 'bg-white shadow-sm text-primary' : 'text-text-secondary hover:text-text-primary'}`} title="Kanban"><KanbanIcon className="h-5 w-5" /></button>
                     </div>
-                    <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-primary text-white font-bold py-2.5 px-6 rounded-full hover:bg-primary-hover transition-all shadow-lg shadow-primary/20 text-sm whitespace-nowrap h-11">
+                    <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-white border border-gray-200 text-primary font-bold py-2.5 px-6 rounded-full hover:bg-orange-50 hover:border-orange-200 transition-all shadow-sm text-sm whitespace-nowrap h-11">
                         <PlusIcon className="h-5 w-5"/> <span>Nova Tarefa</span>
                     </button>
                 </div>
@@ -806,8 +808,8 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             </div>
                         </div>
                         <div className="flex justify-center gap-3 mt-8">
-                            <button onClick={handleCloseModal} className="px-6 py-3 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                            <button onClick={handleSaveChanges} className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Salvar</button>
+                            <button onClick={handleCloseModal} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-text-primary font-semibold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
+                            <button onClick={handleSaveChanges} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Salvar</button>
                         </div>
                     </div>
                 </div>
@@ -820,8 +822,8 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         <h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar</h3>
                         <p className="text-text-secondary mb-8">{confirmAction.message}</p>
                         <div className="flex justify-center gap-4">
-                            <button onClick={() => setIsConfirmOpen(false)} className="px-6 py-2.5 rounded-xl bg-secondary text-text-primary font-semibold hover:bg-gray-200 transition-colors">Cancelar</button>
-                            <button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary-hover transition-colors">Confirmar</button>
+                            <button onClick={() => setIsConfirmOpen(false)} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-text-primary font-semibold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
+                            <button onClick={handleConfirm} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Confirmar</button>
                         </div>
                     </div>
                 </div>

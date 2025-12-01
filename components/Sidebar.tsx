@@ -55,22 +55,8 @@ const modules: NavItem[] = [
     { view: AppView.CONSULTA_CNPJ, name: 'Consulta CNPJ', icon: <BuildingIcon className="h-5 w-5" /> },
     { view: AppView.GERENCIADOR_CARTOES, name: 'Cartões', icon: <CreditCardIcon className="h-5 w-5" /> },
     { view: AppView.FECHAMENTO_PERIODO, name: 'Fechamento', icon: <ClipboardCheckIcon className="h-5 w-5" /> },
-    {
-        name: 'Previsão',
-        icon: <TrendingUpIcon className="h-5 w-5" />,
-        children: [
-            { view: AppView.PREVISAO_FINANCEIRA, name: 'Fábrica', icon: <TrendingUpIcon className="h-4 w-4" /> },
-            { view: AppView.PREVISAO_CRISTIANO, name: 'Cristiano', icon: <DatabaseIcon className="h-4 w-4" /> },
-        ]
-    },
-    {
-        name: 'Pagamentos',
-        icon: <ReportIcon className="h-5 w-5" />,
-        children: [
-            { view: AppView.PAGAMENTOS_FABRICA, name: 'Fábrica', icon: <ReportIcon className="h-4 w-4" /> },
-            { view: AppView.PAGAMENTOS_CRISTIANO, name: 'Cristiano', icon: <ReportIcon className="h-4 w-4" /> },
-        ]
-    },
+    { view: AppView.PREVISAO_FINANCEIRA, name: 'Previsão', icon: <TrendingUpIcon className="h-5 w-5" /> },
+    { view: AppView.PAGAMENTOS_DIARIOS, name: 'Pagamentos', icon: <ReportIcon className="h-5 w-5" /> },
     { view: AppView.CONFIGURACAO_SEGURANCA, name: 'Configurações', icon: <SettingsIcon className="h-5 w-5" /> },
 ];
 
@@ -119,7 +105,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
         />
       )}
 
-      {/* Sidebar Container - Light Theme */}
+      {/* Sidebar Container */}
       <aside className={`
         fixed top-0 left-0 z-50 h-full w-64 bg-white border-r border-gray-200 flex flex-col transition-transform duration-300 ease-in-out
         lg:static lg:translate-x-0 shadow-xl lg:shadow-none
@@ -127,11 +113,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
       `}>
         {/* Header Logo Area */}
         <div className="h-16 flex items-center justify-between px-6 border-b border-gray-100 shrink-0">
-            <div className="flex items-center gap-2">
-                <div className="h-8 w-8 bg-gradient-to-br from-orange-600 to-orange-700 rounded-lg flex items-center justify-center text-white shadow-sm">
+            <div className="flex items-center gap-3">
+                <div className="h-8 w-8 bg-gradient-to-br from-orange-600 to-orange-700 rounded-lg flex items-center justify-center text-white shadow-md shadow-orange-200">
                     <span className="font-bold font-heading text-lg">G</span>
                 </div>
-                <span className="text-lg font-semibold text-gray-900 font-heading tracking-tight">Financeiro</span>
+                <span className="text-lg font-bold text-gray-900 font-heading tracking-tight">Financeiro</span>
             </div>
             <button onClick={onClose} className="lg:hidden text-gray-400 hover:text-gray-900 p-1 rounded-md transition-colors">
                 <XIcon className="h-6 w-6" />
@@ -139,7 +125,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
         </div>
 
         {/* Scrollable Content */}
-        <div className="overflow-y-auto flex-1 py-6 px-4 custom-scrollbar">
+        <div className="overflow-y-auto flex-1 py-6 px-3 custom-scrollbar">
           
           {/* Global Search Button */}
           <button
@@ -148,7 +134,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
           >
               <SearchIcon className="h-4 w-4 text-gray-400 group-hover:text-orange-600 transition-colors" />
               <span>Buscar...</span>
-              <span className="ml-auto text-[10px] font-mono text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">⌘K</span>
+              <span className="ml-auto text-[10px] font-mono text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded">⌘K</span>
           </button>
 
           <nav className="space-y-1">
@@ -161,12 +147,12 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
                       onClick={() => toggleSubMenu(module.name)}
                       className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
                         ${isActive 
-                            ? 'text-gray-900 bg-gray-50' 
+                            ? 'text-gray-900 bg-gray-100' 
                             : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
                       `}
                     >
                       <div className="flex items-center gap-3">
-                        <span className={`${isActive ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-500'}`}>
+                        <span className={`${isActive ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-600'}`}>
                             {module.icon}
                         </span>
                         <span>{module.name}</span>
@@ -174,17 +160,17 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
                       <ChevronDownIcon className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${openSubMenus[module.name] ? 'rotate-180' : ''}`} />
                     </button>
                     
-                    <div className={`overflow-hidden transition-all duration-300 ${openSubMenus[module.name] ? 'max-h-96 opacity-100 pt-1' : 'max-h-0 opacity-0'}`}>
-                      <ul className="space-y-0.5 pl-3">
+                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openSubMenus[module.name] ? 'max-h-96 opacity-100 pt-1' : 'max-h-0 opacity-0'}`}>
+                      <ul className="space-y-1 pl-3">
                         {module.children.map(child => {
                             const isChildActive = currentView === child.view;
                             return (
                               <li key={child.view}>
                                 <button
                                   onClick={() => handleNavigation(child.view)}
-                                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all border-l-2
+                                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all border-l-[3px]
                                     ${isChildActive 
-                                      ? 'border-orange-600 text-orange-700 bg-orange-50 font-medium' 
+                                      ? 'border-orange-600 text-orange-700 bg-orange-50 font-semibold' 
                                       : 'border-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50'}
                                   `}
                                 >
@@ -205,12 +191,12 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
                       onClick={() => handleNavigation(module.view)}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all relative overflow-hidden group
                         ${isSelected 
-                          ? 'text-orange-700 bg-orange-50' 
+                          ? 'text-orange-700 bg-orange-50 font-semibold shadow-sm' 
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
                       `}
                     >
-                      {isSelected && <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-orange-600 rounded-r-full"></div>}
-                      <span className={`transition-colors ${isSelected ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-500'}`}>
+                      {isSelected && <div className="absolute left-0 top-2 bottom-2 w-1 bg-orange-600 rounded-r-full"></div>}
+                      <span className={`transition-colors ${isSelected ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-600'}`}>
                         {module.icon}
                       </span>
                       <span>{module.name}</span>
@@ -223,10 +209,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
         </div>
         
         {/* Footer */}
-        <div className="p-4 border-t border-gray-100 bg-gray-50/50 shrink-0">
+        <div className="p-4 border-t border-gray-100 bg-gray-50/30 shrink-0">
             <button 
                 onClick={onLogout}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors group"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors group"
             >
                 <LogoutIcon className="h-5 w-5 text-gray-400 group-hover:text-red-500 transition-colors" />
                 <span>Sair do Sistema</span>

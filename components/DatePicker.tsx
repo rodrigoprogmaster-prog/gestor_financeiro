@@ -37,34 +37,36 @@ const DatePicker: React.FC<DatePickerProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
 
-  // Initialize viewDate based on value or current date
+  const hasHeightClass = className.includes('h-');
+  const defaultHeight = 'h-12';
+
+  // If label is present, container should autosize (h-auto), input takes default height.
+  // If no label, container takes default height (if not overridden) and input fills it.
+  const containerClass = `${className} ${(!label && !hasHeightClass) ? defaultHeight : 'h-auto'}`;
+  const inputHeightClass = (label && !hasHeightClass) ? defaultHeight : 'h-full';
+
   useEffect(() => {
     if (value) {
       const [year, month, day] = value.split('-').map(Number);
       if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
-        // Create date using UTC to avoid timezone shifts
         setViewDate(new Date(year, month - 1, day));
       }
     }
-  }, [isOpen, value]); // Reset view when opening
+  }, [isOpen, value]);
 
-  // Close on scroll or resize to prevent floating issues
   useEffect(() => {
     const handleClose = () => {
       if (isOpen) setIsOpen(false);
     };
-    
-    // Capture scroll events on window to handle scrolling of any parent container
+    // Capture scroll events to close picker if user scrolls parent containers
     window.addEventListener('scroll', handleClose, true);
     window.addEventListener('resize', handleClose);
-    
     return () => {
       window.removeEventListener('scroll', handleClose, true);
       window.removeEventListener('resize', handleClose);
     };
   }, [isOpen]);
 
-  // Click outside handler
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -80,28 +82,43 @@ const DatePicker: React.FC<DatePickerProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Calculate position for the portal
   useLayoutEffect(() => {
     if (isOpen && containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
-      const scrollX = window.scrollX || window.pageXOffset;
-      const scrollY = window.scrollY || window.pageYOffset;
       
-      const calendarWidth = 280;
-      const calendarHeight = 320; // approximate height
-      const gap = 8;
+      const calendarWidth = 320; 
+      const calendarHeight = 460; 
+      const gap = 4;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
 
-      let top = rect.bottom + scrollY + gap;
-      let left = rect.left + scrollX;
+      let top = rect.bottom + gap;
+      let left = rect.left;
 
-      // Smart positioning: Flip up if not enough space below
-      if (rect.bottom + calendarHeight > window.innerHeight + scrollY && rect.top > calendarHeight) {
-        top = rect.top + scrollY - calendarHeight - gap;
+      if (top + calendarHeight > viewportHeight) {
+        if (rect.top > calendarHeight + gap) {
+            top = rect.top - calendarHeight - gap;
+        } else {
+            const spaceBelow = viewportHeight - rect.bottom;
+            const spaceAbove = rect.top;
+            
+            if (spaceAbove > spaceBelow) {
+                 top = rect.top - calendarHeight - gap;
+                 if (top < 0) top = gap; 
+            } else {
+                 top = rect.bottom + gap;
+                 if (top + calendarHeight > viewportHeight) {
+                     top = viewportHeight - calendarHeight - gap;
+                 }
+            }
+        }
       }
 
-      // Smart positioning: Shift left if off-screen to the right
-      if (rect.left + calendarWidth > window.innerWidth + scrollX) {
-        left = (rect.right + scrollX) - calendarWidth;
+      if (left + calendarWidth > viewportWidth) {
+        left = viewportWidth - calendarWidth - gap;
+      }
+      if (left < 0) {
+        left = gap;
       }
 
       setPortalPosition({ top, left });
@@ -139,6 +156,18 @@ const DatePicker: React.FC<DatePickerProps> = ({
     setIsOpen(false);
   };
 
+  const handleToday = () => {
+    const today = new Date();
+    const isoDate = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+    onChange(isoDate);
+    setIsOpen(false);
+  };
+
+  const handleClear = () => {
+    onChange('');
+    setIsOpen(false);
+  };
+
   const renderCalendar = () => {
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
@@ -147,9 +176,8 @@ const DatePicker: React.FC<DatePickerProps> = ({
     
     const days = [];
     
-    // Empty slots for days before the 1st
     for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="h-8 w-8" />);
+      days.push(<div key={`empty-${i}`} className="h-9 w-9" />);
     }
 
     const today = new Date();
@@ -170,14 +198,17 @@ const DatePicker: React.FC<DatePickerProps> = ({
           onClick={(e) => { e.stopPropagation(); handleDayClick(day); }}
           disabled={isDisabled}
           className={`
-            h-8 w-8 rounded-full flex items-center justify-center text-sm transition-all duration-200
-            ${isSelected 
-              ? 'bg-primary text-white font-bold shadow-md shadow-orange-200' 
-              : isDisabled 
-                ? 'text-gray-300 cursor-not-allowed'
-                : 'text-text-primary hover:bg-orange-50 hover:text-primary'
+            h-9 w-9 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 relative
+            ${isDisabled 
+                ? 'text-gray-300 cursor-not-allowed' 
+                : 'hover:bg-gray-100 text-text-primary'
             }
-            ${isToday && !isSelected ? 'text-primary font-bold border border-orange-100' : ''}
+            ${isSelected 
+              ? 'bg-primary/5 text-primary ring-1 ring-primary font-bold hover:bg-primary/10' 
+              : ''
+            }
+            ${!isSelected && isToday ? 'font-bold text-primary ring-1 ring-primary/30' : ''}
+            ${!isSelected && !isToday && !isDisabled ? 'text-text-primary' : ''}
           `}
         >
           {day}
@@ -192,72 +223,82 @@ const DatePicker: React.FC<DatePickerProps> = ({
     <div 
       ref={calendarRef}
       style={{ 
-        position: 'absolute', 
+        position: 'fixed', 
         top: portalPosition.top, 
         left: portalPosition.left, 
-        zIndex: 9999 
+        zIndex: 99999 
       }}
-      className="w-[280px] bg-white rounded-2xl shadow-2xl border border-border animate-fade-in p-4"
+      className="w-[320px] bg-white rounded-3xl shadow-2xl border border-gray-100 animate-fade-in p-6 select-none flex flex-col"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-6 px-1">
         <button 
           onClick={(e) => { e.stopPropagation(); handlePrevMonth(); }}
-          className="p-1 rounded-full hover:bg-secondary text-text-secondary hover:text-primary transition-colors"
+          className="p-2 rounded-full hover:bg-gray-50 text-gray-400 hover:text-gray-900 transition-colors"
         >
           <ChevronLeftIcon className="h-5 w-5" />
         </button>
-        <span className="text-sm font-bold text-text-primary capitalize">
+        <span className="text-base font-bold text-gray-900 capitalize tracking-tight">
           {MONTH_NAMES[viewDate.getMonth()]} {viewDate.getFullYear()}
         </span>
         <button 
           onClick={(e) => { e.stopPropagation(); handleNextMonth(); }}
-          className="p-1 rounded-full hover:bg-secondary text-text-secondary hover:text-primary transition-colors"
+          className="p-2 rounded-full hover:bg-gray-50 text-gray-400 hover:text-gray-900 transition-colors"
         >
           <ChevronRightIcon className="h-5 w-5" />
         </button>
       </div>
 
-      {/* Week Days Header */}
-      <div className="grid grid-cols-7 mb-2 text-center">
+      <div className="grid grid-cols-7 mb-3 text-center">
         {WEEK_DAYS.map((d, i) => (
-          <span key={i} className="text-xs font-medium text-text-muted">
+          <span key={i} className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
             {d}
           </span>
         ))}
       </div>
 
-      {/* Days Grid */}
-      <div className="grid grid-cols-7 gap-y-1 justify-items-center">
+      <div className="grid grid-cols-7 gap-y-2 justify-items-center mb-4">
         {renderCalendar()}
+      </div>
+
+      <div className="border-t border-gray-100 pt-4 flex justify-between items-center mt-auto">
+          <button 
+            onClick={handleClear}
+            className="text-xs font-semibold text-gray-500 hover:text-red-500 transition-colors px-2 py-1 rounded-md hover:bg-red-50"
+          >
+            Limpar
+          </button>
+          <button 
+            onClick={handleToday}
+            className="text-xs font-bold text-primary hover:text-primary-hover transition-colors px-3 py-1.5 rounded-md bg-primary/5 hover:bg-primary/10"
+          >
+            Hoje
+          </button>
       </div>
     </div>
   );
 
   return (
-    <div className={`relative w-full ${className}`} ref={containerRef}>
+    <div className={`relative w-full flex flex-col ${containerClass}`} ref={containerRef}>
       {label && (
         <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">
           {label}
         </label>
       )}
       
-      {/* Input Trigger */}
       <div 
         onClick={() => !disabled && setIsOpen(!isOpen)}
         className={`
-          w-full bg-white border rounded-xl px-3 py-2 text-text-primary flex items-center justify-between cursor-pointer transition-all h-full min-h-[48px]
-          ${isOpen ? 'border-primary ring-2 ring-primary/10' : 'border-border hover:border-gray-300'}
+          w-full ${inputHeightClass} bg-white border rounded-xl px-4 text-text-primary flex items-center justify-between cursor-pointer transition-all min-h-[2.5rem]
+          ${isOpen ? 'border-primary ring-2 ring-primary/10 bg-white' : 'border-transparent bg-secondary hover:bg-white hover:border-gray-200'}
           ${disabled ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''}
         `}
       >
-        <span className={`text-sm ${!value ? 'text-text-muted' : ''}`}>
+        <span className={`text-sm truncate ${!value ? 'text-gray-400' : ''}`}>
           {value ? formatDateDisplay(value) : placeholder}
         </span>
-        <CalendarClockIcon className={`h-4 w-4 ${isOpen ? 'text-primary' : 'text-text-secondary'}`} />
+        <CalendarClockIcon className={`h-4 w-4 flex-shrink-0 ml-2 ${isOpen ? 'text-primary' : 'text-gray-400'}`} />
       </div>
 
-      {/* Render Portal if Open */}
       {isOpen && createPortal(calendarPopup, document.body)}
     </div>
   );

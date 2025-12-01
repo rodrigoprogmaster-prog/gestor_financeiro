@@ -122,11 +122,11 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     <button
                         type="submit"
                         disabled={isLoading || isSuccess}
-                        className={`w-full flex justify-center items-center h-12 px-4 border border-transparent rounded-xl text-base font-bold text-white transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5
+                        className={`w-full flex justify-center items-center h-12 px-4 border rounded-xl text-base font-bold transition-all duration-300
                             ${isSuccess 
-                                ? 'bg-green-600 hover:bg-green-700 shadow-green-900/20' 
-                                : 'bg-orange-600 hover:bg-orange-700 shadow-orange-900/20'}
-                            ${isLoading ? 'opacity-90 cursor-not-allowed transform-none' : ''}
+                                ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100' 
+                                : 'bg-white border-gray-200 text-primary hover:bg-orange-50 hover:border-orange-200 shadow-sm'}
+                            ${isLoading ? 'opacity-90 cursor-not-allowed' : ''}
                         `}
                     >
                         {isLoading ? (

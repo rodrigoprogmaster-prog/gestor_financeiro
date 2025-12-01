@@ -300,10 +300,10 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
                     <button onClick={() => setMonthFilter('')} className="py-2 px-4 rounded-full bg-secondary hover:bg-border font-semibold transition-colors h-10">
                         Limpar
                     </button>
-                    <button onClick={handleExportXLSX} className="flex items-center gap-2 bg-success text-white font-semibold py-2 px-4 rounded-full hover:bg-green-700 transition-colors duration-300 h-10">
+                    <button onClick={handleExportXLSX} className="flex items-center gap-2 bg-white border border-gray-300 text-success font-semibold py-2 px-4 rounded-full hover:bg-green-50 transition-colors duration-300 h-10 shadow-sm">
                         <DownloadIcon className="h-5 w-5" /> Exportar
                     </button>
-                    <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-primary text-white font-semibold py-2 px-4 rounded-full hover:bg-primary-hover transition-colors duration-300 h-10">
+                    <button onClick={handleOpenAddModal} className="flex items-center gap-2 bg-white border border-gray-200 text-primary font-semibold py-2 px-4 rounded-full hover:bg-orange-50 hover:border-orange-200 transition-colors duration-300 h-10 shadow-sm">
                         <PlusIcon className="h-5 w-5" /> Adicionar
                     </button>
                 </div>
@@ -425,9 +425,9 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
                             </div>
                         </div>
 
-                        <div className="shrink-0 p-6 pt-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
-                            <button onClick={handleCloseModal} className="px-6 py-2.5 rounded-xl bg-secondary hover:bg-border font-semibold transition-colors text-text-secondary">Cancelar</button>
-                            <button onClick={handleSaveChanges} className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold transition-colors shadow-lg shadow-primary/20">Salvar</button>
+                        <div className="shrink-0 p-6 pt-4 border-t border-gray-100 flex justify-center gap-3 bg-gray-50">
+                            <button onClick={handleCloseModal} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-text-primary font-semibold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
+                            <button onClick={handleSaveChanges} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Salvar</button>
                         </div>
                     </div>
                 </div>
@@ -439,8 +439,8 @@ const CartaoManual: React.FC<CartaoManualProps> = ({ title, storageKey, onBack }
                         <h3 className="text-xl font-bold mb-4 text-text-primary">Confirmar</h3>
                         <p className="text-text-secondary mb-8">{confirmAction.message}</p>
                         <div className="flex justify-center gap-4">
-                            <button onClick={() => setIsConfirmOpen(false)} className="px-6 py-2.5 rounded-xl bg-secondary hover:bg-border font-semibold transition-colors">Cancelar</button>
-                            <button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold transition-colors shadow-lg shadow-primary/20">Confirmar</button>
+                            <button onClick={() => setIsConfirmOpen(false)} className="px-6 py-2.5 rounded-xl bg-white border border-gray-200 text-text-primary font-semibold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
+                            <button onClick={handleConfirm} className="px-6 py-2.5 rounded-xl bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Confirmar</button>
                         </div>
                     </div>
                 </div>
