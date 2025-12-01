@@ -1,5 +1,6 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
-import { PlusIcon, TrashIcon, SearchIcon, EditIcon, CheckIcon, CalendarClockIcon, ArrowLeftIcon, ListIcon, KanbanIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, RefreshIcon } from './icons';
+import { PlusIcon, TrashIcon, SearchIcon, EditIcon, CheckIcon, CalendarClockIcon, ArrowLeftIcon, ListIcon, KanbanIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, RefreshIcon, XIcon, ClipboardListIcon } from './icons';
 import DatePicker from './DatePicker';
 import CustomSelect from './CustomSelect';
 import { useHideSidebarOnModal } from '../UIContext';
@@ -97,6 +98,9 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [confirmAction, setConfirmAction] = useState<{ action: (() => void) | null, message: string }>({ action: null, message: '' });
     const [errors, setErrors] = useState<TarefaErrors>({});
     
+    // Viewing Task Modal State
+    const [viewingTask, setViewingTask] = useState<TarefaWithStatus | null>(null);
+    
     // Recurring Delete State
     const [isRecurringDeleteModalOpen, setIsRecurringDeleteModalOpen] = useState(false);
     const [taskToDelete, setTaskToDelete] = useState<Tarefa | null>(null);
@@ -111,7 +115,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
     const [currentPage, setCurrentPage] = useState(1);
 
-    useHideSidebarOnModal(isModalOpen || isConfirmOpen || isRecurringDeleteModalOpen);
+    useHideSidebarOnModal(isModalOpen || isConfirmOpen || isRecurringDeleteModalOpen || !!viewingTask);
 
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(tarefas));
@@ -168,17 +172,17 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const allTarefasWithStatus = useMemo(() => tarefas.map(t => ({ ...t, dynamicStatus: getDynamicStatus(t) })) as TarefaWithStatus[], [tarefas]);
 
     const filteredTarefas = useMemo(() => {
-        // Determine if we are currently looking at the "Real Current Month"
-        const realToday = new Date();
-        const isViewingCurrentRealMonth = 
-            currentViewDate.getMonth() === realToday.getMonth() && 
-            currentViewDate.getFullYear() === realToday.getFullYear();
-
         const startOfMonth = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth(), 1);
         const endOfMonth = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth() + 1, 0);
         
         const startOfMonthISO = startOfMonth.toISOString().split('T')[0];
         const endOfMonthISO = endOfMonth.toISOString().split('T')[0];
+
+        // Also include overdue tasks regardless of the month if they are not completed
+        const realToday = new Date();
+        const isViewingCurrentRealMonth = 
+            currentViewDate.getMonth() === realToday.getMonth() && 
+            currentViewDate.getFullYear() === realToday.getFullYear();
 
         return allTarefasWithStatus.filter(tarefa => {
             // 1. Text Search
@@ -189,10 +193,9 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             const statusMatch = statusFilter === 'Todas' || tarefa.dynamicStatus === statusFilter;
             if (!statusMatch) return false;
 
-            // 3. Date Logic:
+            // 3. Date Logic
             const dueDate = tarefa.dataVencimento;
             const isDueInSelectedMonth = dueDate >= startOfMonthISO && dueDate <= endOfMonthISO;
-            
             const isOverdueAndPending = isViewingCurrentRealMonth && tarefa.status !== StatusTarefa.CONCLUIDA && dueDate < startOfMonthISO;
 
             return isDueInSelectedMonth || isOverdueAndPending;
@@ -237,20 +240,22 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         setErrors({});
         setEditingTarefa({ 
             ...tarefa, 
-            recorrencia: tarefa.recorrencia || RecorrenciaTarefa.NENHUMA, // Handle legacy data
+            recorrencia: tarefa.recorrencia || RecorrenciaTarefa.NENHUMA, 
         });
+        setViewingTask(null); // Close details modal if open
         setIsModalOpen(true);
     };
 
-    const handleDeleteClick = (e: React.MouseEvent, tarefa: Tarefa) => {
-        e.stopPropagation();
+    const handleDeleteClick = (e: React.MouseEvent | null, tarefa: Tarefa) => {
+        if (e) e.stopPropagation();
         
+        // Close details modal if open
+        setViewingTask(null);
+
         if (tarefa.seriesId) {
-            // It's a recurring task
             setTaskToDelete(tarefa);
             setIsRecurringDeleteModalOpen(true);
         } else {
-            // Standard delete
             const action = () => setTarefas(tarefas.filter(t => t.id !== tarefa.id));
             setConfirmAction({ action, message: 'Deseja realmente excluir esta tarefa?' });
             setIsConfirmOpen(true);
@@ -276,38 +281,33 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const handleMarkAsDone = (tarefa: Tarefa) => {
         if (tarefa.status === StatusTarefa.CONCLUIDA) return;
         
+        // Close details modal if open
+        setViewingTask(null);
+
         const action = () => {
             setTarefas(currentTarefas => {
-                // 1. Mark current as done
                 let updatedTarefas = currentTarefas.map(t => t.id === tarefa.id ? { ...t, status: StatusTarefa.CONCLUIDA } : t);
                 
-                // 2. Smart Recurrence Logic
                 if (tarefa.recorrencia && tarefa.recorrencia !== RecorrenciaTarefa.NENHUMA) {
                     const nextDueDate = calculateNextDueDate(tarefa.dataVencimento, tarefa.recorrencia);
-                    
                     let shouldCreate = true;
 
-                    // If this task is part of a series, check if the next one already exists (from batch generation)
                     if (tarefa.seriesId) {
                         const nextTaskExists = currentTarefas.some(t => 
                             t.seriesId === tarefa.seriesId && 
                             t.dataVencimento === nextDueDate &&
                             t.id !== tarefa.id
                         );
-                        if (nextTaskExists) {
-                            shouldCreate = false;
-                        }
+                        if (nextTaskExists) shouldCreate = false;
                     }
 
-                    // If end of batch reached (or legacy task without seriesId), continue infinite loop
                     if (shouldCreate) {
                         const newTarefa: Tarefa = {
                             ...tarefa,
-                            id: `tarefa-${Date.now()}`, // New unique ID
-                            status: StatusTarefa.PENDENTE, // Reset status
+                            id: `tarefa-${Date.now()}`,
+                            status: StatusTarefa.PENDENTE,
                             dataVencimento: nextDueDate,
                             dataCriacao: new Date().toISOString().split('T')[0],
-                            // seriesId is preserved via spread
                         };
                         updatedTarefas = [...updatedTarefas, newTarefa];
                     }
@@ -353,13 +353,10 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         
         const action = () => {
             if (tarefaToSave.id) {
-                // Editing existing task (Single update)
                 setTarefas(prev => prev.map(t => t.id === tarefaToSave.id ? (tarefaToSave as Tarefa) : t));
             } else {
-                // Creating new task (Batch Generation for Recurrence)
                 const newTasks: Tarefa[] = [];
                 const baseIdTimestamp = Date.now();
-                // Generate a Series ID if recurring
                 const seriesId = tarefaToSave.recorrencia !== RecorrenciaTarefa.NENHUMA ? `series-${baseIdTimestamp}` : undefined;
 
                 const firstTask: Tarefa = { 
@@ -374,10 +371,10 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 if (tarefaToSave.recorrencia && tarefaToSave.recorrencia !== RecorrenciaTarefa.NENHUMA) {
                     let limit = 0;
                     switch (tarefaToSave.recorrencia) {
-                        case RecorrenciaTarefa.DIARIA: limit = 90; break; // Next 90 days
-                        case RecorrenciaTarefa.SEMANAL: limit = 52; break; // Next 52 weeks (1 year)
-                        case RecorrenciaTarefa.MENSAL: limit = 12; break; // Next 12 months
-                        case RecorrenciaTarefa.ANUAL: limit = 5; break;   // Next 5 years
+                        case RecorrenciaTarefa.DIARIA: limit = 90; break;
+                        case RecorrenciaTarefa.SEMANAL: limit = 52; break;
+                        case RecorrenciaTarefa.MENSAL: limit = 12; break;
+                        case RecorrenciaTarefa.ANUAL: limit = 5; break;
                     }
 
                     let currentDate = firstTask.dataVencimento;
@@ -392,7 +389,6 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         });
                     }
                 }
-                
                 setTarefas(prev => [...prev, ...newTasks]);
             }
             handleCloseModal();
@@ -404,12 +400,12 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
     const handleConfirm = () => { confirmAction.action?.(); setIsConfirmOpen(false); };
     
-    const getPriorityStyles = (priority: PrioridadeTarefa) => {
+    const getPriorityColor = (priority: PrioridadeTarefa) => {
         switch (priority) {
-            case PrioridadeTarefa.ALTA: return { border: 'border-l-red-500', text: 'text-red-600', bg: 'bg-red-50' };
-            case PrioridadeTarefa.MEDIA: return { border: 'border-l-yellow-500', text: 'text-yellow-600', bg: 'bg-yellow-50' };
-            case PrioridadeTarefa.BAIXA: return { border: 'border-l-blue-500', text: 'text-blue-600', bg: 'bg-blue-50' };
-            default: return { border: 'border-l-gray-300', text: 'text-gray-600', bg: 'bg-gray-50' };
+            case PrioridadeTarefa.ALTA: return 'text-red-600 bg-red-50 border-red-100';
+            case PrioridadeTarefa.MEDIA: return 'text-yellow-600 bg-yellow-50 border-yellow-100';
+            case PrioridadeTarefa.BAIXA: return 'text-blue-600 bg-blue-50 border-blue-100';
+            default: return 'text-gray-600 bg-gray-50 border-gray-100';
         }
     };
 
@@ -420,62 +416,25 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             [StatusTarefa.EM_ANDAMENTO]: 'bg-blue-100 text-blue-800 border-blue-200',
             [StatusTarefa.CONCLUIDA]: 'bg-green-100 text-green-800 border-green-200',
         };
-        return <span className={`px-3 py-1 text-[10px] font-bold uppercase rounded-full tracking-wide border ${styles[status]}`}>{status}</span>;
+        return <span className={`px-2.5 py-0.5 text-[10px] font-bold uppercase rounded-full tracking-wide border ${styles[status]} whitespace-nowrap`}>{status}</span>;
     };
 
-    const renderTaskCard = (tarefa: TarefaWithStatus) => {
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-        const vencimento = new Date(tarefa.dataVencimento + 'T00:00:00');
-        const isOverdue = vencimento < hoje && tarefa.status !== StatusTarefa.CONCLUIDA;
-        const priorityStyle = getPriorityStyles(tarefa.prioridade);
-        const isRecurring = tarefa.recorrencia && tarefa.recorrencia !== RecorrenciaTarefa.NENHUMA;
-
+    // Kanban Card - Kept for Board View
+    const renderKanbanCard = (tarefa: TarefaWithStatus) => {
+        const priorityColor = getPriorityColor(tarefa.prioridade);
         return (
             <div
-                key={tarefa.id}
-                className={`bg-white rounded-2xl shadow-sm border border-border flex flex-col justify-between hover:shadow-md hover:-translate-y-1 transition-all duration-200 min-h-[180px] relative group border-l-[4px] ${priorityStyle.border}`}
+                onClick={() => setViewingTask(tarefa)}
+                className={`bg-white rounded-xl shadow-sm border border-border p-4 hover:shadow-md cursor-pointer transition-all mb-3 flex flex-col gap-2`}
             >
-                <div className="p-5 pb-3 flex-grow">
-                    <div className="flex justify-between items-start mb-3 gap-2">
-                        <div className="flex flex-col gap-1.5">
-                            <div className="flex gap-1">
-                                <span className="px-2 py-0.5 bg-secondary rounded-md text-[10px] font-bold uppercase tracking-wider text-text-secondary w-fit border border-border/50">{tarefa.categoria}</span>
-                                {isRecurring && (
-                                    <span className="px-2 py-0.5 bg-blue-50 rounded-md text-[10px] font-bold uppercase tracking-wider text-blue-600 w-fit border border-blue-100 flex items-center gap-1">
-                                        <RefreshIcon className="h-3 w-3" /> {tarefa.recorrencia}
-                                    </span>
-                                )}
-                            </div>
-                            <h4 className={`font-bold text-base text-text-primary line-clamp-2 leading-tight ${tarefa.status === StatusTarefa.CONCLUIDA ? 'line-through text-text-secondary decoration-2' : ''}`}>
-                                {tarefa.titulo}
-                            </h4>
-                        </div>
-                        <div className="flex-shrink-0">
-                             {renderStatusPill(tarefa.dynamicStatus)}
-                        </div>
-                    </div>
-                    <p className="text-sm text-text-secondary line-clamp-3 mb-2">{tarefa.descricao || <span className="italic opacity-50">Sem descrição.</span>}</p>
+                <div className="flex justify-between items-start">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${priorityColor}`}>{tarefa.prioridade}</span>
+                    {tarefa.recorrencia !== RecorrenciaTarefa.NENHUMA && <RefreshIcon className="h-3 w-3 text-blue-500" />}
                 </div>
-
-                <div className="px-5 py-3 bg-secondary/20 border-t border-border rounded-b-2xl flex items-center justify-between">
-                    <div className={`flex items-center gap-1.5 text-xs font-bold ${isOverdue ? 'text-danger' : 'text-text-secondary'}`}>
-                        <CalendarClockIcon className="h-4 w-4" />
-                        <span>{formatDateToBR(tarefa.dataVencimento)}</span>
-                    </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        {tarefa.status !== StatusTarefa.CONCLUIDA && (
-                            <button onClick={(e) => { e.stopPropagation(); handleMarkAsDone(tarefa); }} className="p-2 rounded-full bg-white text-success shadow-sm border border-border hover:bg-success hover:text-white transition-colors" title="Concluir">
-                                <CheckIcon className="h-4 w-4" />
-                            </button>
-                        )}
-                        <button onClick={(e) => { e.stopPropagation(); handleEditClick(tarefa); }} className="p-2 rounded-full bg-white text-primary shadow-sm border border-border hover:bg-primary hover:text-white transition-colors" title="Editar">
-                            <EditIcon className="h-4 w-4" />
-                        </button>
-                        <button onClick={(e) => { handleDeleteClick(e, tarefa); }} className="p-2 rounded-full bg-white text-danger shadow-sm border border-border hover:bg-danger hover:text-white transition-colors" title="Excluir">
-                            <TrashIcon className="h-4 w-4" />
-                        </button>
-                    </div>
+                <h4 className="font-bold text-sm text-text-primary line-clamp-2">{tarefa.titulo}</h4>
+                <div className="flex items-center gap-1.5 text-xs text-text-secondary mt-1">
+                    <CalendarClockIcon className="h-3.5 w-3.5" />
+                    <span>{formatDateToBR(tarefa.dataVencimento)}</span>
                 </div>
             </div>
         );
@@ -494,13 +453,17 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 {columns.map(col => {
                     const colTasks = filteredTarefas.filter(t => t.dynamicStatus === col.id);
                     return (
-                        <div key={col.id} className="min-w-[340px] w-[340px] flex-shrink-0 flex flex-col h-full max-h-full bg-secondary/30 rounded-3xl border border-border">
+                        <div key={col.id} className="min-w-[300px] w-[300px] flex-shrink-0 flex flex-col h-full max-h-full bg-secondary/30 rounded-3xl border border-border">
                             <div className={`flex items-center justify-between px-5 py-4 border-b border-border rounded-t-3xl ${col.color}`}>
                                 <span className="font-extrabold text-sm uppercase tracking-wide">{col.title}</span>
                                 <span className="text-xs font-bold bg-white px-2.5 py-1 rounded-full shadow-sm text-text-primary border border-border/50">{colTasks.length}</span>
                             </div>
-                            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-                                {colTasks.map(tarefa => renderTaskCard(tarefa))}
+                            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                                {colTasks.map(tarefa => (
+                                    <div key={tarefa.id}>
+                                        {renderKanbanCard(tarefa)}
+                                    </div>
+                                ))}
                                 {colTasks.length === 0 && (
                                     <div className="flex flex-col items-center justify-center h-32 text-text-secondary opacity-40 border-2 border-dashed border-border rounded-2xl m-2">
                                         <span className="text-sm font-medium">Sem tarefas</span>
@@ -514,9 +477,103 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         );
     };
 
+    const renderListView = () => (
+        <div className="bg-white border border-border rounded-2xl overflow-hidden flex-grow shadow-sm flex flex-col">
+            <div className="overflow-x-auto overflow-y-auto flex-grow custom-scrollbar">
+                <table className="min-w-full divide-y divide-border text-sm text-left">
+                    <thead className="bg-gray-50 text-text-secondary font-semibold uppercase text-xs tracking-wider sticky top-0 z-10 shadow-sm">
+                        <tr>
+                            <th className="px-6 py-3 w-32">Status</th>
+                            <th className="px-6 py-3">Tarefa</th>
+                            <th className="px-6 py-3">Categoria</th>
+                            <th className="px-6 py-3">Prioridade</th>
+                            <th className="px-6 py-3">Vencimento</th>
+                            <th className="px-6 py-3 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border bg-white">
+                        {paginatedTarefas.length > 0 ? paginatedTarefas.map(tarefa => (
+                            <tr 
+                                key={tarefa.id} 
+                                onClick={() => setViewingTask(tarefa)}
+                                className="hover:bg-gray-50 transition-colors cursor-pointer group"
+                            >
+                                <td className="px-6 py-3">
+                                    {renderStatusPill(tarefa.dynamicStatus)}
+                                </td>
+                                <td className="px-6 py-3">
+                                    <div className="font-bold text-text-primary">{tarefa.titulo}</div>
+                                    {tarefa.recorrencia !== RecorrenciaTarefa.NENHUMA && (
+                                        <div className="flex items-center gap-1 text-[10px] text-blue-600 mt-0.5">
+                                            <RefreshIcon className="h-3 w-3" />
+                                            <span>{tarefa.recorrencia}</span>
+                                        </div>
+                                    )}
+                                </td>
+                                <td className="px-6 py-3">
+                                    <span className="px-2 py-1 bg-secondary rounded-md text-xs font-medium text-text-secondary border border-border/50">
+                                        {tarefa.categoria}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-3">
+                                    <span className={`px-2 py-1 rounded text-xs font-bold border ${getPriorityColor(tarefa.prioridade)}`}>
+                                        {tarefa.prioridade}
+                                    </span>
+                                </td>
+                                <td className={`px-6 py-3 font-medium tabular-nums ${tarefa.dynamicStatus === 'Atrasada' ? 'text-danger' : 'text-text-secondary'}`}>
+                                    {formatDateToBR(tarefa.dataVencimento)}
+                                </td>
+                                <td className="px-6 py-3 text-center">
+                                    <button className="text-primary hover:bg-primary/10 p-1.5 rounded-full transition-colors opacity-0 group-hover:opacity-100">
+                                        <EditIcon className="h-4 w-4" />
+                                    </button>
+                                </td>
+                            </tr>
+                        )) : (
+                            <tr>
+                                <td colSpan={6} className="text-center py-20">
+                                    <div className="flex flex-col items-center justify-center text-text-secondary opacity-60">
+                                        <SearchIcon className="w-10 h-10 mb-4 text-gray-300" />
+                                        <h3 className="text-lg font-medium text-text-primary">Nenhuma Tarefa Encontrada</h3>
+                                        <p className="mt-1">Para o mês selecionado ou filtros aplicados.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+            {/* Pagination */}
+            {filteredTarefas.length > 0 && (
+                <div className="flex justify-between items-center p-4 border-t border-border bg-gray-50 text-xs text-text-secondary">
+                    <div>
+                        Exibindo {startIndex + 1} a {Math.min(startIndex + ITEMS_PER_PAGE, filteredTarefas.length)} de {filteredTarefas.length} registros
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="p-1.5 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            <ChevronLeftIcon className="h-4 w-4" />
+                        </button>
+                        <span className="font-medium">Página {currentPage} de {Math.max(1, totalPages)}</span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages || totalPages === 0}
+                            className="p-1.5 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            <ChevronRightIcon className="h-4 w-4" />
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+
     const renderTarefas = () => (
         <>
-            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 gap-4 bg-white p-4 rounded-3xl border border-border shadow-sm">
+            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4 bg-white p-4 rounded-3xl border border-border shadow-sm">
                  <div className="flex flex-col sm:flex-row gap-4 w-full xl:w-auto flex-grow items-center">
                     <div className="relative w-full sm:w-72">
                         <input type="text" placeholder="Buscar tarefa..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-11 pr-4 h-11 bg-secondary border-transparent rounded-full text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder-text-secondary/60"/>
@@ -565,46 +622,7 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 </div>
             </div>
 
-            {viewMode === 'list' ? (
-                <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 flex-grow content-start overflow-y-auto pb-4 pr-1 custom-scrollbar">
-                        {paginatedTarefas.length > 0 ? paginatedTarefas.map(tarefa => renderTaskCard(tarefa)) : (
-                            <div className="col-span-full flex flex-col items-center justify-center text-text-secondary py-20 bg-white/50 rounded-3xl border-2 border-dashed border-border">
-                                <SearchIcon className="w-12 h-12 mb-4 text-gray-300"/>
-                                <h3 className="text-lg font-bold text-text-primary">Nenhuma Tarefa Encontrada</h3>
-                                <p className="text-sm mt-2">Para o mês selecionado ou filtros aplicados.</p>
-                            </div>
-                        )}
-                    </div>
-                    {/* Pagination Footer */}
-                    {filteredTarefas.length > 0 && (
-                        <div className="flex justify-between items-center p-4 border-t border-border bg-card rounded-b-2xl mt-4">
-                            <div className="text-sm text-text-secondary">
-                                Exibindo {filteredTarefas.length > 0 ? startIndex + 1 : 0} a {Math.min(startIndex + ITEMS_PER_PAGE, filteredTarefas.length)} de {filteredTarefas.length} registros
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                    disabled={currentPage === 1}
-                                    className="p-2 rounded-full hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                    title="Página Anterior"
-                                >
-                                    <ChevronLeftIcon className="h-5 w-5 text-text-primary" />
-                                </button>
-                                <span className="text-sm font-medium text-text-primary">Página {currentPage} de {Math.max(1, totalPages)}</span>
-                                <button
-                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                    disabled={currentPage === totalPages || totalPages === 0}
-                                    className="p-2 rounded-full hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                    title="Próxima Página"
-                                >
-                                    <ChevronRightIcon className="h-5 w-5 text-text-primary" />
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </>
-            ) : (
+            {viewMode === 'list' ? renderListView() : (
                 <div className="flex-grow overflow-hidden pb-2">
                     {renderKanban()}
                 </div>
@@ -614,7 +632,6 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
     const renderAnalise = () => {
         const { statusCounts, priorityCounts, categoryCounts, total } = analysisData;
-        
         const renderProgressBar = (count: number, total: number, colorClass: string) => {
             const percentage = total > 0 ? (count / total) * 100 : 0;
             return (
@@ -728,6 +745,77 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             </div>
 
             {activeTab === 'tarefas' ? renderTarefas() : renderAnalise()}
+
+            {/* Task Details Modal */}
+            {viewingTask && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="p-6 border-b border-border flex justify-between items-start bg-gray-50">
+                            <div>
+                                <h3 className="text-xl font-bold text-text-primary mb-2 line-clamp-2">{viewingTask.titulo}</h3>
+                                {renderStatusPill(viewingTask.dynamicStatus)}
+                            </div>
+                            <button onClick={() => setViewingTask(null)} className="text-text-secondary hover:text-text-primary p-2 rounded-full hover:bg-gray-200 transition-colors">
+                                <XIcon className="h-6 w-6" />
+                            </button>
+                        </div>
+                        
+                        {/* Modal Body */}
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div className="bg-secondary/30 p-3 rounded-xl border border-border/50">
+                                    <p className="text-xs font-bold text-text-secondary uppercase mb-1">Categoria</p>
+                                    <p className="font-semibold text-text-primary">{viewingTask.categoria}</p>
+                                </div>
+                                <div className="bg-secondary/30 p-3 rounded-xl border border-border/50">
+                                    <p className="text-xs font-bold text-text-secondary uppercase mb-1">Prioridade</p>
+                                    <span className={`px-2 py-0.5 rounded text-xs font-bold border inline-block ${getPriorityColor(viewingTask.prioridade)}`}>
+                                        {viewingTask.prioridade}
+                                    </span>
+                                </div>
+                                <div className="bg-secondary/30 p-3 rounded-xl border border-border/50">
+                                    <p className="text-xs font-bold text-text-secondary uppercase mb-1">Vencimento</p>
+                                    <p className={`font-semibold ${viewingTask.dynamicStatus === 'Atrasada' ? 'text-danger' : 'text-text-primary'}`}>
+                                        {formatDateToBR(viewingTask.dataVencimento)}
+                                    </p>
+                                </div>
+                                <div className="bg-secondary/30 p-3 rounded-xl border border-border/50">
+                                    <p className="text-xs font-bold text-text-secondary uppercase mb-1">Recorrência</p>
+                                    <p className="font-semibold text-text-primary flex items-center gap-1">
+                                        {viewingTask.recorrencia}
+                                        {viewingTask.recorrencia !== RecorrenciaTarefa.NENHUMA && <RefreshIcon className="h-3 w-3 text-blue-500" />}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 className="font-bold text-text-primary mb-2 flex items-center gap-2">
+                                    <ClipboardListIcon className="h-5 w-5 text-gray-400" /> Descrição
+                                </h4>
+                                <div className="bg-white border border-border rounded-xl p-4 min-h-[100px] text-text-primary text-sm leading-relaxed whitespace-pre-wrap">
+                                    {viewingTask.descricao || <span className="italic text-text-secondary">Sem descrição fornecida.</span>}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer (Actions) */}
+                        <div className="p-6 border-t border-border bg-gray-50 flex flex-wrap justify-end gap-3">
+                            <button onClick={() => handleDeleteClick(null, viewingTask)} className="px-4 py-2.5 rounded-xl bg-white border border-red-200 text-red-600 font-bold hover:bg-red-50 transition-colors shadow-sm flex items-center gap-2">
+                                <TrashIcon className="h-4 w-4" /> Excluir
+                            </button>
+                            <button onClick={() => handleEditClick(viewingTask)} className="px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-primary font-bold hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2">
+                                <EditIcon className="h-4 w-4" /> Editar
+                            </button>
+                            {viewingTask.status !== StatusTarefa.CONCLUIDA && (
+                                <button onClick={() => handleMarkAsDone(viewingTask)} className="px-6 py-2.5 rounded-xl bg-success text-white font-bold hover:bg-green-700 transition-colors shadow-lg shadow-green-500/20 flex items-center gap-2">
+                                    <CheckIcon className="h-4 w-4" /> Concluir Tarefa
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Add/Edit Modal */}
             {isModalOpen && editingTarefa && (
