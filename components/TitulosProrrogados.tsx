@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, 
     ArrowLeftIcon, SpinnerIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
@@ -493,13 +492,13 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
       <div className="bg-white border border-border rounded-2xl overflow-hidden flex flex-col flex-grow shadow-sm">
         <div className="overflow-x-auto overflow-y-auto flex-grow custom-scrollbar">
-            <table className="min-w-full divide-y divide-border text-sm text-left">
+            <table className="min-w-full divide-y divide-border text-sm text-left font-sans">
             <thead className="bg-gray-50 text-xs font-semibold text-text-secondary uppercase tracking-wider sticky top-0 z-10 shadow-sm">
                 <tr>
                 <th className="px-6 py-3">
                     <input 
                         type="checkbox" 
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        className="h-4 w-4 rounded border-gray-300 bg-white accent-orange-700 cursor-pointer focus:ring-orange-700 p-0"
                         checked={filteredTitles.length > 0 && selectedTitles.size === filteredTitles.length}
                         onChange={handleSelectAll}
                     />
@@ -524,7 +523,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     <td className="px-6 py-3" onClick={(e) => e.stopPropagation()}>
                         <input 
                             type="checkbox" 
-                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                            className="h-4 w-4 rounded border-gray-300 bg-white accent-orange-700 cursor-pointer focus:ring-orange-700 p-0"
                             checked={selectedTitles.has(title.id)}
                             onChange={() => handleSelectTitle(title.id)}
                         />

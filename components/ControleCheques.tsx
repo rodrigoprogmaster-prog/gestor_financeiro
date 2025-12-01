@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, ArrowLeftIcon, ChevronDownIcon, CalendarClockIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
 import AutocompleteInput from './AutocompleteInput';
@@ -250,6 +249,26 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   };
 
   const handleOpenAddModal = () => { setErrors({}); setEditingCheque({ ...newChequeTemplate }); setIsModalOpen(true); };
+  
+  // Global Event Listener for Add Action
+  useEffect(() => {
+    const handleTrigger = () => handleOpenAddModal();
+    window.addEventListener('trigger:add-cheque', handleTrigger);
+    return () => window.removeEventListener('trigger:add-cheque', handleTrigger);
+  }, []);
+
+  // Keyboard shortcut for adding new cheque
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.ctrlKey && event.key === '+') {
+            event.preventDefault();
+            handleOpenAddModal();
+        }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleEditClick = (cheque: Cheque) => { setErrors({}); setEditingCheque({ ...cheque }); setIsModalOpen(true); };
   const handleDeleteClick = (id: string) => { const action = () => setCheques(prev => prev.filter(c => c.id !== id)); setConfirmAction({ action, message: "Tem certeza que deseja excluir este cheque?" }); setIsConfirmOpen(true); };
   const handleDoubleClickRow = (cheque: Cheque) => { if (getDynamicStatus(cheque) === StatusCheque.COMPENSADO) return; setChequeParaAcao(cheque); };
@@ -351,7 +370,7 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
         <div className="bg-white border border-border rounded-2xl overflow-hidden flex flex-col flex-grow shadow-sm">
             <div className="overflow-x-auto flex-grow custom-scrollbar">
-                <table className="min-w-full divide-y divide-border text-sm text-left">
+                <table className="min-w-full divide-y divide-border text-sm text-left font-sans">
                     <thead className="bg-gray-50 text-xs font-semibold text-text-secondary uppercase tracking-wider sticky top-0 z-10 shadow-sm">
                         <tr>
                             <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors select-none" onClick={() => requestSort('dynamicStatus')}>Status {renderSortIcon('dynamicStatus')}</th>
