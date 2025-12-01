@@ -49,23 +49,31 @@ const Header: React.FC<HeaderProps> = ({ setView, onToggleSidebar }) => {
       <div className="flex items-center gap-4">
         <button
             onClick={onToggleSidebar}
-            className="lg:hidden flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-100 p-2 rounded-xl transition-colors"
+            className="flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-100 p-2 rounded-xl transition-colors"
             aria-label="Abrir menu de navegação"
         >
             <MenuIcon className="h-6 w-6" />
         </button>
 
-        {/* Mobile Logo Title */}
+        {/* Logo Title - Click to go Dashboard (and open sidebar) */}
         <div
-            className="flex items-center gap-3 cursor-pointer lg:hidden"
+            className="flex items-center gap-3 cursor-pointer"
             onClick={handleLogoClick}
+            title="Ir para o Dashboard"
         >
-            <h1 className="text-lg font-bold text-gray-900 font-heading tracking-tight">
+            <div className="h-8 w-8 bg-gradient-to-br from-orange-600 to-orange-700 rounded-lg flex items-center justify-center text-white shadow-md shadow-orange-200 lg:hidden">
+                <span className="font-bold font-heading text-lg">G</span>
+            </div>
+            <h1 className="text-lg font-bold text-gray-900 font-heading tracking-tight lg:hidden">
+                Financeiro
+            </h1>
+            {/* Desktop breadcrumb style text */}
+            <h1 className="hidden lg:block text-lg font-bold text-gray-900 font-heading tracking-tight hover:text-orange-700 transition-colors">
                 Financeiro
             </h1>
         </div>
         
-        <div className="hidden md:flex items-center text-sm text-gray-500">
+        <div className="hidden md:flex items-center text-sm text-gray-500 border-l border-gray-200 pl-4 ml-2">
             <span className="font-medium text-orange-600">Bem-vindo</span>
         </div>
       </div>

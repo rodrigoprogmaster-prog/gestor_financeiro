@@ -79,6 +79,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
 
   const handleNavigation = (view: AppView) => {
     setView(view);
+    // On mobile, close logic is handled by wrapper interaction or explicit close
+    // On desktop, app logic handles state via handleSetView in App.tsx
     if (window.innerWidth < 1024) {
       onClose();
     }
@@ -107,9 +109,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
 
       {/* Sidebar Container */}
       <aside className={`
-        fixed top-0 left-0 z-50 h-full w-64 bg-white border-r border-gray-200 flex flex-col transition-transform duration-300 ease-in-out
-        lg:static lg:translate-x-0 shadow-xl lg:shadow-none
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        fixed top-0 left-0 z-50 h-full w-64 bg-white border-r border-gray-200 flex flex-col transition-transform duration-300 ease-in-out shadow-xl
+        ${isOpen ? 'translate-x-0 lg:static' : '-translate-x-full'}
       `}>
         {/* Header Logo Area */}
         <div className="h-16 flex items-center justify-between px-6 border-b border-gray-100 shrink-0">

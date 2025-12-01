@@ -26,7 +26,8 @@ const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return sessionStorage.getItem('isAuthenticated') === 'true';
   });
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // Default to true (expanded) on load
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [globalSearchTerm, setGlobalSearchTerm] = useState('');
 
@@ -40,6 +41,16 @@ const App: React.FC = () => {
     setGlobalSearchTerm('');
   }, []);
 
+  // Centralized navigation handler to manage Sidebar state based on View
+  const handleSetView = useCallback((view: AppView) => {
+    setCurrentView(view);
+    if (view === AppView.DASHBOARD) {
+      setIsSidebarOpen(true);
+    } else {
+      setIsSidebarOpen(false);
+    }
+  }, []);
+
   useEffect(() => {
     // Global keyboard shortcuts
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -51,7 +62,7 @@ const App: React.FC = () => {
       // Alt + Enter: Go to Dashboard
       else if (event.altKey && event.key === 'Enter') {
         event.preventDefault();
-        setCurrentView(AppView.DASHBOARD);
+        handleSetView(AppView.DASHBOARD);
       }
       // Escape: Close Global Search
       else if (event.key === 'Escape' && isGlobalSearchOpen) {
@@ -64,7 +75,7 @@ const App: React.FC = () => {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isGlobalSearchOpen, handleCloseGlobalSearch]);
+  }, [isGlobalSearchOpen, handleCloseGlobalSearch, handleSetView]);
 
   useEffect(() => {
     // Apply theme on load
@@ -151,15 +162,15 @@ const App: React.FC = () => {
   const handleLogout = () => {
     sessionStorage.removeItem('isAuthenticated');
     setIsAuthenticated(false);
-    setCurrentView(AppView.DASHBOARD); 
+    handleSetView(AppView.DASHBOARD); 
   };
   
   const handleToggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   const handleSearchNavigate = useCallback((view: AppView) => {
-    setCurrentView(view);
+    handleSetView(view);
     handleCloseGlobalSearch();
-  }, [handleCloseGlobalSearch]);
+  }, [handleCloseGlobalSearch, handleSetView]);
 
 
   if (!isAuthenticated) {
@@ -200,21 +211,21 @@ const App: React.FC = () => {
         return <ConsultaCnpj />;
       case AppView.DASHBOARD:
       default:
-        return <Dashboard setView={setCurrentView} />;
+        return <Dashboard setView={handleSetView} />;
     }
   };
 
   return (
     <div className="w-full h-full bg-background font-sans flex flex-col overflow-hidden text-text-primary">
       <Header 
-        setView={setCurrentView} 
+        setView={handleSetView} 
         onToggleSidebar={handleToggleSidebar} 
       />
       <div className="flex flex-1 overflow-hidden min-h-0">
         <div className={isAnyModalOpen ? 'hidden' : 'block h-full'}>
             <Sidebar 
                 currentView={currentView} 
-                setView={setCurrentView} 
+                setView={handleSetView} 
                 isOpen={isSidebarOpen} 
                 onClose={() => setIsSidebarOpen(false)}
                 onLogout={handleLogout}
@@ -222,7 +233,7 @@ const App: React.FC = () => {
             />
         </div>
         {/* Main content wrapper with min-w-0 to prevent flex children from overflowing */}
-        <main className="flex-1 relative flex flex-col h-full overflow-hidden bg-background min-w-0">
+        <main className="flex-1 relative flex flex-col h-full overflow-hidden bg-background min-w-0 transition-all duration-300">
             <div className="w-full h-full flex flex-col overflow-hidden">
                 {renderView()}
             </div>
