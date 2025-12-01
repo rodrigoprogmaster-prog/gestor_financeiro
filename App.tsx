@@ -44,11 +44,6 @@ const App: React.FC = () => {
   // Centralized navigation handler to manage Sidebar state based on View
   const handleSetView = useCallback((view: AppView) => {
     setCurrentView(view);
-    if (view === AppView.DASHBOARD) {
-      setIsSidebarOpen(true);
-    } else {
-      setIsSidebarOpen(false);
-    }
   }, []);
 
   useEffect(() => {

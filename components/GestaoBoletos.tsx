@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, CalendarClockIcon, SpinnerIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ArrowLeftIcon } from './icons';
 import AutocompleteInput from './AutocompleteInput';
@@ -89,6 +90,11 @@ type SortConfig = { key: keyof BoletoReceber | 'dynamicStatus'; direction: 'asc'
 
 const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const STORAGE_KEY = 'boletos_a_receber_data';
+    const LS_KEY_SEARCH_TERM = 'boletosReceber_searchTerm';
+    const LS_KEY_STATUS_FILTER = 'boletosReceber_statusFilter';
+    const LS_KEY_DATE_RANGE = 'boletosReceber_dateRange';
+    const LS_KEY_SORT_CONFIG = 'boletosReceber_sortConfig';
+    const LS_KEY_CURRENT_PAGE = 'boletosReceber_currentPage';
 
     const [boletos, setBoletos] = useState<BoletoReceber[]>(() => {
         const saved = localStorage.getItem(STORAGE_KEY);
@@ -101,16 +107,38 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [confirmAction, setConfirmAction] = useState<{ action: (() => void) | null, message: string }>({ action: null, message: '' });
     const [errors, setErrors] = useState<BoletoErrors>({});
     
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState(() => localStorage.getItem(LS_KEY_SEARCH_TERM) || '');
     // CHANGE: Default status to 'Todos' to show data immediately
-    const [statusFilter, setStatusFilter] = useState<StatusBoletoReceber | 'Todos'>('Todos');
-    const [dateRange, setDateRange] = useState({ start: '', end: '' });
-    const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
+    const [statusFilter, setStatusFilter] = useState<StatusBoletoReceber | 'Todos'>(() => {
+        const savedFilter = localStorage.getItem(LS_KEY_STATUS_FILTER);
+        return (savedFilter as StatusBoletoReceber | 'Todos') || 'Todos';
+    });
+    const [dateRange, setDateRange] = useState(() => {
+        try {
+            const savedRange = localStorage.getItem(LS_KEY_DATE_RANGE);
+            return savedRange ? JSON.parse(savedRange) : { start: '', end: '' };
+        } catch (e) {
+            console.error("Failed to parse dateRange from localStorage", e);
+            return { start: '', end: '' };
+        }
+    });
+    const [sortConfig, setSortConfig] = useState<SortConfig | null>(() => {
+        try {
+            const savedSort = localStorage.getItem(LS_KEY_SORT_CONFIG);
+            return savedSort ? JSON.parse(savedSort) : null;
+        } catch (e) {
+            console.error("Failed to parse sortConfig from localStorage", e);
+            return null;
+        }
+    });
     
     const fileInputRef = useRef<HTMLInputElement>(null);
     
     // Pagination State
-    const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = useState(() => {
+        const savedPage = localStorage.getItem(LS_KEY_CURRENT_PAGE);
+        return savedPage ? parseInt(savedPage, 10) : 1;
+    });
 
     useHideSidebarOnModal(isModalOpen || isConfirmOpen);
 
@@ -121,6 +149,26 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(boletos));
     }, [boletos]);
+
+    useEffect(() => {
+        localStorage.setItem(LS_KEY_SEARCH_TERM, searchTerm);
+    }, [searchTerm]);
+
+    useEffect(() => {
+        localStorage.setItem(LS_KEY_STATUS_FILTER, statusFilter);
+    }, [statusFilter]);
+
+    useEffect(() => {
+        localStorage.setItem(LS_KEY_DATE_RANGE, JSON.stringify(dateRange));
+    }, [dateRange]);
+
+    useEffect(() => {
+        localStorage.setItem(LS_KEY_SORT_CONFIG, JSON.stringify(sortConfig));
+    }, [sortConfig]);
+
+    useEffect(() => {
+        localStorage.setItem(LS_KEY_CURRENT_PAGE, currentPage.toString());
+    }, [currentPage]);
 
     // Reset page when filters change
     useEffect(() => {
@@ -551,7 +599,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
             <div className="bg-white border border-border rounded-2xl overflow-hidden flex-grow shadow-sm flex flex-col">
                 <div className="overflow-x-auto overflow-y-auto flex-grow custom-scrollbar">
-                    <table className="min-w-full divide-y divide-border text-sm text-left font-sans">
+                    <table className="min-w-full divide-y divide-border text-sm text-left">
                         <thead className="bg-gray-50 text-text-secondary font-semibold uppercase text-xs tracking-wider sticky top-0 z-10 shadow-sm">
                             <tr>
                                 <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors select-none" onClick={() => requestSort('dynamicStatus')}>Status {renderSortIcon('dynamicStatus')}</th>

@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, 
     ArrowLeftIcon, SpinnerIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
@@ -64,6 +65,10 @@ const ITEMS_PER_PAGE = 20;
 
 const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const STORAGE_KEY = 'titulos_prorrogados_data';
+  const LS_KEY_STATUS_FILTER = 'titulosProrrogados_statusFilter';
+  const LS_KEY_SEARCH_TERM = 'titulosProrrogados_searchTerm';
+  const LS_KEY_DATE_RANGE = 'titulosProrrogados_dateRange';
+  const LS_KEY_CURRENT_PAGE = 'titulosProrrogados_currentPage';
 
   const [titles, setTitles] = useState<Title[]>(() => {
     const savedTitles = localStorage.getItem(STORAGE_KEY);
@@ -94,14 +99,41 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
 
   // Filter states
-  const [statusFilter, setStatusFilter] = useState<StatusTitulo | 'Todos'>('Todos');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [dateRange, setDateRange] = useState({ start: '', end: '' });
+  const [statusFilter, setStatusFilter] = useState<StatusTitulo | 'Todos'>(() => (localStorage.getItem(LS_KEY_STATUS_FILTER) as StatusTitulo | 'Todos') || 'Todos');
+  const [searchTerm, setSearchTerm] = useState<string>(() => localStorage.getItem(LS_KEY_SEARCH_TERM) || '');
+  const [dateRange, setDateRange] = useState(() => {
+    try {
+        const savedRange = localStorage.getItem(LS_KEY_DATE_RANGE);
+        return savedRange ? JSON.parse(savedRange) : { start: '', end: '' };
+    } catch (e) {
+        console.error("Failed to parse dateRange from localStorage", e);
+        return { start: '', end: '' };
+    }
+  });
 
   // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => {
+    const savedPage = localStorage.getItem(LS_KEY_CURRENT_PAGE);
+    return savedPage ? parseInt(savedPage, 10) : 1;
+  });
 
   useHideSidebarOnModal(isModalOpen || isConfirmOpen);
+
+  useEffect(() => {
+    localStorage.setItem(LS_KEY_STATUS_FILTER, statusFilter);
+  }, [statusFilter]);
+
+  useEffect(() => {
+    localStorage.setItem(LS_KEY_SEARCH_TERM, searchTerm);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    localStorage.setItem(LS_KEY_DATE_RANGE, JSON.stringify(dateRange));
+  }, [dateRange]);
+
+  useEffect(() => {
+    localStorage.setItem(LS_KEY_CURRENT_PAGE, currentPage.toString());
+  }, [currentPage]);
 
   useEffect(() => {
     setSelectedTitles(new Set());
@@ -492,7 +524,7 @@ const TitulosProrrogados: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
       <div className="bg-white border border-border rounded-2xl overflow-hidden flex flex-col flex-grow shadow-sm">
         <div className="overflow-x-auto overflow-y-auto flex-grow custom-scrollbar">
-            <table className="min-w-full divide-y divide-border text-sm text-left font-sans">
+            <table className="min-w-full divide-y divide-border text-sm text-left">
             <thead className="bg-gray-50 text-xs font-semibold text-text-secondary uppercase tracking-wider sticky top-0 z-10 shadow-sm">
                 <tr>
                 <th className="px-6 py-3">

@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { PlusIcon, TrashIcon, SearchIcon, DownloadIcon, EditIcon, UploadIcon, CheckIcon, ArrowLeftIcon, SpinnerIcon, ChevronDownIcon, RefreshIcon, ClipboardCheckIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
 import AutocompleteInput from './AutocompleteInput';
@@ -47,12 +48,21 @@ const formatCurrency = (value: number) => value.toLocaleString('pt-BR', { style:
 const ITEMS_PER_PAGE = 20;
 
 type SortConfig = { key: keyof Boleto | 'dynamicStatus'; direction: 'asc' | 'desc' };
+type Tab = 'boletos' | 'recorrentes' | 'notas_fiscais';
 
 const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const STORAGE_KEY = 'boletos_a_pagar_data';
     const STORAGE_KEY_RECORRENTES = 'despesas_recorrentes_data';
+    const LS_KEY_ACTIVE_TAB = 'controleBoletos_activeTab';
+    const LS_KEY_BOLETOS_SEARCH_TERM = 'controleBoletos_pagar_searchTerm';
+    const LS_KEY_BOLETOS_STATUS_FILTER = 'controleBoletos_pagar_statusFilter';
+    const LS_KEY_BOLETOS_DATE_RANGE = 'controleBoletos_pagar_dateRange';
+    const LS_KEY_BOLETOS_SORT_CONFIG = 'controleBoletos_pagar_sortConfig';
+    const LS_KEY_BOLETOS_CURRENT_PAGE = 'controleBoletos_pagar_currentPage';
+    const LS_KEY_RECORRENTES_FILTERS = 'controleBoletos_recorrentes_filters';
 
-    const [activeView, setActiveView] = useState<'boletos' | 'recorrentes' | 'notas_fiscais'>('boletos');
+
+    const [activeView, setActiveView] = useState<Tab>(() => (localStorage.getItem(LS_KEY_ACTIVE_TAB) as Tab) || 'boletos');
 
     const [boletos, setBoletos] = useState<Boleto[]>(() => {
         try {
@@ -82,23 +92,53 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const [boletoErrors, setBoletoErrors] = useState<BoletoErrors>({});
     
     // Default filter set to 'Todos' to show data immediately
-    const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState<StatusBoleto | 'Todos'>('Todos');
-    const [dateRange, setDateRange] = useState({ start: '', end: '' });
+    const [searchTerm, setSearchTerm] = useState(() => localStorage.getItem(LS_KEY_BOLETOS_SEARCH_TERM) || '');
+    const [statusFilter, setStatusFilter] = useState<StatusBoleto | 'Todos'>(() => {
+        const savedFilter = localStorage.getItem(LS_KEY_BOLETOS_STATUS_FILTER);
+        return (savedFilter as StatusBoleto | 'Todos') || 'Todos';
+    });
+    const [dateRange, setDateRange] = useState(() => {
+        try {
+            const savedRange = localStorage.getItem(LS_KEY_BOLETOS_DATE_RANGE);
+            return savedRange ? JSON.parse(savedRange) : { start: '', end: '' };
+        } catch (e) {
+            console.error("Failed to parse boletos dateRange from localStorage", e);
+            return { start: '', end: '' };
+        }
+    });
     
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
-    const [currentPage, setCurrentPage] = useState(1);
+    const [sortConfig, setSortConfig] = useState<SortConfig | null>(() => {
+        try {
+            const savedSort = localStorage.getItem(LS_KEY_BOLETOS_SORT_CONFIG);
+            return savedSort ? JSON.parse(savedSort) : null;
+        } catch (e) {
+            console.error("Failed to parse boletos sortConfig from localStorage", e);
+            return null;
+        }
+    });
+    const [currentPage, setCurrentPage] = useState(() => {
+        const savedPage = localStorage.getItem(LS_KEY_BOLETOS_CURRENT_PAGE);
+        return savedPage ? parseInt(savedPage, 10) : 1;
+    });
 
     const [editingDespesa, setEditingDespesa] = useState<Partial<DespesaRecorrente> | null>(null);
     const [despesaErrors, setDespesaErrors] = useState<DespesaErrors>({});
     
     // Filters for Recorrentes
-    const [recorrentesFilters, setRecorrentesFilters] = useState({
-        empresa: '',
-        descricao: '',
-        diaMes: '',
-        status: ''
+    const [recorrentesFilters, setRecorrentesFilters] = useState(() => {
+        try {
+            const savedFilters = localStorage.getItem(LS_KEY_RECORRENTES_FILTERS);
+            return savedFilters ? JSON.parse(savedFilters) : {
+                empresa: '',
+                descricao: '',
+                diaMes: '',
+                status: ''
+            };
+        } catch (e) {
+            console.error("Failed to parse recorrentesFilters from localStorage", e);
+            return { empresa: '', descricao: '', diaMes: '', status: '' };
+        }
     });
 
     useHideSidebarOnModal(isModalOpen || isConfirmOpen);
@@ -115,6 +155,37 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY_RECORRENTES, JSON.stringify(despesasRecorrentes));
     }, [despesasRecorrentes]);
+
+    // Persist active tab
+    useEffect(() => {
+        localStorage.setItem(LS_KEY_ACTIVE_TAB, activeView);
+    }, [activeView]);
+
+    // Persist boletos filters
+    useEffect(() => {
+        localStorage.setItem(LS_KEY_BOLETOS_SEARCH_TERM, searchTerm);
+    }, [searchTerm]);
+
+    useEffect(() => {
+        localStorage.setItem(LS_KEY_BOLETOS_STATUS_FILTER, statusFilter);
+    }, [statusFilter]);
+
+    useEffect(() => {
+        localStorage.setItem(LS_KEY_BOLETOS_DATE_RANGE, JSON.stringify(dateRange));
+    }, [dateRange]);
+
+    useEffect(() => {
+        localStorage.setItem(LS_KEY_BOLETOS_SORT_CONFIG, JSON.stringify(sortConfig));
+    }, [sortConfig]);
+
+    useEffect(() => {
+        localStorage.setItem(LS_KEY_BOLETOS_CURRENT_PAGE, currentPage.toString());
+    }, [currentPage]);
+
+    // Persist recorrentes filters
+    useEffect(() => {
+        localStorage.setItem(LS_KEY_RECORRENTES_FILTERS, JSON.stringify(recorrentesFilters));
+    }, [recorrentesFilters]);
 
     useEffect(() => {
         setCurrentPage(1);
@@ -398,7 +469,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {(Object.values(StatusBoleto) as StatusBoleto[]).map(status => {
                         const total = totals[status] || { count: 0, value: 0 };
-                        let bgClass = 'bg-white hover:border-gray-200';
+                        let bgClass = 'bg-white hover:border-orange-200';
                         let ringClass = '';
                         let textClass = 'text-primary';
 
@@ -451,14 +522,14 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                 value={dateRange.start} 
                                 onChange={(val) => setDateRange(prev => ({ ...prev, start: val }))} 
                                 placeholder="Início"
-                                className="w-32 h-9 bg-white border-transparent focus:border-primary shadow-sm"
+                                className="w-32 h-9"
                             />
                             <span className="text-xs text-text-secondary font-medium px-1">até</span>
                             <DatePicker 
                                 value={dateRange.end} 
                                 onChange={(val) => setDateRange(prev => ({ ...prev, end: val }))} 
                                 placeholder="Fim"
-                                className="w-32 h-9 bg-white border-transparent focus:border-primary shadow-sm"
+                                className="w-32 h-9"
                             />
                         </div>
                         <button onClick={() => { setSearchTerm(''); setStatusFilter('Todos'); setDateRange({start: '', end: ''}); setSortConfig(null); }} className="px-4 py-2 rounded-xl bg-secondary hover:bg-border text-text-primary font-medium text-sm transition-colors border border-transparent hover:border-gray-300">Limpar</button>
@@ -468,7 +539,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 {/* Table */}
                 <div className="bg-white border border-border rounded-2xl overflow-hidden flex-grow shadow-sm flex flex-col">
                     <div className="overflow-x-auto overflow-y-auto flex-grow custom-scrollbar">
-                        <table className="min-w-full divide-y divide-border text-sm text-left font-sans">
+                        <table className="min-w-full divide-y divide-border text-sm text-left">
                             <thead className="bg-gray-50 text-text-secondary font-semibold uppercase text-xs tracking-wider sticky top-0 z-10 shadow-sm">
                                 <tr>
                                     <th className="px-6 py-3 cursor-pointer select-none hover:text-primary transition-colors" onClick={() => requestSort('dynamicStatus')}>Status {renderSortIcon('dynamicStatus')}</th>
@@ -492,7 +563,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                                 {boleto.dynamicStatus}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-3 font-medium text-text-primary">{boleto.fornecedor}</td>
+                                        <td className="px-6 py-3 font-medium text-text-primary whitespace-nowrap">{boleto.fornecedor}</td>
                                         <td className="px-6 py-3 text-text-secondary">{boleto.pagador}</td>
                                         <td className="px-6 py-3 text-text-secondary tabular-nums">{formatDateToBR(boleto.vencimento)}</td>
                                         <td className="px-6 py-3 text-right font-semibold text-text-primary tabular-nums">{formatCurrency(boleto.valor)}</td>
@@ -596,7 +667,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
                 <div className="bg-white border border-border rounded-2xl overflow-hidden flex-grow shadow-sm flex flex-col">
                     <div className="overflow-x-auto overflow-y-auto flex-grow custom-scrollbar">
-                        <table className="min-w-full divide-y divide-border text-sm text-left font-sans">
+                        <table className="min-w-full divide-y divide-border text-sm text-left">
                             <thead className="bg-gray-50 text-text-secondary font-semibold uppercase text-xs tracking-wider sticky top-0 z-10 shadow-sm">
                                 <tr>
                                     <th className="px-6 py-3">Dia Venc.</th>

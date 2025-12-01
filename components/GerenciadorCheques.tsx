@@ -102,6 +102,11 @@ type SortConfig = { key: keyof Cheque | 'dynamicStatus'; direction: 'asc' | 'des
 
 const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const STORAGE_KEY = 'gerenciador_cheques_data';
+  const LS_KEY_SEARCH_TERM = 'cheques_searchTerm';
+  const LS_KEY_STATUS_FILTER = 'cheques_statusFilter';
+  const LS_KEY_DATE_RANGE = 'cheques_dateRange';
+  const LS_KEY_SORT_CONFIG = 'cheques_sortConfig';
+  const LS_KEY_CURRENT_PAGE = 'cheques_currentPage';
 
   const [cheques, setCheques] = useState<Cheque[]>(() => {
     const savedData = localStorage.getItem(STORAGE_KEY);
@@ -113,16 +118,38 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{ action: (() => void) | null, message: string }>({ action: null, message: '' });
   const [errors, setErrors] = useState<ChequeErrors>({});
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StatusCheque | 'Vencido' | 'Todos'>(StatusCheque.A_DEPOSITAR);
+  const [searchTerm, setSearchTerm] = useState(() => localStorage.getItem(LS_KEY_SEARCH_TERM) || '');
+  const [statusFilter, setStatusFilter] = useState<StatusCheque | 'Vencido' | 'Todos'>(() => {
+    const savedFilter = localStorage.getItem(LS_KEY_STATUS_FILTER);
+    return (savedFilter as StatusCheque | 'Vencido' | 'Todos') || StatusCheque.A_DEPOSITAR;
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [dateRange, setDateRange] = useState({ start: '', end: '' });
+  const [dateRange, setDateRange] = useState(() => {
+    try {
+      const savedRange = localStorage.getItem(LS_KEY_DATE_RANGE);
+      return savedRange ? JSON.parse(savedRange) : { start: '', end: '' };
+    } catch (e) {
+      console.error("Failed to parse dateRange from localStorage", e);
+      return { start: '', end: '' };
+    }
+  });
   const [chequeParaAcao, setChequeParaAcao] = useState<Cheque | null>(null);
   const [lembreteCheques, setLembreteCheques] = useState<Cheque[]>([]);
   const [isLembreteModalOpen, setIsLembreteModalOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => {
+    const savedPage = localStorage.getItem(LS_KEY_CURRENT_PAGE);
+    return savedPage ? parseInt(savedPage, 10) : 1;
+  });
   
-  const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
+  const [sortConfig, setSortConfig] = useState<SortConfig | null>(() => {
+    try {
+      const savedSort = localStorage.getItem(LS_KEY_SORT_CONFIG);
+      return savedSort ? JSON.parse(savedSort) : null;
+    } catch (e) {
+      console.error("Failed to parse sortConfig from localStorage", e);
+      return null;
+    }
+  });
 
   const uniqueEmitentes = useMemo(() => [...new Set(cheques.map(c => c.emitente).filter(Boolean))].sort(), [cheques]);
   const uniqueLojas = useMemo(() => [...new Set(cheques.map(c => c.loja).filter(Boolean))].sort(), [cheques]);
@@ -141,6 +168,26 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cheques));
   }, [cheques]);
+
+  useEffect(() => {
+    localStorage.setItem(LS_KEY_SEARCH_TERM, searchTerm);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    localStorage.setItem(LS_KEY_STATUS_FILTER, statusFilter);
+  }, [statusFilter]);
+
+  useEffect(() => {
+    localStorage.setItem(LS_KEY_DATE_RANGE, JSON.stringify(dateRange));
+  }, [dateRange]);
+
+  useEffect(() => {
+    localStorage.setItem(LS_KEY_SORT_CONFIG, JSON.stringify(sortConfig));
+  }, [sortConfig]);
+
+  useEffect(() => {
+    localStorage.setItem(LS_KEY_CURRENT_PAGE, currentPage.toString());
+  }, [currentPage]);
 
   useEffect(() => {
     const today = new Date();
@@ -371,7 +418,7 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
         <div className="bg-white border border-border rounded-2xl overflow-hidden flex flex-col flex-grow shadow-sm">
             <div className="overflow-x-auto flex-grow custom-scrollbar">
-                <table className="min-w-full divide-y divide-border text-sm text-left">
+                <table className="min-w-full divide-y divide-border text-sm text-left font-sans">
                     <thead className="bg-gray-50 text-xs font-semibold text-text-secondary uppercase tracking-wider sticky top-0 z-10 shadow-sm">
                         <tr>
                             <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors select-none" onClick={() => requestSort('dynamicStatus')}>Status {renderSortIcon('dynamicStatus')}</th>
@@ -490,6 +537,7 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                     onChange={(val) => setEditingCheque(prev => ({...prev, dataDeposito: val}))}
                                     placeholder="Selecione"
                                 />
+                                {/* Removed duplicate className attribute */}
                                 {errors.dataDeposito && <p className="text-danger text-xs mt-1 ml-1">{errors.dataDeposito}</p>}
                              </div>
                         </div>
