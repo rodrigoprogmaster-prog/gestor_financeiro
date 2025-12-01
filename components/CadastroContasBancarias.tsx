@@ -100,6 +100,13 @@ const CadastroContasBancarias: React.FC<{ onBack?: () => void }> = ({ onBack }) 
         setIsModalOpen(true);
     };
 
+    // Global Event Listener for Add Action
+    useEffect(() => {
+        const handleTrigger = () => handleOpenAddModal();
+        window.addEventListener('trigger:add-conta', handleTrigger);
+        return () => window.removeEventListener('trigger:add-conta', handleTrigger);
+    }, []);
+
     const handleEditClick = (conta: ContaBancaria) => {
         setErrors({});
         setEditingConta({ ...conta });

@@ -232,6 +232,16 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         setIsModalOpen(true);
     };
 
+    // Global Event Listener for Add Action
+    useEffect(() => {
+        const handleTrigger = () => {
+            setActiveView('boletos'); // Ensure we are on the correct tab
+            handleOpenAddModal();
+        }
+        window.addEventListener('trigger:add-boleto-pagar', handleTrigger);
+        return () => window.removeEventListener('trigger:add-boleto-pagar', handleTrigger);
+    }, [activeView]);
+
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.ctrlKey && event.key === '+') {
@@ -382,6 +392,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     };
 
     const renderBoletosView = () => {
+        // ... (Render logic mostly unchanged, just encapsulated)
         return (
             <>
                 {/* Cards Grid */}
@@ -422,7 +433,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     })}
                 </div>
 
-                {/* Filter Toolbar */}
+                {/* Filter Toolbar - Updated for better aesthetics and no clipping */}
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 bg-white p-3 rounded-2xl border border-border shadow-sm">
                     <div className="relative w-full sm:w-auto flex-grow sm:flex-grow-0">
                         <input 
@@ -434,23 +445,24 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         />
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon className="h-4 w-4 text-text-secondary"/></div>
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
-                        <div className="flex items-center gap-2 bg-secondary rounded-lg p-1">
+                    <div className="flex items-center gap-3 flex-wrap w-full sm:w-auto justify-end">
+                        {/* Improved Date Picker Container */}
+                        <div className="flex items-center gap-2 bg-secondary/50 rounded-xl p-1.5 border border-border">
                             <DatePicker 
                                 value={dateRange.start} 
                                 onChange={(val) => setDateRange(prev => ({ ...prev, start: val }))} 
                                 placeholder="Início"
-                                className="w-28 h-9"
+                                className="w-32 h-9 bg-white border-transparent focus:border-primary shadow-sm"
                             />
-                            <span className="text-xs text-text-secondary font-medium">até</span>
+                            <span className="text-xs text-text-secondary font-medium px-1">até</span>
                             <DatePicker 
                                 value={dateRange.end} 
                                 onChange={(val) => setDateRange(prev => ({ ...prev, end: val }))} 
                                 placeholder="Fim"
-                                className="w-28 h-9"
+                                className="w-32 h-9 bg-white border-transparent focus:border-primary shadow-sm"
                             />
                         </div>
-                        <button onClick={() => { setSearchTerm(''); setStatusFilter('Todos'); setDateRange({start: '', end: ''}); setSortConfig(null); }} className="px-4 py-2 rounded-full bg-secondary hover:bg-border text-text-primary font-medium text-sm transition-colors">Limpar</button>
+                        <button onClick={() => { setSearchTerm(''); setStatusFilter('Todos'); setDateRange({start: '', end: ''}); setSortConfig(null); }} className="px-4 py-2 rounded-xl bg-secondary hover:bg-border text-text-primary font-medium text-sm transition-colors border border-transparent hover:border-gray-300">Limpar</button>
                     </div>
                 </div>
 
@@ -543,39 +555,41 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const renderRecorrentesView = () => {
         return (
             <div className="flex flex-col flex-grow h-full overflow-hidden">
-                {/* Search Bar for Recorrentes */}
-                <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 bg-white p-3 rounded-2xl border border-border shadow-sm shrink-0">
-                    <div className="relative w-full sm:w-64">
-                        <input 
-                            type="text" 
-                            placeholder="Buscar Empresa..." 
-                            value={recorrentesFilters.empresa} 
-                            onChange={e => setRecorrentesFilters(prev => ({...prev, empresa: e.target.value}))} 
-                            className="w-full pl-10 pr-3 bg-secondary border-transparent rounded-xl text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-10"
-                        />
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon className="h-4 w-4 text-text-secondary"/></div>
-                    </div>
-                    <div className="relative w-full sm:w-64">
-                        <input 
-                            type="text" 
-                            placeholder="Buscar Descrição..." 
-                            value={recorrentesFilters.descricao} 
-                            onChange={e => setRecorrentesFilters(prev => ({...prev, descricao: e.target.value}))} 
-                            className="w-full pl-3 pr-3 bg-secondary border-transparent rounded-xl text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-10"
-                        />
-                    </div>
-                    <div className="relative w-full sm:w-32">
-                        <input 
-                            type="text" 
-                            placeholder="Dia/Mês" 
-                            value={recorrentesFilters.diaMes} 
-                            onChange={e => setRecorrentesFilters(prev => ({...prev, diaMes: e.target.value}))} 
-                            className="w-full pl-3 pr-3 bg-secondary border-transparent rounded-xl text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-10 text-center"
-                        />
+                {/* Search Bar for Recorrentes - Updated container styling */}
+                <div className="flex flex-col xl:flex-row justify-between items-center mb-4 gap-4 bg-white p-3 rounded-2xl border border-border shadow-sm shrink-0">
+                    <div className="flex flex-col sm:flex-row gap-4 w-full xl:w-auto">
+                        <div className="relative w-full sm:w-64">
+                            <input 
+                                type="text" 
+                                placeholder="Buscar Empresa..." 
+                                value={recorrentesFilters.empresa} 
+                                onChange={e => setRecorrentesFilters(prev => ({...prev, empresa: e.target.value}))} 
+                                className="w-full pl-10 pr-3 bg-secondary border-transparent rounded-xl text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-10"
+                            />
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><SearchIcon className="h-4 w-4 text-text-secondary"/></div>
+                        </div>
+                        <div className="relative w-full sm:w-64">
+                            <input 
+                                type="text" 
+                                placeholder="Buscar Descrição..." 
+                                value={recorrentesFilters.descricao} 
+                                onChange={e => setRecorrentesFilters(prev => ({...prev, descricao: e.target.value}))} 
+                                className="w-full pl-3 pr-3 bg-secondary border-transparent rounded-xl text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-10"
+                            />
+                        </div>
+                        <div className="relative w-full sm:w-32">
+                            <input 
+                                type="text" 
+                                placeholder="Dia/Mês" 
+                                value={recorrentesFilters.diaMes} 
+                                onChange={e => setRecorrentesFilters(prev => ({...prev, diaMes: e.target.value}))} 
+                                className="w-full pl-3 pr-3 bg-secondary border-transparent rounded-xl text-sm text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-10 text-center"
+                            />
+                        </div>
                     </div>
                     <button 
                         onClick={() => setRecorrentesFilters({ empresa: '', descricao: '', diaMes: '', status: '' })} 
-                        className="px-4 py-2 rounded-full bg-secondary hover:bg-border text-text-primary font-medium text-sm transition-colors"
+                        className="w-full sm:w-auto px-6 py-2 rounded-xl bg-secondary hover:bg-border text-text-primary font-medium text-sm transition-colors border border-transparent hover:border-gray-300"
                     >
                         Limpar
                     </button>
@@ -665,6 +679,7 @@ const BoletosAPagar: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             {activeView === 'recorrentes' && renderRecorrentesView()}
             {activeView === 'notas_fiscais' && <GerenciadorNotasFiscais />}
 
+            {/* ... (Modal content same as before) ... */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">

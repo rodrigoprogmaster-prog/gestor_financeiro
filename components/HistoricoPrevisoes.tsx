@@ -44,7 +44,7 @@ interface NavCardProps {
 const NavCard: React.FC<NavCardProps> = ({ title, icon, onClick }) => (
     <div
         onClick={onClick}
-        className="bg-card rounded-2xl border border-border p-6 flex flex-col items-center text-center cursor-pointer hover:border-primary hover:shadow-sm transition-all duration-200 group"
+        className="bg-card rounded-2xl border border-border p-6 flex flex-col items-center text-center cursor-pointer hover:border-primary hover:shadow-sm transition-all duration-200 group active:scale-95"
     >
         <div className="bg-secondary p-4 rounded-full mb-4 border border-border group-hover:border-primary/30 transition-colors">
             {icon}
@@ -87,6 +87,42 @@ const formatDateToBR = (isoDate: string): string => {
 
 type View = 'menu' | 'previsao' | 'dashboard' | 'banco' | 'empresa';
 
+// Filter Bar Component extracted to prevent re-renders
+const ReportFilterBar: React.FC<{
+    dateFilter: string;
+    setDateFilter: (date: string) => void;
+    weekFilter: string;
+    setWeekFilter: (week: string) => void;
+}> = ({ dateFilter, setDateFilter, weekFilter, setWeekFilter }) => (
+    <div className="flex flex-col sm:flex-row items-end gap-4 bg-white p-4 rounded-2xl border border-border shadow-sm flex-shrink-0">
+        <div className="w-full sm:w-auto">
+            <DatePicker 
+                label="Data"
+                value={dateFilter} 
+                onChange={setDateFilter} 
+                placeholder="Selecione"
+                className="w-full sm:w-40 h-10"
+            />
+        </div>
+        <div className="w-full sm:w-auto">
+            <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Semana</label>
+            <input 
+                type="text" 
+                placeholder="Ex: Semana 42" 
+                value={weekFilter} 
+                onChange={e => setWeekFilter(e.target.value)} 
+                className="bg-white border border-border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary w-full sm:w-40 h-10 transition-all"
+            />
+        </div>
+        <button 
+            onClick={() => {setDateFilter(''); setWeekFilter('')}} 
+            className="w-full sm:w-auto px-6 rounded-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold text-sm transition-colors h-10 shadow-sm"
+        >
+            Limpar
+        </button>
+    </div>
+);
+
 export const PrevisaoCristiano: React.FC = () => {
     const [previsoes, setPrevisoes] = useState<Previsao[]>(() => {
         const savedPrevisoes = localStorage.getItem('previsoes_cristiano');
@@ -113,7 +149,7 @@ export const PrevisaoCristiano: React.FC = () => {
         return savedClosedDates ? new Set(JSON.parse(savedClosedDates)) : new Set();
     });
     
-    const [view, setView] = useState<View>('previsao');
+    const [view, setView] = useState<View>('menu');
     
     const [reportDateFilter, setReportDateFilter] = useState<string>('');
     const [reportWeekFilter, setReportWeekFilter] = useState<string>('');
@@ -528,36 +564,6 @@ export const PrevisaoCristiano: React.FC = () => {
     
     const viewTitles: Record<View, string> = { menu: '', previsao: 'Previsão', dashboard: 'Dashboard', banco: 'Totais por Banco e Empresa', empresa: 'Despesas por Empresa' };
 
-    const FilterBar = () => (
-        <div className="flex flex-col sm:flex-row items-end gap-4 bg-white p-4 rounded-2xl border border-border shadow-sm flex-shrink-0">
-            <div className="w-full sm:w-auto">
-                <DatePicker 
-                    label="Data"
-                    value={reportDateFilter} 
-                    onChange={setReportDateFilter} 
-                    placeholder="Selecione"
-                    className="w-full sm:w-40 h-10"
-                />
-            </div>
-            <div className="w-full sm:w-auto">
-                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Semana</label>
-                <input 
-                    type="text" 
-                    placeholder="Ex: Semana 42" 
-                    value={reportWeekFilter} 
-                    onChange={e => setReportWeekFilter(e.target.value)} 
-                    className="bg-white border border-border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary w-full sm:w-40 h-10 transition-all"
-                />
-            </div>
-            <button 
-                onClick={() => {setReportDateFilter(''); setReportWeekFilter('')}} 
-                className="w-full sm:w-auto px-6 rounded-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold text-sm transition-colors h-10 shadow-sm"
-            >
-                Limpar
-            </button>
-        </div>
-    );
-
   return (
     <div className="p-4 sm:p-6 w-full h-full flex flex-col animate-fade-in">
        <div className="flex items-center justify-between gap-4 mb-4">
@@ -674,12 +680,13 @@ export const PrevisaoCristiano: React.FC = () => {
                 return (
                   <div className="animate-fade-in">
                       <h3 className="text-lg font-bold text-text-primary mb-4">Totais por Banco</h3>
-                      
-                      {/* Unified Filter + Cards Section */}
                       <div className="flex flex-col xl:flex-row items-start xl:items-center gap-6 mb-6">
-                          <FilterBar />
-                          
-                          {/* Cards Scroll Container */}
+                          <ReportFilterBar 
+                            dateFilter={reportDateFilter} 
+                            setDateFilter={setReportDateFilter} 
+                            weekFilter={reportWeekFilter} 
+                            setWeekFilter={setReportWeekFilter} 
+                          />
                           <div className="w-full xl:flex-1 overflow-x-auto custom-scrollbar pb-2 xl:pb-0">
                               <div className="flex gap-3 xl:justify-end min-w-max px-1">
                                   {bankSummaries.map(([bank, value]) => (
@@ -696,32 +703,34 @@ export const PrevisaoCristiano: React.FC = () => {
                       </div>
 
                       <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-                          <table className="min-w-full divide-y divide-border text-sm text-left">
-                              <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider">
-                                  <tr>
-                                      <th className="px-6 py-3">Empresa</th>
-                                      <th className="px-6 py-3">Banco</th>
-                                      <th className="px-6 py-3 text-right">Receitas</th>
-                                  </tr>
-                              </thead>
-                              <tbody className="divide-y divide-border bg-white">
-                                  {totaisPorBanco.length > 0 ? (
-                                      totaisPorBanco.map(item => (
-                                          <tr key={`${item.empresa}-${item.banco}`} className="hover:bg-secondary">
-                                              <td className="px-6 py-4 font-medium text-text-primary">{item.empresa}</td>
-                                              <td className="px-6 py-4 text-text-secondary">{item.banco}</td>
-                                              <td className="px-6 py-4 text-right text-success font-semibold">{formatCurrency(item.receitas)}</td>
-                                          </tr>
-                                      ))
-                                  ) : (
-                                      <tr>
-                                          <td colSpan={3} className="text-center py-16 text-text-secondary">
-                                              Nenhuma receita para exibir com os filtros selecionados.
-                                          </td>
-                                      </tr>
-                                  )}
-                              </tbody>
-                          </table>
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-border text-sm text-left">
+                                <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider">
+                                    <tr>
+                                        <th className="px-6 py-3">Empresa</th>
+                                        <th className="px-6 py-3">Banco</th>
+                                        <th className="px-6 py-3 text-right">Receitas</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border bg-white">
+                                    {totaisPorBanco.length > 0 ? (
+                                        totaisPorBanco.map(item => (
+                                            <tr key={`${item.empresa}-${item.banco}`} className="hover:bg-secondary">
+                                                <td className="px-6 py-4 font-medium text-text-primary">{item.empresa}</td>
+                                                <td className="px-6 py-4 text-text-secondary">{item.banco}</td>
+                                                <td className="px-6 py-4 text-right text-success font-semibold">{formatCurrency(item.receitas)}</td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={3} className="text-center py-16 text-text-secondary">
+                                                Nenhuma receita para exibir com os filtros selecionados.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                          </div>
                       </div>
                   </div>
                 );
@@ -729,7 +738,12 @@ export const PrevisaoCristiano: React.FC = () => {
                 return (
                   <div className="animate-fade-in">
                     <h3 className="text-lg font-bold text-text-primary mb-4">Despesas por Empresa</h3>
-                    <FilterBar />
+                    <ReportFilterBar 
+                        dateFilter={reportDateFilter} 
+                        setDateFilter={setReportDateFilter} 
+                        weekFilter={reportWeekFilter} 
+                        setWeekFilter={setReportWeekFilter} 
+                    />
                     <div className="mb-6">
                         <div className="bg-card p-4 rounded-2xl border border-border shadow-sm text-center sm:max-w-sm">
                             <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Despesa Total</p>
@@ -737,30 +751,32 @@ export const PrevisaoCristiano: React.FC = () => {
                         </div>
                     </div>
                     <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-                        <table className="min-w-full divide-y divide-border text-sm text-left">
-                            <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider">
-                                <tr>
-                                    <th className="px-6 py-3">Empresa</th>
-                                    <th className="px-6 py-3 text-right">Despesas</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border bg-white">
-                                {despesasPorEmpresa.length > 0 ? (
-                                    despesasPorEmpresa.map(item => (
-                                        <tr key={item.empresa} className="hover:bg-secondary">
-                                            <td className="px-6 py-4 font-medium text-text-primary">{item.empresa}</td>
-                                            <td className="px-6 py-4 text-right text-danger font-semibold">{formatCurrency(item.totalDespesas)}</td>
-                                        </tr>
-                                    ))
-                                ) : (
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-border text-sm text-left">
+                                <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider">
                                     <tr>
-                                        <td colSpan={2} className="text-center py-16 text-text-secondary">
-                                            Nenhuma despesa registrada com os filtros selecionados.
-                                        </td>
+                                        <th className="px-6 py-3">Empresa</th>
+                                        <th className="px-6 py-3 text-right">Despesas</th>
                                     </tr>
-                                )}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-border bg-white">
+                                    {despesasPorEmpresa.length > 0 ? (
+                                        despesasPorEmpresa.map(item => (
+                                            <tr key={item.empresa} className="hover:bg-secondary">
+                                                <td className="px-6 py-4 font-medium text-text-primary">{item.empresa}</td>
+                                                <td className="px-6 py-4 text-right text-danger font-semibold">{formatCurrency(item.totalDespesas)}</td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={2} className="text-center py-16 text-text-secondary">
+                                                Nenhuma despesa registrada com os filtros selecionados.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                   </div>
                 );
@@ -771,42 +787,45 @@ export const PrevisaoCristiano: React.FC = () => {
           
           {isEditModalOpen && editingPrevisao && (
               <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                {/* ... (Modal code remains unchanged) ... */}
-                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-visible">
-                    <h3 className="text-2xl font-bold text-text-primary mb-6 text-center pt-8">Editar Previsão</h3>
-                    <div className="px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-                        <div>
-                            <DatePicker 
-                                label="Data"
-                                value={editingPrevisao.data || ''} 
-                                onChange={(val) => setEditingPrevisao(prev => ({...prev, data: val}))} 
-                                placeholder="Selecione"
-                            />
-                        </div>
-                        <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Semana</label><input type="text" name="semana" value={editingPrevisao.semana || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                        <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label>
-                        <AutocompleteInput name="empresa" value={editingPrevisao.empresa || ''} onChange={handleInputChange} suggestions={uniqueEmpresas} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                        <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Banco</label>
-                        <AutocompleteInput name="tipo" value={editingPrevisao.tipo || ''} onChange={handleInputChange} suggestions={uniqueBancos} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                        
-                        <div className="relative">
-                            <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Receitas</label>
-                            <div className="relative">
-                                <input type="text" name="receitas" value={formatCurrency(editingPrevisao.receitas)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 pr-10 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/>
-                                <button onClick={() => setShowCalculator({ field: 'receitas' })} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                    <div className="shrink-0 p-6 pb-4 border-b border-gray-100">
+                        <h3 className="text-2xl font-bold text-text-primary text-center">Editar Previsão</h3>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar pb-32">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
+                            <div>
+                                <DatePicker 
+                                    label="Data"
+                                    value={editingPrevisao.data || ''} 
+                                    onChange={(val) => setEditingPrevisao(prev => ({...prev, data: val}))} 
+                                    placeholder="Selecione"
+                                />
                             </div>
-                            {showCalculator.field === 'receitas' && <Calculator initialValue={editingPrevisao.receitas} onResult={(res) => handleCalculatorUpdate(res, 'receitas', 'edit')} onClose={() => setShowCalculator({ field: null })} />}
-                        </div>
-                        <div className="relative">
-                            <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Despesas</label>
+                            <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Semana</label><input type="text" name="semana" value={editingPrevisao.semana || ''} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                            <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label>
+                            <AutocompleteInput name="empresa" value={editingPrevisao.empresa || ''} onChange={handleInputChange} suggestions={uniqueEmpresas} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                            <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Banco</label>
+                            <AutocompleteInput name="tipo" value={editingPrevisao.tipo || ''} onChange={handleInputChange} suggestions={uniqueBancos} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                            
                             <div className="relative">
-                                <input type="text" name="despesas" value={formatCurrency(editingPrevisao.despesas)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 pr-10 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/>
-                                <button onClick={() => setShowCalculator({ field: 'despesas' })} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                                <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Receitas</label>
+                                <div className="relative">
+                                    <input type="text" name="receitas" value={formatCurrency(editingPrevisao.receitas)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 pr-10 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/>
+                                    <button onClick={() => setShowCalculator({ field: 'receitas' })} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                                </div>
+                                {showCalculator.field === 'receitas' && <Calculator initialValue={editingPrevisao.receitas} onResult={(res) => handleCalculatorUpdate(res, 'receitas', 'edit')} onClose={() => setShowCalculator({ field: null })} />}
                             </div>
-                            {showCalculator.field === 'despesas' && <Calculator initialValue={editingPrevisao.despesas} onResult={(res) => handleCalculatorUpdate(res, 'despesas', 'edit')} onClose={() => setShowCalculator({ field: null })} />}
+                            <div className="relative">
+                                <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Despesas</label>
+                                <div className="relative">
+                                    <input type="text" name="despesas" value={formatCurrency(editingPrevisao.despesas)} onChange={handleInputChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 pr-10 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/>
+                                    <button onClick={() => setShowCalculator({ field: 'despesas' })} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                                </div>
+                                {showCalculator.field === 'despesas' && <Calculator initialValue={editingPrevisao.despesas} onResult={(res) => handleCalculatorUpdate(res, 'despesas', 'edit')} onClose={() => setShowCalculator({ field: null })} />}
+                            </div>
                         </div>
                     </div>
-                    <div className="px-8 pb-8 flex justify-center gap-3">
+                    <div className="shrink-0 p-6 pt-4 border-t border-gray-100 flex justify-center gap-3 bg-gray-50">
                         <button onClick={handleCloseModal} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-text-primary font-semibold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
                         <button onClick={handleSaveChanges} className="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-primary font-bold shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors">Salvar</button>
                     </div>
@@ -816,39 +835,42 @@ export const PrevisaoCristiano: React.FC = () => {
               
               {isAddEntryModalOpen && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                    {/* ... (Add modal content remains unchanged) ... */}
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-visible">
-                        <h3 className="text-2xl font-bold text-text-primary mb-6 text-center pt-8">Adicionar Lançamento</h3>
-                        <div className="px-8 pb-8 grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-                            <div>
-                                <DatePicker 
-                                    label="Data"
-                                    value={newEntry.data || ''} 
-                                    onChange={(val) => setNewEntry(prev => ({...prev, data: val}))} 
-                                    placeholder="Selecione"
-                                />
-                            </div>
-                            <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Semana</label><input type="text" name="semana" value={newEntry.semana || ''} onChange={handleNewEntryChange} placeholder="Ex: Semana 32" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                            <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label>
-                            <AutocompleteInput name="empresa" value={newEntry.empresa || ''} onChange={handleNewEntryChange} suggestions={uniqueEmpresas} placeholder="Digite a empresa" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                            <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Banco</label>
-                            <AutocompleteInput name="tipo" value={newEntry.tipo || ''} onChange={handleNewEntryChange} suggestions={uniqueBancos} placeholder="Digite o banco" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
-                            
-                            <div className="relative">
-                                <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Receitas</label>
-                                <div className="relative">
-                                    <input type="text" name="receitas" value={formatCurrency(newEntry.receitas)} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 pr-10 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/>
-                                    <button onClick={() => setShowCalculator({ field: 'receitas' })} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="shrink-0 p-6 pb-4 border-b border-gray-100">
+                            <h3 className="text-2xl font-bold text-text-primary text-center">Adicionar Lançamento</h3>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar pb-32">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
+                                <div>
+                                    <DatePicker 
+                                        label="Data"
+                                        value={newEntry.data || ''} 
+                                        onChange={(val) => setNewEntry(prev => ({...prev, data: val}))} 
+                                        placeholder="Selecione"
+                                    />
                                 </div>
-                                {showCalculator.field === 'receitas' && <Calculator initialValue={newEntry.receitas} onResult={(res) => handleCalculatorUpdate(res, 'receitas', 'add')} onClose={() => setShowCalculator({ field: null })} />}
-                            </div>
-                            <div className="relative">
-                                <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Despesas</label>
+                                <div><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Semana</label><input type="text" name="semana" value={newEntry.semana || ''} onChange={handleNewEntryChange} placeholder="Ex: Semana 32" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                                <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Empresa</label>
+                                <AutocompleteInput name="empresa" value={newEntry.empresa || ''} onChange={handleNewEntryChange} suggestions={uniqueEmpresas} placeholder="Digite a empresa" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                                <div className="md:col-span-2"><label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Banco</label>
+                                <AutocompleteInput name="tipo" value={newEntry.tipo || ''} onChange={handleNewEntryChange} suggestions={uniqueBancos} placeholder="Digite o banco" className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/></div>
+                                
                                 <div className="relative">
-                                    <input type="text" name="despesas" value={formatCurrency(newEntry.despesas)} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 pr-10 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/>
-                                    <button onClick={() => setShowCalculator({ field: 'despesas' })} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                                    <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Receitas</label>
+                                    <div className="relative">
+                                        <input type="text" name="receitas" value={formatCurrency(newEntry.receitas)} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 pr-10 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/>
+                                        <button onClick={() => setShowCalculator({ field: 'receitas' })} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                                    </div>
+                                    {showCalculator.field === 'receitas' && <Calculator initialValue={newEntry.receitas} onResult={(res) => handleCalculatorUpdate(res, 'receitas', 'add')} onClose={() => setShowCalculator({ field: null })} />}
                                 </div>
-                                {showCalculator.field === 'despesas' && <Calculator initialValue={newEntry.despesas} onResult={(res) => handleCalculatorUpdate(res, 'despesas', 'add')} onClose={() => setShowCalculator({ field: null })} />}
+                                <div className="relative">
+                                    <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider ml-1">Despesas</label>
+                                    <div className="relative">
+                                        <input type="text" name="despesas" value={formatCurrency(newEntry.despesas)} onChange={handleNewEntryChange} className="w-full bg-secondary border border-transparent rounded-xl px-4 py-3 pr-10 text-text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none h-12"/>
+                                        <button onClick={() => setShowCalculator({ field: 'despesas' })} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary"><CalculatorIcon className="h-5 w-5" /></button>
+                                    </div>
+                                    {showCalculator.field === 'despesas' && <Calculator initialValue={newEntry.despesas} onResult={(res) => handleCalculatorUpdate(res, 'despesas', 'add')} onClose={() => setShowCalculator({ field: null })} />}
+                                </div>
                             </div>
                         </div>
                         <div className="px-8 pb-8 flex justify-center gap-3">

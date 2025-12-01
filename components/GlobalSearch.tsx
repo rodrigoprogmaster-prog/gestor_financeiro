@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { AppView, SearchItem } from '../types';
-import { SearchIcon, XIcon } from './icons';
+import { SearchIcon, XIcon, PlusIcon, ArrowRightIcon } from './icons';
 
 interface GlobalSearchProps {
   isOpen: boolean;
@@ -13,6 +12,14 @@ interface GlobalSearchProps {
 
 // Define the searchable items and their mapping to AppView
 const SEARCH_ITEMS: SearchItem[] = [
+  // --- Actions ---
+  { label: 'Nova Tarefa', view: AppView.GERENCIADOR_TAREFAS, keywords: ['adicionar tarefa', 'nova tarefa', 'criar tarefa', 'task'], action: 'trigger:add-task' },
+  { label: 'Lançar Cheque', view: AppView.CONTROLE_CHEQUES, keywords: ['adicionar cheque', 'novo cheque', 'lançar cheque'], action: 'trigger:add-cheque' },
+  { label: 'Novo Boleto a Receber', view: AppView.GESTAO_BOLETOS, keywords: ['adicionar boleto', 'novo boleto receber', 'fatura'], action: 'trigger:add-boleto-receber' },
+  { label: 'Novo Boleto a Pagar', view: AppView.CONTROLE_BOLETOS, keywords: ['adicionar conta', 'novo boleto pagar', 'despesa'], action: 'trigger:add-boleto-pagar' },
+  { label: 'Nova Conta Bancária', view: AppView.CADASTRO_CONTAS_BANCARIAS, keywords: ['adicionar conta', 'nova conta', 'banco'], action: 'trigger:add-conta' },
+  
+  // --- Navigation ---
   { label: 'Dashboard', view: AppView.DASHBOARD, keywords: ['início', 'home', 'painel', 'resumo'] },
   { label: 'Boletos a Receber', view: AppView.GESTAO_BOLETOS, keywords: ['recebimento', 'contas a receber', 'faturas', 'crédito'] },
   { label: 'Gerenciador de Cheques', view: AppView.CONTROLE_CHEQUES, keywords: ['cheques', 'compensar', 'devolvido', 'depósito'] },
@@ -42,10 +49,18 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, searchTerm, setSear
       return [];
     }
     const lowercasedSearchTerm = searchTerm.toLowerCase();
-    return SEARCH_ITEMS.filter(item =>
+    
+    const results = SEARCH_ITEMS.filter(item =>
       item.label.toLowerCase().includes(lowercasedSearchTerm) ||
       item.keywords.some(keyword => keyword.toLowerCase().includes(lowercasedSearchTerm))
-    ).slice(0, 10); // Limit to 10 results for brevity
+    );
+
+    // Prioritize Actions over Navigation
+    return results.sort((a, b) => {
+        if (a.action && !b.action) return -1;
+        if (!a.action && b.action) return 1;
+        return 0;
+    }).slice(0, 10);
   }, [searchTerm]);
 
   useEffect(() => {
@@ -54,6 +69,18 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, searchTerm, setSear
       setHighlightedIndex(-1); // Reset highlight on open
     }
   }, [isOpen]);
+
+  const handleSelectResult = useCallback((item: SearchItem) => {
+    onNavigate(item.view);
+    
+    if (item.action) {
+        // Dispatch the custom event after a short delay to ensure the component is mounted
+        setTimeout(() => {
+            window.dispatchEvent(new Event(item.action!));
+        }, 150);
+    }
+    onClose();
+  }, [onNavigate, onClose]);
 
   // Handle keyboard navigation for results
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
@@ -72,13 +99,13 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, searchTerm, setSear
     } else if (event.key === 'Enter') {
       event.preventDefault();
       if (highlightedIndex !== -1 && filteredResults[highlightedIndex]) {
-        onNavigate(filteredResults[highlightedIndex].view);
+        handleSelectResult(filteredResults[highlightedIndex]);
       }
     } else if (event.key === 'Escape') {
       event.preventDefault();
       onClose();
     }
-  }, [isOpen, filteredResults, highlightedIndex, onNavigate, onClose]);
+  }, [isOpen, filteredResults, highlightedIndex, handleSelectResult, onClose]);
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
@@ -109,7 +136,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, searchTerm, setSear
             <input
               ref={inputRef}
               type="text"
-              placeholder="Buscar módulos, relatórios ou configurações..."
+              placeholder="Digite um comando (ex: 'nova tarefa') ou busque..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-12 pr-4 py-3 bg-secondary border-transparent rounded-2xl text-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white placeholder-text-secondary/60 transition-all"
@@ -125,33 +152,61 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, searchTerm, setSear
           </button>
         </div>
 
-        <div className="max-h-[50vh] overflow-y-auto custom-scrollbar p-4">
+        <div className="max-h-[50vh] overflow-y-auto custom-scrollbar p-2">
           {filteredResults.length > 0 ? (
             <ul role="listbox" aria-label="Resultados da busca">
               {filteredResults.map((item, index) => (
-                <li key={item.view} role="option" aria-selected={highlightedIndex === index}>
+                <li key={`${item.view}-${index}`} role="option" aria-selected={highlightedIndex === index}>
                   <button
-                    onClick={() => onNavigate(item.view)}
+                    onClick={() => handleSelectResult(item)}
                     onMouseEnter={() => setHighlightedIndex(index)}
                     className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-colors ${
                       highlightedIndex === index
-                        ? 'bg-primary/10 text-primary font-semibold'
+                        ? 'bg-secondary text-primary'
                         : 'text-text-primary hover:bg-secondary'
                     }`}
                   >
-                    <SearchIcon className="h-5 w-5 opacity-60" />
-                    <span>{item.label}</span>
+                    <div className={`p-2 rounded-full ${item.action ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-500'}`}>
+                        {item.action ? <PlusIcon className="h-4 w-4" /> : <SearchIcon className="h-4 w-4" />}
+                    </div>
+                    <div className="flex-1">
+                        <span className="font-medium">{item.label}</span>
+                        {item.action && <span className="text-xs text-text-secondary ml-2 font-normal opacity-70">Ação Rápida</span>}
+                    </div>
+                    {highlightedIndex === index && (
+                        <ArrowRightIcon className="h-4 w-4 text-text-secondary animate-pulse" />
+                    )}
                   </button>
                 </li>
               ))}
             </ul>
           ) : (
             <div className="text-center py-16 text-text-secondary">
-              <SearchIcon className="w-12 h-12 mb-4 text-gray-300" />
-              <p className="text-lg font-medium text-text-primary">Nenhum resultado encontrado</p>
-              <p className="text-sm mt-2">Tente outra palavra-chave.</p>
+              {searchTerm ? (
+                  <>
+                    <SearchIcon className="w-12 h-12 mb-4 text-gray-300 mx-auto" />
+                    <p className="text-lg font-medium text-text-primary">Nenhum resultado encontrado</p>
+                    <p className="text-sm mt-2">Tente "nova tarefa", "cheque" ou "configurações".</p>
+                  </>
+              ) : (
+                  <div className="flex flex-col gap-2 opacity-50">
+                      <p className="text-xs font-bold uppercase tracking-wider">Sugestões</p>
+                      <div className="flex flex-wrap justify-center gap-2 mt-2">
+                          <span className="px-2 py-1 bg-secondary rounded-md text-xs">Nova Tarefa</span>
+                          <span className="px-2 py-1 bg-secondary rounded-md text-xs">Dashboard</span>
+                          <span className="px-2 py-1 bg-secondary rounded-md text-xs">Lançar Cheque</span>
+                      </div>
+                  </div>
+              )}
             </div>
           )}
+        </div>
+        <div className="px-6 py-2 bg-gray-50 border-t border-border flex justify-between items-center text-[10px] text-text-secondary font-medium">
+            <div className="flex gap-4">
+                <span><span className="bg-white border border-gray-200 rounded px-1 py-0.5 mx-1">↑↓</span> navegar</span>
+                <span><span className="bg-white border border-gray-200 rounded px-1 py-0.5 mx-1">enter</span> selecionar</span>
+            </div>
+            <span><span className="bg-white border border-gray-200 rounded px-1 py-0.5 mx-1">esc</span> fechar</span>
         </div>
       </div>
     </div>

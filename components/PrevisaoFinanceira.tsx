@@ -44,7 +44,7 @@ interface NavCardProps {
 const NavCard: React.FC<NavCardProps> = ({ title, icon, onClick }) => (
     <div
         onClick={onClick}
-        className="bg-card rounded-2xl border border-border p-6 flex flex-col items-center text-center cursor-pointer hover:border-primary hover:shadow-sm transition-all duration-200 group"
+        className="bg-card rounded-2xl border border-border p-6 flex flex-col items-center text-center cursor-pointer hover:border-primary hover:shadow-sm transition-all duration-200 group active:scale-95"
     >
         <div className="bg-secondary p-4 rounded-full mb-4 border border-border group-hover:border-primary/30 transition-colors">
             {icon}
@@ -94,6 +94,42 @@ const formatDateToBR = (isoDate: string): string => {
     });
 };
 
+// Filter Bar Component extracted to prevent re-renders
+const ReportFilterBar: React.FC<{
+    dateFilter: string;
+    setDateFilter: (date: string) => void;
+    weekFilter: string;
+    setWeekFilter: (week: string) => void;
+}> = ({ dateFilter, setDateFilter, weekFilter, setWeekFilter }) => (
+    <div className="flex flex-col sm:flex-row items-end gap-4 bg-white p-4 rounded-2xl border border-border shadow-sm flex-shrink-0">
+        <div className="w-full sm:w-auto">
+            <DatePicker 
+                label="Data"
+                value={dateFilter} 
+                onChange={setDateFilter} 
+                placeholder="Selecione"
+                className="w-full sm:w-40 h-10"
+            />
+        </div>
+        <div className="w-full sm:w-auto">
+            <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Semana</label>
+            <input 
+                type="text" 
+                placeholder="Ex: Semana 42" 
+                value={weekFilter} 
+                onChange={e => setWeekFilter(e.target.value)} 
+                className="bg-white border border-border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary w-full sm:w-40 h-10 transition-all"
+            />
+        </div>
+        <button 
+            onClick={() => {setDateFilter(''); setWeekFilter('')}} 
+            className="w-full sm:w-auto px-6 rounded-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold text-sm transition-colors h-10 shadow-sm"
+        >
+            Limpar
+        </button>
+    </div>
+);
+
 type View = 'menu' | 'previsao' | 'dashboard' | 'banco' | 'empresa';
 
 const ITEMS_PER_LOAD = 20;
@@ -125,7 +161,7 @@ export const PrevisaoFabrica: React.FC = () => {
         return savedClosedDates ? new Set(JSON.parse(savedClosedDates)) : new Set();
     });
     
-    const [view, setView] = useState<View>('previsao');
+    const [view, setView] = useState<View>('menu');
     
     const [reportDateFilter, setReportDateFilter] = useState<string>('');
     const [reportWeekFilter, setReportWeekFilter] = useState<string>('');
@@ -538,36 +574,6 @@ export const PrevisaoFabrica: React.FC = () => {
     
     const viewTitles: Record<View, string> = { menu: '', previsao: 'Previsão', dashboard: 'Dashboard', banco: 'Totais por Banco e Empresa', empresa: 'Despesas por Empresa' };
 
-    const FilterBar = () => (
-        <div className="flex flex-col sm:flex-row items-end gap-4 bg-white p-4 rounded-2xl border border-border shadow-sm flex-shrink-0">
-            <div className="w-full sm:w-auto">
-                <DatePicker 
-                    label="Data"
-                    value={reportDateFilter} 
-                    onChange={setReportDateFilter} 
-                    placeholder="Selecione"
-                    className="w-full sm:w-40 h-10"
-                />
-            </div>
-            <div className="w-full sm:w-auto">
-                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Semana</label>
-                <input 
-                    type="text" 
-                    placeholder="Ex: Semana 42" 
-                    value={reportWeekFilter} 
-                    onChange={e => setReportWeekFilter(e.target.value)} 
-                    className="bg-white border border-border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary w-full sm:w-40 h-10 transition-all"
-                />
-            </div>
-            <button 
-                onClick={() => {setReportDateFilter(''); setReportWeekFilter('')}} 
-                className="w-full sm:w-auto px-6 rounded-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold text-sm transition-colors h-10 shadow-sm"
-            >
-                Limpar
-            </button>
-        </div>
-    );
-
   return (
     <div className="p-4 sm:p-6 w-full h-full flex flex-col animate-fade-in">
        <div className="flex items-center justify-between gap-4 mb-4">
@@ -685,7 +691,12 @@ export const PrevisaoFabrica: React.FC = () => {
                   <div className="animate-fade-in">
                       <h3 className="text-lg font-bold text-text-primary mb-4">Totais por Banco</h3>
                       <div className="flex flex-col xl:flex-row items-start xl:items-center gap-6 mb-6">
-                          <FilterBar />
+                          <ReportFilterBar 
+                            dateFilter={reportDateFilter} 
+                            setDateFilter={setReportDateFilter} 
+                            weekFilter={reportWeekFilter} 
+                            setWeekFilter={setReportWeekFilter} 
+                          />
                           <div className="w-full xl:flex-1 overflow-x-auto custom-scrollbar pb-2 xl:pb-0">
                               <div className="flex gap-3 xl:justify-end min-w-max px-1">
                                   {bankSummaries.map(([bank, value]) => (
@@ -702,32 +713,34 @@ export const PrevisaoFabrica: React.FC = () => {
                       </div>
 
                       <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-                          <table className="min-w-full divide-y divide-border text-sm text-left">
-                              <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider">
-                                  <tr>
-                                      <th className="px-6 py-3">Empresa</th>
-                                      <th className="px-6 py-3">Banco</th>
-                                      <th className="px-6 py-3 text-right">Receitas</th>
-                                  </tr>
-                              </thead>
-                              <tbody className="divide-y divide-border bg-white">
-                                  {totaisPorBanco.length > 0 ? (
-                                      totaisPorBanco.map(item => (
-                                          <tr key={`${item.empresa}-${item.banco}`} className="hover:bg-secondary">
-                                              <td className="px-6 py-4 font-medium text-text-primary">{item.empresa}</td>
-                                              <td className="px-6 py-4 text-text-secondary">{item.banco}</td>
-                                              <td className="px-6 py-4 text-right text-success font-semibold">{formatCurrency(item.receitas)}</td>
-                                          </tr>
-                                      ))
-                                  ) : (
-                                      <tr>
-                                          <td colSpan={3} className="text-center py-16 text-text-secondary">
-                                              Nenhuma receita para exibir com os filtros selecionados.
-                                          </td>
-                                      </tr>
-                                  )}
-                              </tbody>
-                          </table>
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-border text-sm text-left">
+                                <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider">
+                                    <tr>
+                                        <th className="px-6 py-3">Empresa</th>
+                                        <th className="px-6 py-3">Banco</th>
+                                        <th className="px-6 py-3 text-right">Receitas</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border bg-white">
+                                    {totaisPorBanco.length > 0 ? (
+                                        totaisPorBanco.map(item => (
+                                            <tr key={`${item.empresa}-${item.banco}`} className="hover:bg-secondary">
+                                                <td className="px-6 py-4 font-medium text-text-primary">{item.empresa}</td>
+                                                <td className="px-6 py-4 text-text-secondary">{item.banco}</td>
+                                                <td className="px-6 py-4 text-right text-success font-semibold">{formatCurrency(item.receitas)}</td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={3} className="text-center py-16 text-text-secondary">
+                                                Nenhuma receita para exibir com os filtros selecionados.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                          </div>
                       </div>
                   </div>
                 );
@@ -735,7 +748,12 @@ export const PrevisaoFabrica: React.FC = () => {
                 return (
                   <div className="animate-fade-in">
                     <h3 className="text-lg font-bold text-text-primary mb-4">Despesas por Empresa</h3>
-                    <FilterBar />
+                    <ReportFilterBar 
+                        dateFilter={reportDateFilter} 
+                        setDateFilter={setReportDateFilter} 
+                        weekFilter={reportWeekFilter} 
+                        setWeekFilter={setReportWeekFilter} 
+                    />
                     <div className="mb-6">
                         <div className="bg-card p-4 rounded-2xl border border-border shadow-sm text-center sm:max-w-sm">
                             <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Despesa Total</p>
@@ -743,30 +761,32 @@ export const PrevisaoFabrica: React.FC = () => {
                         </div>
                     </div>
                     <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-                        <table className="min-w-full divide-y divide-border text-sm text-left">
-                            <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider">
-                                <tr>
-                                    <th className="px-6 py-3">Empresa</th>
-                                    <th className="px-6 py-3 text-right">Despesas</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border bg-white">
-                                {despesasPorEmpresa.length > 0 ? (
-                                    despesasPorEmpresa.map(item => (
-                                        <tr key={item.empresa} className="hover:bg-secondary">
-                                            <td className="px-6 py-4 font-medium text-text-primary">{item.empresa}</td>
-                                            <td className="px-6 py-4 text-right text-danger font-semibold">{formatCurrency(item.totalDespesas)}</td>
-                                        </tr>
-                                    ))
-                                ) : (
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-border text-sm text-left">
+                                <thead className="bg-secondary text-text-secondary font-medium uppercase text-xs tracking-wider">
                                     <tr>
-                                        <td colSpan={2} className="text-center py-16 text-text-secondary">
-                                            Nenhuma despesa registrada com os filtros selecionados.
-                                        </td>
+                                        <th className="px-6 py-3">Empresa</th>
+                                        <th className="px-6 py-3 text-right">Despesas</th>
                                     </tr>
-                                )}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-border bg-white">
+                                    {despesasPorEmpresa.length > 0 ? (
+                                        despesasPorEmpresa.map(item => (
+                                            <tr key={item.empresa} className="hover:bg-secondary">
+                                                <td className="px-6 py-4 font-medium text-text-primary">{item.empresa}</td>
+                                                <td className="px-6 py-4 text-right text-danger font-semibold">{formatCurrency(item.totalDespesas)}</td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={2} className="text-center py-16 text-text-secondary">
+                                                Nenhuma despesa registrada com os filtros selecionados.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                   </div>
                 );

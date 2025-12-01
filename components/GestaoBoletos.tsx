@@ -37,6 +37,7 @@ const formatDateToBR = (isoDate: string): string => {
     });
 };
 
+// ... (Rest of format functions same as original)
 const formatDateToISO = (brDate: string): string => {
     if (!brDate || !/^\d{2}\/\d{2}\/\d{4}$/.test(brDate)) return '';
     const [day, month, year] = brDate.split('/');
@@ -202,6 +203,13 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         setIsModalOpen(true);
     };
 
+    // Global Event Listener for Add Action
+    useEffect(() => {
+        const handleTrigger = () => handleOpenAddModal();
+        window.addEventListener('trigger:add-boleto-receber', handleTrigger);
+        return () => window.removeEventListener('trigger:add-boleto-receber', handleTrigger);
+    }, []);
+
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.ctrlKey && event.key === '+') {
@@ -329,21 +337,18 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     });
 
                     json.forEach((row, index) => {
-                        // 1. Credor (Mandatory)
+                        // ... (Import logic preserved)
                         const credor = row['Credor'] || row['credor'] || row['CREDOR'] || 
                                        row['Cedente'] || row['cedente'] || row['CEDENTE'] ||
                                        row['Empresa'] || row['EMPRESA'];
 
-                        // 2. Cliente (Mandatory)
                         const cliente = row['Cliente'] || row['cliente'] || row['CLIENTE'] || 
                                         row['Sacado'] || row['sacado'] || row['SACADO'] ||
                                         row['Pagador'] || row['Nome'] || row['Nome Fantasia'];
 
-                        // 3. Vencimento (Mandatory)
                         const vencimentoRaw = row['Vencimento'] || row['vencimento'] || row['VENCIMENTO'] || 
                                               row['Data Vencimento'] || row['Dt Venc'] || row['Data'];
 
-                        // 4. Valor (Mandatory)
                         const valorRaw = row['Valor'] || row['valor'] || row['VALOR'] || 
                                          row['Valor Título'] || row['Valor Original'] || row['Valor Liquido'];
 
@@ -450,6 +455,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
     return (
         <div className="p-4 sm:p-6 lg:p-8 w-full animate-fade-in flex flex-col h-full max-w-[1600px] mx-auto">
+            {/* ... (Header and filters logic remains unchanged, actions map to handlers above) ... */}
             <input type="file" ref={fileInputRef} onChange={handleFileImport} className="hidden" accept=".xlsx, .xls" />
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
                 <div className="flex items-center gap-4">
@@ -477,6 +483,7 @@ const BoletosAReceber: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 </div>
             </div>
 
+            {/* ... (Cards and Table rendering) ... */}
             <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {(Object.values(StatusBoletoReceber) as StatusBoletoReceber[]).map(status => {
                     const total = totals[status] || { count: 0, value: 0 };

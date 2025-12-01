@@ -250,6 +250,26 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   };
 
   const handleOpenAddModal = () => { setErrors({}); setEditingCheque({ ...newChequeTemplate }); setIsModalOpen(true); };
+  
+  // Global Event Listener for Add Action
+  useEffect(() => {
+    const handleTrigger = () => handleOpenAddModal();
+    window.addEventListener('trigger:add-cheque', handleTrigger);
+    return () => window.removeEventListener('trigger:add-cheque', handleTrigger);
+  }, []);
+
+  // Keyboard shortcut for adding new cheque
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.ctrlKey && event.key === '+') {
+            event.preventDefault();
+            handleOpenAddModal();
+        }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleEditClick = (cheque: Cheque) => { setErrors({}); setEditingCheque({ ...cheque }); setIsModalOpen(true); };
   const handleDeleteClick = (id: string) => { const action = () => setCheques(prev => prev.filter(c => c.id !== id)); setConfirmAction({ action, message: "Tem certeza que deseja excluir este cheque?" }); setIsConfirmOpen(true); };
   const handleDoubleClickRow = (cheque: Cheque) => { if (getDynamicStatus(cheque) === StatusCheque.COMPENSADO) return; setChequeParaAcao(cheque); };
@@ -386,7 +406,7 @@ const GerenciadorCheques: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                     <td className="px-6 py-3 text-text-secondary whitespace-nowrap">{cheque.contaDeposito}</td>
                                     <td className="px-6 py-3 text-text-secondary whitespace-nowrap tabular-nums">{formatDateToBR(cheque.dataDeposito)}</td>
                                     <td className="px-6 py-3 text-center">
-                                        <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="flex items-center justify-center gap-1">
                                             <button onClick={(e) => { e.stopPropagation(); handleEditClick(cheque); }} className="text-primary p-1.5 rounded-md hover:bg-primary/10 transition-colors"><EditIcon className="h-4 w-4"/></button>
                                             <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(cheque.id); }} className="text-danger p-1.5 rounded-md hover:bg-danger/10 transition-colors"><TrashIcon className="h-4 w-4"/></button>
                                         </div>

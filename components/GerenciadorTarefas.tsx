@@ -138,6 +138,13 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         setIsModalOpen(true);
     };
 
+    // Global Event Listener for Add Action
+    useEffect(() => {
+        const handleTrigger = () => handleOpenAddModal();
+        window.addEventListener('trigger:add-task', handleTrigger);
+        return () => window.removeEventListener('trigger:add-task', handleTrigger);
+    }, []);
+
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.ctrlKey && event.key === '+') {
@@ -419,6 +426,8 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         return <span className={`px-2.5 py-0.5 text-[10px] font-bold uppercase rounded-full tracking-wide border ${styles[status]} whitespace-nowrap`}>{status}</span>;
     };
 
+    // ... (Rest of component remains unchanged)
+    
     // Kanban Card - Kept for Board View
     const renderKanbanCard = (tarefa: TarefaWithStatus) => {
         const priorityColor = getPriorityColor(tarefa.prioridade);
@@ -523,10 +532,23 @@ const GerenciadorTarefas: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                 <td className={`px-6 py-3 font-medium tabular-nums ${tarefa.dynamicStatus === 'Atrasada' ? 'text-danger' : 'text-text-secondary'}`}>
                                     {formatDateToBR(tarefa.dataVencimento)}
                                 </td>
-                                <td className="px-6 py-3 text-center">
-                                    <button className="text-primary hover:bg-primary/10 p-1.5 rounded-full transition-colors opacity-0 group-hover:opacity-100">
-                                        <EditIcon className="h-4 w-4" />
-                                    </button>
+                                <td className="px-6 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex items-center justify-center gap-1">
+                                        <button 
+                                            onClick={() => handleEditClick(tarefa)} 
+                                            className="text-primary hover:bg-primary/10 p-1.5 rounded-full transition-colors"
+                                            title="Editar"
+                                        >
+                                            <EditIcon className="h-4 w-4" />
+                                        </button>
+                                        <button 
+                                            onClick={(e) => handleDeleteClick(e, tarefa)} 
+                                            className="text-danger hover:bg-danger/10 p-1.5 rounded-full transition-colors"
+                                            title="Excluir"
+                                        >
+                                            <TrashIcon className="h-4 w-4" />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         )) : (

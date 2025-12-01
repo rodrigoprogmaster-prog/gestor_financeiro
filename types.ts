@@ -1,3 +1,4 @@
+
 export enum AppView {
   DASHBOARD = 'DASHBOARD',
   CONTROLE_CHEQUES = 'CONTROLE_CHEQUES',
@@ -33,4 +34,5 @@ export interface SearchItem {
   label: string;
   view: AppView;
   keywords: string[];
+  action?: string; // Optional custom event name to trigger
 }

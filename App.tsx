@@ -4,7 +4,7 @@ import { AppView, SearchItem } from './types';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
-import BoletosAReceber from './components/ControleCheques'; // Renomeado para clareza
+import GerenciadorCheques from './components/GerenciadorCheques';
 import GestaoBoletos from './components/GestaoBoletos';
 import BoletosAPagar from './components/ControleBoletos'; // Renomeado para clareza
 import TitulosProrrogados from './components/TitulosProrrogados';
@@ -180,7 +180,7 @@ const App: React.FC = () => {
   const renderView = () => {
     switch (currentView) {
       case AppView.CONTROLE_CHEQUES:
-        return <BoletosAReceber />;
+        return <GerenciadorCheques />;
       case AppView.GESTAO_BOLETOS:
         return <GestaoBoletos />;
       case AppView.CONTROLE_BOLETOS:
